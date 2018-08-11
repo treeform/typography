@@ -123,7 +123,7 @@ This library does not support Subpixel rendering.
 
 # How to convert any font to SVG font using FontForge:
 
-SVG fonts are really nice. The are simple to parse and understand and debug. They are very uncommon though. But they are good as a debug input or output or intermediate step.
+SVG fonts are really nice. The are simple to parse and understand and debug. They are very uncommon though. But they are good as a debug input, output, or intermediate step.
 
 ```bash
 $ fontforge -c 'Open($1); Generate($2)' foo.ttf foo.svg
