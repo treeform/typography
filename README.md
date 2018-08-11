@@ -65,11 +65,10 @@ Each glyphs can be rendered with a subpixel offset, so that it fits into the lay
 ![example output](tests/subpixelpos.png?raw=true)
 
 Note how many of the "o"s and "m"s are different from each other. This happens because spaces between letters are not an integer number of pixels so glyphs must be rendred shifted by fraction of a pixel.
+
 Here is how glyph changes with different subpixel offsets:
 
 ![example output](tests/subpixelglyphs.png?raw=true)
-
-Here is how glyph changes with different subpixel offsets.
 
 # Comparison to different OSs.
 
