@@ -1,11 +1,6 @@
-import xmlparser, os
-import xmltree
-import tables
-import streams
-import strutils
-
-import font
+import xmlparser, xmltree, tables, streams, os, strutils
 import vmath
+import font
 
 
 proc readFontSvg*(filename: string): Font =

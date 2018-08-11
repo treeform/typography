@@ -1,6 +1,4 @@
-import tables
-import strutils
-
+import tables, strutils
 import chroma, vmath, flippy, print
 
 type

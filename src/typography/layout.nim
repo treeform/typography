@@ -1,14 +1,6 @@
-import vmath
-import flippy
-import font
-import algorithm
-import tables
-import unicode
-
-import rasterizer
-
-import print
-
+import tables, unicode
+import flippy, vmath, print
+import font, rasterizer
 
 type
   Span* = object

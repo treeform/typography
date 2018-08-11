@@ -1,4 +1,3 @@
-import unicode, os, streams, strutils, tables, algorithm, math, endians
 import flippy, vmath
 
 include typography/font

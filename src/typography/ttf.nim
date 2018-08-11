@@ -1,12 +1,6 @@
-import tables
-import streams
-import strutils
-import endians
-import unicode
-
+import tables, streams, strutils, endians, unicode
 import font
-import vmath
-import print
+import vmath, print
 
 proc readFontTtf*(filename: string): Font =
   ## Reads TTF font
