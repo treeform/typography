@@ -5,7 +5,7 @@ import chroma, vmath, flippy, print
 
 type
   Segment* = object
-    ## A math segment from point at to point to
+    ## A math segment from point "at" to point "to"
     at*: Vec2
     to*: Vec2
 
