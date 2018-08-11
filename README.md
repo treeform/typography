@@ -70,21 +70,21 @@ Note how many of the "o"s and "m"s are different from each other. This happens b
 
 Here is how glyph changes with different subpixel offsets.
 
-# Comperason to different OSs.
+# Comparison to different OSs.
 
-At the large pixels sizes of fonts > 24px the fonts on most operating system looks nearly identaical. But when you scale the font bellow 24px different OSes take different approaches.
-* OSX - tries to render fonts most true to how font designer intended even if they look a blury.
+At the large pixels sizes of fonts > 24px the fonts on most operating system looks nearly identical. But when you scale the font bellow 24px different OSes take different approaches.
+* OSX - tries to render fonts most true to how font designer intended even if they look a blurry.
 * Windows - tries to render fonts to a pixel grid making them look sharper.
-* Linux - configurable and some where between the two.
-* iOS, Android - it really does not matter how the font is renderd becaues its almost always above 24px because of high resolution screens phones have.
+* Linux - configurable and somewhere between the two.
+* iOS, Android - it really does not matter how the font is rendered because its almost always above 24px because of high resolution screens phones have.
 
 ```nim
-    var font = readFontSvg("fonts/DejaVuSans.svg")
-    font.size = 11 # 11px or 8pt
-    font.drawText(image, vec2(10, 15), "The quick brown fox jumps over the lazy dog.")
+   var font = readFontSvg("fonts/DejaVuSans.svg")
+   font.size = 11 # 11px or 8pt
+   font.drawText(image, vec2(10, 15), "The quick brown fox jumps over the lazy dog.")
 ```
 
-Typorgraphy renderer - this library (4x):
+Typography renderer - this library (4x):
 
 ![example output](tests/scaledup.png?raw=true)
 
@@ -107,7 +107,7 @@ Bohemian Sketch renderer OSx (4x):
 
 # Subpixel rendering is on its way out
 
-About a decade ago Subpixel rendering significnatly improved readablity of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. Back then the pixels were big and monitors followed predictable patterns first in CRTs then in LCDs.
+About a decade ago Subpixel rendering significantly improved readability of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. Back then the pixels were big and monitors followed predictable patterns first in CRTs then in LCDs.
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/5/57/Subpixel-rendering-RGB.png?raw=true)
 
@@ -115,7 +115,7 @@ Then everything changed. In 2018 our pixels are really small and they don't foll
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Pixel_geometry_01_Pengo.jpg/220px-Pixel_geometry_01_Pengo.jpg)
 
-The fact that there is no standard pixel layout grid anymore and the fact that high resolution displays are everywhere makes subpixeling absolute. Apple, Adobie, Bohemian and other companies in the typography space are abandoning subpixeling for these reasons.
+The fact that there is no standard pixel layout grid anymore and the fact that high resolution displays are everywhere makes subpixeling absolute. Apple, Adobe, Bohemian and other companies in the typography space are abandoning subpixeling for these reasons.
 
 This library does not support Subpixel rendering.
 
@@ -123,7 +123,7 @@ This library does not support Subpixel rendering.
 
 # How to convert any font to SVG font using FontForge:
 
-SVG fonts are really nice. The are simple to parse and understan and debug. They are very uncommon though. But they are good as a debug input or output or intermediate step.
+SVG fonts are really nice. The are simple to parse and understand and debug. They are very uncommon though. But they are good as a debug input or output or intermediate step.
 
 ```bash
 $ fontforge -c 'Open($1); Generate($2)' foo.ttf foo.svg
