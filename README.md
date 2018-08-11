@@ -4,6 +4,7 @@ Typography is pure nim implementation for font rasterization (letter drawing) an
 
 It does relay on stb_image for png writing, but if you don't write pngs it would not be included.
 
+See api reference: https://treeform.github.io/typography/
 
 # Font file formats:
 * SVG fonts - Most features are supported.
