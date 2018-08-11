@@ -85,13 +85,9 @@ At the large pixels sizes of fonts > 24px the fonts on most operating system loo
    font.drawText(image, vec2(10, 15), "The quick brown fox jumps over the lazy dog.")
 ```
 
-Typography renderer - this library (4x):
+Typography renderer - **this library** (4x):
 
 ![example output](tests/scaledup.png?raw=true)
-
-Window ClearType renderer (4x):
-
-![example output](tests/notepadWindows.png?raw=true)
 
 Apple Core Text renderer (4x):
 
@@ -105,6 +101,9 @@ Bohemian Sketch renderer OSx (4x):
 
 ![example output](tests/sketchMac.png?raw=true)
 
+Window ClearType renderer (4x):
+
+![example output](tests/notepadWindows.png?raw=true)
 
 # Subpixel rendering is on its way out
 
