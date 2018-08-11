@@ -1,6 +1,6 @@
 import tables
 import flippy, vmath, chroma, print
-import typography, typography/ttf
+import typography
 
 
 proc alphaWhite(image: var Image) =

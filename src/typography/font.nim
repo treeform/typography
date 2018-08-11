@@ -5,18 +5,23 @@ import chroma, vmath, flippy, print
 
 type
   Segment* = object
+    ## A math segment from point at to point to
     at*: Vec2
     to*: Vec2
 
   PathCommandKind* = enum
+    ## Type of binary commands
     Start, Move, Line, HLine, VLine, Cubic, SCurve, Quad, TQuad, End
     RMove, RLine, RHLine, RVLine, RCubic, RSCurve, RQuad, RTQuad
 
   PathCommand* = object
+    ## Binary version of an SVG command
     kind*: PathCommandKind
     numbers*: seq[float]
 
   Glyph* = object
+    ## Contains information about Glyphs or "letters"
+    ## SVG Path, command buffer, and line-shape
     name*: string
     code*: string
     advance*: float
@@ -27,6 +32,7 @@ type
     bboxMax*: Vec2
 
   Font* = object
+    ## Main font object contains font information and Glyphs
     filename*: string
     name*: string
     bboxMin*: Vec2
@@ -44,17 +50,36 @@ type
     kerning*: Table[string, float]
 
 
-proc `sizePt`*(font: Font): float = font.size * 0.75
-proc `sizePt=`*(font: var Font, sizePoints: float) = font.size = sizePoints / 0.75
+proc `sizePt`*(font: Font): float =
+  ## Gets font size in Pt or Point units.
+  font.size * 0.75
 
-proc `sizeEm`*(font: Font): float = font.size / 12
-proc `sizeEm=`*(font: var Font, sizeEm: float) = font.size = sizeEm * 12
+proc `sizePt=`*(font: var Font, sizePoints: float) =
+  ## Sets font size in Pt or Point units.
+  font.size = sizePoints / 0.75
 
-proc `sizePr`*(font: Font): float = font.size / 1200
-proc `sizePr=`*(font: var Font, sizePercent: float) = font.size = sizePercent * 1200
+
+proc `sizeEm`*(font: Font): float =
+  ## Gets font size in em units.
+  font.size / 12
+
+proc `sizeEm=`*(font: var Font, sizeEm: float) =
+  ## Gets font size in em units.
+  font.size = sizeEm * 12
+
+
+proc `sizePr`*(font: Font): float =
+  ## Gets font size in % or Percent units.
+  font.size / 1200
+
+proc `sizePr=`*(font: var Font, sizePercent: float) =
+  ## Gets font size in % or Percent units.
+  font.size = sizePercent * 1200
 
 
 proc intersects*(a, b: Segment, at: var Vec2): bool =
+  ## Checks if the a segment intersects b segment.
+  ## If it returns true, at will have point of intersection
   var s1_x, s1_y, s2_x, s2_y: float
   s1_x = a.to.x - a.at.x
   s1_y = a.to.y - a.at.y
@@ -73,93 +98,95 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
 
 
 proc glyphPathToCommands*(glyph: var Glyph) =
-    glyph.commands = newSeq[PathCommand]()
+  ## Converts a glphy into lines-shape
+  glyph.commands = newSeq[PathCommand]()
 
-    var command = Start
-    var number = ""
-    var numbers = newSeq[float]()
-    var commands = newSeq[PathCommand]()
+  var command = Start
+  var number = ""
+  var numbers = newSeq[float]()
+  var commands = newSeq[PathCommand]()
 
-    proc finishDigit() =
-      if number.len > 0:
-        numbers.add(parseFloat(number))
-        number = ""
+  proc finishDigit() =
+    if number.len > 0:
+      numbers.add(parseFloat(number))
+      number = ""
 
-    proc finishCommand() =
-      finishDigit()
-      if command != Start:
-        commands.add PathCommand(kind: command, numbers: numbers)
-        numbers = newSeq[float]()
+  proc finishCommand() =
+    finishDigit()
+    if command != Start:
+      commands.add PathCommand(kind: command, numbers: numbers)
+      numbers = newSeq[float]()
 
-    for c in glyph.path:
-      case c:
-        of 'm':
-          finishCommand()
-          command = RMove
-        of 'l':
-          finishCommand()
-          command = RLine
-        of 'h':
-          finishCommand()
-          command = RHLine
-        of 'v':
-          finishCommand()
-          command = RVLine
-        of 'c':
-          finishCommand()
-          command = RCubic
-        of 's':
-          finishCommand()
-          command = RSCurve
-        of 'q':
-          finishCommand()
-          command = RQuad
-        of 't':
-          finishCommand()
-          command = RTQuad
-        of 'z':
-          finishCommand()
-          command = End
+  for c in glyph.path:
+    case c:
+      of 'm':
+        finishCommand()
+        command = RMove
+      of 'l':
+        finishCommand()
+        command = RLine
+      of 'h':
+        finishCommand()
+        command = RHLine
+      of 'v':
+        finishCommand()
+        command = RVLine
+      of 'c':
+        finishCommand()
+        command = RCubic
+      of 's':
+        finishCommand()
+        command = RSCurve
+      of 'q':
+        finishCommand()
+        command = RQuad
+      of 't':
+        finishCommand()
+        command = RTQuad
+      of 'z':
+        finishCommand()
+        command = End
 
-        of 'M':
-          finishCommand()
-          command = Move
-        of 'L':
-          finishCommand()
-          command = Line
-        of 'H':
-          finishCommand()
-          command = HLine
-        of 'V':
-          finishCommand()
-          command = VLine
-        of 'C':
-          finishCommand()
-          command = Cubic
-        of 'S':
-          finishCommand()
-          command = SCurve
-        of 'Q':
-          finishCommand()
-          command = Quad
-        of 'T':
-          finishCommand()
-          command = TQuad
-        of 'Z':
-          finishCommand()
-          command = End
+      of 'M':
+        finishCommand()
+        command = Move
+      of 'L':
+        finishCommand()
+        command = Line
+      of 'H':
+        finishCommand()
+        command = HLine
+      of 'V':
+        finishCommand()
+        command = VLine
+      of 'C':
+        finishCommand()
+        command = Cubic
+      of 'S':
+        finishCommand()
+        command = SCurve
+      of 'Q':
+        finishCommand()
+        command = Quad
+      of 'T':
+        finishCommand()
+        command = TQuad
+      of 'Z':
+        finishCommand()
+        command = End
 
-        of ' ', ',':
-          finishDigit()
-        else:
-          number &= c
+      of ' ', ',':
+        finishDigit()
+      else:
+        number &= c
 
-    finishCommand()
+  finishCommand()
 
-    glyph.commands = commands
+  glyph.commands = commands
 
 
 proc commandsToShapes*(glyph: var Glyph) =
+  ## Converts SVG-like commands to shape made out of lines
 
   var lines = newSeq[Segment]()
   var start, at, to, ctr, ctr2: Vec2

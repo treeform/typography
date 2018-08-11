@@ -9,6 +9,7 @@ import vmath
 
 
 proc readFontSvg*(filename: string): Font =
+  ## Reads an SVG font
   if not fileExists(filename):
     raise newException(OSError, "File " & filename & " not found")
 
