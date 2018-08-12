@@ -47,17 +47,31 @@ font.drawText(image, vec2(10, 10), readFile("examples/sample.ru.txt"))
 
 # Dealing with Glyphs
 
+Each font has an table of glyphs.
 ```nim
-font.getGlyphOutlineImage("Q")
+font.glyphs["Q"]
 ```
-![example output](tests/q.png?raw=true)
-
+And for each glyphs, you can see what the SVG path of a glyph looks like:
 ```nim
 echo font.glyphs["Q"].path
 ```
 ```
 M754,236 Q555,236 414,377  Q273,518 273,717  Q273,916 414,1057  Q555,1198 754,1198  Q953,1198 1094,1057  Q1235,916 1235,717  Q1235,593 1175,485  L1096,565  Q1062,599 1013,599  Q964,599 929,565  Q895,530 895,481  Q895,432 929,398  L1014,313  Q895,236 754,236  Z M1347,314  Q1471,496 1471,717  Q1471,1014 1261,1224  Q1051,1434 754,1434  Q458,1434 247,1224 Q37,1014 37,717  Q37,421 247,210  Q458,0 754,0  Q993,0 1184,143  L1292,35  Q1327,0 1376,0  Q1425,0 1459,35  Q1494,69 1494,118  Q1494,167 1459,201  Z
 ```
+You can also draw this path to see all of the paths and all of the curve contorl points:
+```nim
+font.getGlyphOutlineImage("Q")
+```
+![example output](tests/qOutLine.png?raw=true)
+
+Most of the time you would like to just get the image instead:
+
+```nim
+font.getGlyphImage("Q")
+```
+![example output](tests/qFill.png?raw=true)
+
+You can then use this image in openGL, canvas, or even HTML.
 
 # Subpixel glyphs with subpixel layout:
 
@@ -70,6 +84,38 @@ Note how many of the "o"s and "m"s are different from each other. This happens b
 Here is how glyph changes with different subpixel offsets:
 
 ![example output](tests/subpixelglyphs.png?raw=true)
+
+```nim
+var glyphOffset # this is an offset of the image from the 0,0 position
+var image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=X)
+```
+
+# Typesetting
+
+Before glyphs can be rendered they need to be type set:
+
+```nim
+var layout = font.typeset("""
+Two roads diverged in a yellow wood,
+And sorry I could not travel both
+And be one traveler, long I stood
+And looked down one as far as I could
+To where it bent in the undergrowth;""")
+```
+
+This produces a layout.
+
+![example output](tests/layoutNoText.png?raw=true)
+
+
+You can then use the simple drawing included to draw to an image, or use some other graphical librarry like openGL, canvas, or even HTML:
+
+```nim
+  image.drawText(layout)
+```
+
+![example output](tests/layout.png?raw=true)
+
 
 # Comparison to different OSs.
 
@@ -104,6 +150,8 @@ Bohemian Sketch renderer OSx (4x):
 Window ClearType renderer (4x):
 
 ![example output](tests/notepadWindows.png?raw=true)
+
+How the font should looks on screen is very subjective, some people love the crisp windows fonts, others swear by the apples adherence to design. But my opinion is its all related a lot with familiarity. What you are used to is what you would like best, and when a person switches to a different screen with a different font rendering style brain immediately rejects it.
 
 # Subpixel rendering is on its way out
 
