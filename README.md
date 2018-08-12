@@ -92,7 +92,7 @@ var image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=X)
 
 # Typesetting
 
-Before glyphs can be rendered they need to be type set:
+Before glyphs can be rendered they need to be typeset:
 
 ```nim
 var layout = font.typeset("""
@@ -119,7 +119,7 @@ You can then use the simple drawing included to draw to an image, or use some ot
 
 # Comparison to different OSs.
 
-At the large pixels sizes of fonts > 24px the fonts on most operating system looks nearly identical. But when you scale the font bellow 24px different OSes take different approaches.
+At the large font sizes (more then 24 pixels) the fonts on most operating system looks nearly identical. But when you scale the font bellow 24px different OSes take different approaches.
 * OSX - tries to render fonts most true to how font designer intended even if they look a blurry.
 * Windows - tries to render fonts to a pixel grid making them look sharper.
 * Linux - configurable and somewhere between the two.
@@ -153,9 +153,9 @@ Window ClearType renderer (4x):
 
 How the font should looks on screen is very subjective, some people love the crisp windows fonts, others swear by the apples adherence to design. But my opinion is its all related a lot with familiarity. What you are used to is what you would like best, and when a person switches to a different screen with a different font rendering style brain immediately rejects it.
 
-# Subpixel rendering is on its way out
+# Subpixel Antialising is on its way out
 
-About a decade ago Subpixel rendering significantly improved readability of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. Back then the pixels were big and monitors followed predictable patterns first in CRTs then in LCDs.
+About a decade ago Subpixel Antialising significantly improved readability of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. Back then the pixels were big and monitors followed predictable patterns first in CRTs then in LCDs.
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/5/57/Subpixel-rendering-RGB.png?raw=true)
 
@@ -163,11 +163,13 @@ Then everything changed. In 2018 our pixels are really small and they don't foll
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Pixel_geometry_01_Pengo.jpg/220px-Pixel_geometry_01_Pengo.jpg)
 
-The fact that there is no standard pixel layout grid anymore and the fact that high resolution displays are everywhere makes subpixeling absolute. Apple, Adobe, Bohemian and other companies in the typography space are abandoning subpixeling for these reasons.
+The fact that there is no standard pixel layout grid anymore and the fact that high resolution displays are everywhere makes subpixeling obsolete. Apple, Adobe, Bohemian and other companies in the typography space are abandoning subpixeling for these reasons.
 
-This library does not support Subpixel rendering.
+This library does not support Subpixel Antialising.
 
-[Neat tricks](http://www.typophile.com/node/60577) [with Subpixel rendering](http://www.typophile.com/node/61920)
+[Neat tricks](http://www.typophile.com/node/60577) with [Subpixel rendering](http://www.typophile.com/node/61920)
+
+[Apple removes Subpixel Antialising](https://www.reddit.com/r/apple/comments/8wpk18/macos_mojave_nukes_subpixel_antialiasing_making/)
 
 # How to convert any font to SVG font using FontForge:
 
