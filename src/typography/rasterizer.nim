@@ -1,14 +1,28 @@
 import algorithm, tables
 import flippy, vmath, chroma, print
-import font
+import font, ttf
+
 
 proc makeReady*(glyph: var Glyph) =
   ## Make sure the glyph is ready to render
-  if glyph.path.len > 0 and glyph.commands == nil:
-    glyph.glyphPathToCommands()
 
-  if glyph.commands.len > 0 and glyph.lines.len == 0:
+  if glyph.ready:
+    return
+
+  if glyph.ttfStream != nil:
+    #perfBegin "ttfGlyphToCommands"
+    glyph.ttfGlyphToCommands()
+    #perfEnd()
+
+  if glyph.path.len > 0:
+    #perfBegin "glyphPathToCommands"
+    glyph.glyphPathToCommands()
+    #perfEnd()
+
+  if glyph.commands.len > 0:
+    #perfBegin "commandsToShapes"
     glyph.commandsToShapes()
+    #perfEnd()
 
     glyph.bboxMin = glyph.lines[0].at
     glyph.bboxMax = glyph.lines[0].at
@@ -26,7 +40,26 @@ proc makeReady*(glyph: var Glyph) =
       if to.y < glyph.bboxMin.y: glyph.bboxMin.y = to.y
       if to.x > glyph.bboxMax.x: glyph.bboxMax.x = to.x
       if to.y > glyph.bboxMax.y: glyph.bboxMax.y = to.y
+  else:
+    glyph.isEmpty = true
 
+  glyph.ready = true
+
+proc getGlyphSize*(
+    font: var Font,
+    glyph: var Glyph
+  ): Vec2 =
+
+  glyph.makeReady()
+  var
+    fontHeight = font.ascent - font.descent
+    scale = font.size / fontHeight
+    tx = floor(glyph.bboxMin.x * scale)
+    ty = floor(glyph.bboxMin.y * scale)
+    w = ceil(glyph.bboxMax.x * scale) - tx + 1
+    h = ceil(glyph.bboxMax.y * scale) - ty + 1
+
+  return vec2(float w, float h)
 
 proc getGlyphImage*(
     font: var Font,
@@ -36,17 +69,16 @@ proc getGlyphImage*(
     subPixelShift: float = 0.0,
   ): Image =
   ## Get image for this glyph
+  let white = ColorRgba(r:255, g:255, b:255, a:255)
 
-  glyph.makeReady()
-
-  var white = ColorRgba(r:255, g:255, b:255, a:255)
-
-  var fontHeight = font.ascent - font.descent
-  var scale = font.size / fontHeight
-  var tx = int floor(glyph.bboxMin.x * scale)
-  var ty = int floor(glyph.bboxMin.y * scale)
-  var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
-  var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
+  var
+    size = getGlyphSize(font, glyph)
+    w = int(size.x)
+    h = int(size.y)
+    fontHeight = font.ascent - font.descent
+    scale = font.size / fontHeight
+    tx = floor(glyph.bboxMin.x * scale)
+    ty = floor(glyph.bboxMin.y * scale)
 
   var image = newImage(w, h, 4)
   image.fill(ColorRgba(r:255, g:255, b:255, a:0))

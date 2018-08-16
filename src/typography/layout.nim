@@ -2,6 +2,7 @@ import tables, unicode
 import flippy, vmath, print
 import font, rasterizer
 
+
 type
   Span* = object
     ## Represents a run of litter of same size and font
@@ -21,14 +22,17 @@ type
     size*: Vec2
     character*: string
 
-  AlignMode* = enum
+  HAlignMode* = enum
     ## Text align mode
     Left
     Center
     Right
-    Top
-    Bottom
 
+  VAlignMode* = enum
+    ## Text align mode
+    Top
+    Middle
+    Bottom
 
 proc kerningAdjustment*(font: var Font, prev, c: string): float =
   ## Get Kerning Adjustment between two letters
@@ -44,63 +48,96 @@ proc kerningAdjustment*(font: var Font, prev, c: string): float =
 proc typeset*(
     font: var Font,
     text: string,
-    start: Vec2 = vec2(0, 0)
+    pos: Vec2 = vec2(0, 0),
+    size: Vec2 = vec2(0, 0),
+    hAlign: HAlignMode = Left,
+    vAlign: VAlignMode = Top
   ): seq[GlyphPosition] =
   ## Draw text string
-  result = @[]
-  var at = start
-  var prev = ""
-  var fontHeight = font.ascent - font.descent
-  var scale = font.size / fontHeight
 
-  at.y += floor(font.ascent * scale)
+  result = @[]
+  var
+    at = pos
+    lineStart = pos.x
+    prev = ""
+    fontHeight = font.ascent - font.descent
+    scale = font.size / fontHeight
+    boundsMin = vec2(0, 0)
+    boundsMax = vec2(0, 0)
+    glyphCount = 0
+
+  let smallAdj = floor(font.capHeight - font.xHeight) * scale
+  #let smallAdj = 1.0 # WHY?
+
+  at.y += font.size - smallAdj
 
   for rune in runes(text):
-    let c = $rune
+    var c = $rune
     if rune == Rune(10):
-      at.x = start.x
+      at.x = lineStart
       at.y += font.lineHeight
       continue
 
-    if c in font.glyphs:
-      var glyph = font.glyphs[c]
-      at.x += font.kerningAdjustment(prev, c)
-      var glyphOffset: Vec2
-      var subPixelShift = at.x - floor(at.x)
-      let pos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
-      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=subPixelShift)
-      if img.width != 0 and img.height != 0:
-        result.add GlyphPosition(
-          font: font,
-          fontSize: font.size,
-          subPixelShift: subPixelShift,
-          at: pos,
-          size: vec2(float img.width, float img.height),
-          character: c
-        )
-      at.x += glyph.advance * scale
-      prev = c
+    if c notin font.glyphs:
+      c = "\uFFFD" # if glyph is missing use missing glyph
 
-    else:
-      discard
+    var glyph = font.glyphs[c]
+    at.x += font.kerningAdjustment(prev, c)
 
-proc align*(layout: var seq[GlyphPosition], alignMode: AlignMode = Left) =
+    var glyphOffset: Vec2
+    var subPixelShift = at.x - floor(at.x)
+    let pos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
+    let size = font.getGlyphSize(glyph)
+    if size.x != 0 and size.y != 0:
+      result.add GlyphPosition(
+        font: font,
+        fontSize: font.size,
+        subPixelShift: subPixelShift,
+        at: pos,
+        size: size,
+        character: c
+      )
+      if glyphCount == 0:
+        # first glyph
+        boundsMax.x = at.x + size.x
+        boundsMin.x = at.x
+        boundsMax.y = at.y + font.size
+        boundsMin.y = at.y
+      else:
+        boundsMax.x = max(boundsMax.x, at.x + size.x)
+        boundsMin.x = min(boundsMin.x, at.x)
+        boundsMax.y = max(boundsMax.y, at.y + font.size + smallAdj)
+        boundsMin.y = min(boundsMin.y, at.y)
+      inc glyphCount
+
+
+    at.x += glyph.advance * scale
+    prev = c
+
   ## Shifts layout by alignMode
-  if layout.len == 0: return
-  var maxX = layout[0].at.x
-  var minX = layout[0].at.x
-  if alignMode == Right or alignMode == Center:
-    for pos in layout:
-      maxX = max(maxX, pos.at.x + pos.size.x)
-      minX = min(minX, pos.at.x)
-    let textWidth = maxX - minX
-    if alignMode == Right:
-      for pos in layout.mitems:
-        pos.at.x -= textWidth
-    if alignMode == Center:
-      let center = textWidth / 2.0
-      for pos in layout.mitems:
-        pos.at.x -= center
+  if result.len == 0: return
+
+  let boundsSize = boundsMax - boundsMin
+
+  if hAlign == Right:
+    let offset = floor(size.x - boundsSize.x)
+    for pos in result.mitems:
+      pos.at.x += offset
+
+  if hAlign == Center:
+    let offset = floor((size.x - boundsSize.x) / 2.0)
+    for pos in result.mitems:
+      pos.at.x += offset
+
+  if vAlign == Bottom:
+    let offset = floor(size.y - boundsSize.y)
+    for pos in result.mitems:
+      pos.at.y += offset
+
+  if vAlign == Middle:
+    let offset = floor((size.y - boundsSize.y) / 2.0)
+    for pos in result.mitems:
+      pos.at.y += offset
 
 
 proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
@@ -117,7 +154,7 @@ proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
     )
 
 
-proc drawText*(font: var Font, image: var Image, start: Vec2, text: string) =
+proc drawText*(font: var Font, image: var Image, pos: Vec2, text: string) =
   ## Draw text string
-  var layout = font.typeset(text, start=start)
+  var layout = font.typeset(text, pos)
   image.drawText(layout)

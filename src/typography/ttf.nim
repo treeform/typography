@@ -2,76 +2,78 @@ import tables, streams, strutils, endians, unicode
 import font
 import vmath, print
 
+
+proc read[T](s: Stream, result: var T) =
+  if readData(s, addr(result), sizeof(T)) != sizeof(T):
+    quit("cannot read from stream at " & $s.getPosition())
+
+proc readUInt8(stream: Stream): uint8 =
+  var val: uint8 = 0
+  stream.read(val)
+  return val
+
+proc readInt8(stream: Stream): int8 =
+  var val: int8 = 0
+  stream.read(val)
+  return val
+
+proc readUInt16(stream: Stream): uint16 =
+  var val: uint16 = 0
+  stream.read(val)
+  swapEndian16(addr val, addr val)
+  return val
+
+proc readUint16Seq(stream: Stream, len: int): seq[uint16] =
+  result = newSeq[uint16](len)
+  for i in 0..<len:
+    result[i] = stream.readUInt16()
+
+proc readInt16(stream: Stream): int16 =
+  var val: int16 = 0
+  stream.read(val)
+  swapEndian16(addr val, addr val)
+  return val
+
+proc readUInt32(stream: Stream): uint32 =
+  var val: uint32 = 0
+  stream.read(val)
+  swapEndian32(addr val, addr val)
+  return val
+
+proc readInt32(stream: Stream): int32 =
+  var val: int32 = 0
+  stream.read(val)
+  swapEndian32(addr val, addr val)
+  return val
+
+proc readString(stream: Stream, size: int): string =
+  var val = ""
+  var i = 0
+  while i < size:
+    let c = stream.readChar()
+    if ord(c) == 0:
+      break
+    val &= c
+    inc i
+  while i < size:
+    discard stream.readChar()
+    inc i
+  return val
+
+proc readFixed32(stream: Stream): float =
+  var val: int32 = 0
+  stream.read(val)
+  swapEndian32(addr val, addr val)
+  return ceil(float(val) / 65536.0 * 100000.0) / 100000.0
+
+proc readLongDateTime(stream: Stream): float64 =
+  discard stream.readUInt32()
+  return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
+
+
 proc readFontTtf*(filename: string): Font =
   ## Reads TTF font
-  var font: Font
-
-  proc read[T](s: Stream, result: var T) =
-    if readData(s, addr(result), sizeof(T)) != sizeof(T):
-      quit("cannot read from stream at " & $s.getPosition())
-
-  proc readUInt8(stream: Stream): uint8 =
-    var val: uint8 = 0
-    stream.read(val)
-    return val
-
-  proc readInt8(stream: Stream): int8 =
-    var val: int8 = 0
-    stream.read(val)
-    return val
-
-  proc readUInt16(stream: Stream): uint16 =
-    var val: uint16 = 0
-    stream.read(val)
-    swapEndian16(addr val, addr val)
-    return val
-
-  proc readUint16Seq(stream: Stream, len: int): seq[uint16] =
-    result = newSeq[uint16](len)
-    for i in 0..<len:
-      result[i] = stream.readUInt16()
-
-  proc readInt16(stream: Stream): int16 =
-    var val: int16 = 0
-    stream.read(val)
-    swapEndian16(addr val, addr val)
-    return val
-
-  proc readUInt32(stream: Stream): uint32 =
-    var val: uint32 = 0
-    stream.read(val)
-    swapEndian32(addr val, addr val)
-    return val
-
-  proc readInt32(stream: Stream): int32 =
-    var val: int32 = 0
-    stream.read(val)
-    swapEndian32(addr val, addr val)
-    return val
-
-  proc readString(stream: Stream, size: int): string =
-    var val = ""
-    var i = 0
-    while i < size:
-      let c = stream.readChar()
-      if ord(c) == 0:
-        break
-      val &= c
-      inc i
-    while i < size:
-      discard stream.readChar()
-      inc i
-    return val
-
-  proc readFixed32(stream: Stream): float =
-    var val: int32 = 0
-    stream.read(val)
-    swapEndian32(addr val, addr val)
-    return ceil(float(val) / 65536.0 * 100000.0) / 100000.0
-
-  proc readLongDateTime(stream: Stream): float64 =
-    discard stream.readUInt32()
-    return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
+  var font = new Font
 
   var f = newFileStream(filename, fmRead)
   var version = f.readFixed32()
@@ -219,141 +221,25 @@ proc readFontTtf*(filename: string): Font =
     let offset = glyphOffset + locaOffset
     f.setPosition(int offset)
     if not glyphTabe.hasKey(offset):
+
+      glyphTabe[offset] = new Glyph
+      glyphTabe[offset].ready = false
+
       var isNull = glyphIndex + 1 < loca.len and loca[glyphIndex] == loca[glyphIndex + 1]
-
-      glyphTabe[offset] = Glyph()
-
       if isNull:
-        glyphs[glyphIndex] = glyphTabe[offset]
-        continue
+        glyphTabe[offset].isEmpty = true
+        glyphTabe[offset].ready = true
 
       let numberOfContours = f.readInt16()
+      if numberOfContours <= 0:
+        glyphTabe[offset].isEmpty = true
+        glyphTabe[offset].ready = true
 
-      type TtfCoridante = object
-        x: int
-        y: int
-        isOnCurve: bool
+      if not glyphTabe[offset].isEmpty:
+        glyphTabe[offset].ttfStream = f
+        glyphTabe[offset].ttfOffset = offset
+        glyphTabe[offset].numberOfContours = numberOfContours
 
-      let xMin = f.readInt16()
-      let yMin = f.readInt16()
-      let xMax = f.readInt16()
-      let yMax = f.readInt16()
-
-      var endPtsOfContours = newSeq[int]()
-      if numberOfContours >= 0:
-        for i in 0..<numberOfContours:
-          endPtsOfContours.add int f.readUint16()
-
-      if endPtsOfContours.len == 0:
-        glyphs.add glyphTabe[offset]
-        continue
-
-      let instructionLength = f.readUint16()
-      for i in 0..<int(instructionLength):
-        discard f.readChar()
-
-      let flagsOffset = f.getPosition()
-      var flags = newSeq[uint8]()
-
-      if numberOfContours >= 0:
-        let totalOfCoordinates = endPtsOfContours[endPtsOfContours.len - 1] + 1
-        var coordinates = newSeq[TtfCoridante](totalOfCoordinates)
-
-        var i = 0
-        while i < totalOfCoordinates:
-          let flag = f.readUint8()
-          flags.add(flag)
-          inc i
-
-          if (flag and 0x8) != 0 and i < totalOfCoordinates:
-            let repeat = f.readUint8()
-            for j in 0..<int(repeat):
-              flags.add(flag)
-              inc i
-
-        # xCoordinates
-        var prevX = 0
-        for i, flag in flags:
-          var x = 0
-          if (flag and 0x2) != 0:
-            x = int f.readUint8()
-            if (flag and 16) == 0:
-              x = -x
-          elif (flag and 16) != 0:
-            x = 0
-          else:
-            x = int f.readInt16()
-          prevX += x
-          coordinates[i].x = prevX
-          coordinates[i].isOnCurve = (flag and 1) != 0
-
-        # yCoordinates
-        var prevY = 0
-        for i, flag in flags:
-          var y = 0
-          if (flag and 0x4) != 0:
-            y = int f.readUint8()
-            if (flag and 32) == 0:
-              y = -y
-          elif (flag and 32) != 0:
-            y = 0
-          else:
-            y = int f.readInt16()
-          prevY += y
-          coordinates[i].y = prevY
-
-        # make an svg path out of this crazy stuff
-        var path = ""
-        var
-          startPts = 0
-          currentPts = 0
-          endPts = 0
-          prevPoint: TtfCoridante
-          currentPoint: TtfCoridante
-          nextPoint: TtfCoridante
-
-        for i in 0..<endPtsOfContours.len:
-          endPts = endPtsOfContours[i]
-          while currentPts < endPts + 1:
-            currentPoint = coordinates[currentPts]
-            if currentPts != startPts:
-              prevPoint = coordinates[currentPts - 1]
-            else:
-              prevPoint = coordinates[endPts]
-            if currentPts != endPts and currentPts + 1 < coordinates.len:
-              nextPoint = coordinates[currentPts + 1]
-            else:
-              nextPoint = coordinates[startPts]
-
-            if currentPts == startPts:
-              if currentPoint.isOnCurve:
-                path &= "M" & $currentPoint.x & "," & $currentPoint.y & " "
-              else:
-                path &= "M" & $prevPoint.x & "," & $prevPoint.y & " "
-                path &= "Q" & $currentPoint.x & "," & $currentPoint.y & " "
-            else:
-              if currentPoint.isOnCurve and prevPoint.isOnCurve:
-                path &= " L"
-              elif not currentPoint.isOnCurve and not prevPoint.isOnCurve:
-                var midx = (prevPoint.x + currentPoint.x) div 2
-                var midy = (prevPoint.y + currentPoint.y) div 2
-                path &= $midx & "," & $midy & " "
-              elif not currentPoint.isOnCurve:
-                path &= " Q"
-              path &= $currentPoint.x & "," & $currentPoint.y & " "
-
-            inc currentPts
-
-          if not currentPoint.isOnCurve:
-            if coordinates[startPts].isOnCurve:
-              path &= $coordinates[startPts].x & "," & $coordinates[startPts].y & " "
-            else:
-              var midx = (prevPoint.x + currentPoint.x) div 2
-              var midy = (prevPoint.y + currentPoint.y) div 2
-              path &= $midx & "," & $midy & " "
-          path &= " Z "
-          startPts = endPtsOfContours[i] + 1
-        glyphTabe[offset].path = path
     glyphs[glyphIndex] = glyphTabe[offset]
 
   # hhea
@@ -447,6 +333,7 @@ proc readFontTtf*(filename: string): Font =
             if glyphIndex < glyphs.len:
               let unicode = Rune(int c).toUTF8()
               font.glyphs[unicode] = glyphs[glyphIndex]
+              font.glyphs[unicode].code = unicode
               glyphsIndexToRune[glyphIndex] = unicode
             else:
               discard
@@ -484,6 +371,290 @@ proc readFontTtf*(filename: string): Font =
 
   return font
 
+
+proc ttfGlyphToPath*(glyph: var Glyph) =
+  var
+    f = glyph.ttfStream
+    offset = glyph.ttfOffset
+
+  f.setPosition(0)
+  f.setPosition(int offset)
+  let numberOfContours = f.readInt16()
+  assert numberOfContours == glyph.numberOfContours
+
+  type TtfCoridante = object
+    x: int
+    y: int
+    isOnCurve: bool
+
+  let xMin = f.readInt16()
+  let yMin = f.readInt16()
+  let xMax = f.readInt16()
+  let yMax = f.readInt16()
+
+  var endPtsOfContours = newSeq[int]()
+  if numberOfContours >= 0:
+    for i in 0..<numberOfContours:
+      endPtsOfContours.add int f.readUint16()
+
+  if endPtsOfContours.len == 0:
+    return
+
+  let instructionLength = f.readUint16()
+  for i in 0..<int(instructionLength):
+    discard f.readChar()
+
+  let flagsOffset = f.getPosition()
+  var flags = newSeq[uint8]()
+
+  if numberOfContours >= 0:
+    let totalOfCoordinates = endPtsOfContours[endPtsOfContours.len - 1] + 1
+    var coordinates = newSeq[TtfCoridante](totalOfCoordinates)
+
+    var i = 0
+    while i < totalOfCoordinates:
+      let flag = f.readUint8()
+      flags.add(flag)
+      inc i
+
+      if (flag and 0x8) != 0 and i < totalOfCoordinates:
+        let repeat = f.readUint8()
+        for j in 0..<int(repeat):
+          flags.add(flag)
+          inc i
+
+    # xCoordinates
+    var prevX = 0
+    for i, flag in flags:
+      var x = 0
+      if (flag and 0x2) != 0:
+        x = int f.readUint8()
+        if (flag and 16) == 0:
+          x = -x
+      elif (flag and 16) != 0:
+        x = 0
+      else:
+        x = int f.readInt16()
+      prevX += x
+      coordinates[i].x = prevX
+      coordinates[i].isOnCurve = (flag and 1) != 0
+
+    # yCoordinates
+    var prevY = 0
+    for i, flag in flags:
+      var y = 0
+      if (flag and 0x4) != 0:
+        y = int f.readUint8()
+        if (flag and 32) == 0:
+          y = -y
+      elif (flag and 32) != 0:
+        y = 0
+      else:
+        y = int f.readInt16()
+      prevY += y
+      coordinates[i].y = prevY
+
+    # make an svg path out of this crazy stuff
+    var path = ""
+    var
+      startPts = 0
+      currentPts = 0
+      endPts = 0
+      prevPoint: TtfCoridante
+      currentPoint: TtfCoridante
+      nextPoint: TtfCoridante
+
+    for i in 0..<endPtsOfContours.len:
+      endPts = endPtsOfContours[i]
+      while currentPts < endPts + 1:
+        currentPoint = coordinates[currentPts]
+        if currentPts != startPts:
+          prevPoint = coordinates[currentPts - 1]
+        else:
+          prevPoint = coordinates[endPts]
+        if currentPts != endPts and currentPts + 1 < coordinates.len:
+          nextPoint = coordinates[currentPts + 1]
+        else:
+          nextPoint = coordinates[startPts]
+
+        if currentPts == startPts:
+          if currentPoint.isOnCurve:
+            path.add "M" & $currentPoint.x & "," & $currentPoint.y & " "
+          else:
+            path.add "M" & $prevPoint.x & "," & $prevPoint.y & " "
+            path.add "Q" & $currentPoint.x & "," & $currentPoint.y & " "
+        else:
+          if currentPoint.isOnCurve and prevPoint.isOnCurve:
+            path.add " L"
+          elif not currentPoint.isOnCurve and not prevPoint.isOnCurve:
+            var midx = (prevPoint.x + currentPoint.x) div 2
+            var midy = (prevPoint.y + currentPoint.y) div 2
+            path.add $midx & "," & $midy & " "
+          elif not currentPoint.isOnCurve:
+            path.add " Q"
+          path.add $currentPoint.x & "," & $currentPoint.y & " "
+
+        inc currentPts
+
+      if not currentPoint.isOnCurve:
+        if coordinates[startPts].isOnCurve:
+          path.add $coordinates[startPts].x & "," & $coordinates[startPts].y & " "
+        else:
+          var midx = (prevPoint.x + currentPoint.x) div 2
+          var midy = (prevPoint.y + currentPoint.y) div 2
+          path.add $midx & "," & $midy & " "
+      path.add " Z "
+      startPts = endPtsOfContours[i] + 1
+
+    glyph.path = path
+
+
+proc ttfGlyphToCommands*(glyph: var Glyph) =
+  var
+    f = glyph.ttfStream
+    offset = glyph.ttfOffset
+
+  f.setPosition(0)
+  f.setPosition(int offset)
+  let numberOfContours = f.readInt16()
+  assert numberOfContours == glyph.numberOfContours
+
+  type TtfCoridante = object
+    x: int
+    y: int
+    isOnCurve: bool
+
+  let xMin = f.readInt16()
+  let yMin = f.readInt16()
+  let xMax = f.readInt16()
+  let yMax = f.readInt16()
+
+  var endPtsOfContours = newSeq[int]()
+  if numberOfContours >= 0:
+    for i in 0..<numberOfContours:
+      endPtsOfContours.add int f.readUint16()
+
+  if endPtsOfContours.len == 0:
+    return
+
+  let instructionLength = f.readUint16()
+  for i in 0..<int(instructionLength):
+    discard f.readChar()
+
+  let flagsOffset = f.getPosition()
+  var flags = newSeq[uint8]()
+
+  if numberOfContours >= 0:
+    let totalOfCoordinates = endPtsOfContours[endPtsOfContours.len - 1] + 1
+    var coordinates = newSeq[TtfCoridante](totalOfCoordinates)
+
+    var i = 0
+    while i < totalOfCoordinates:
+      let flag = f.readUint8()
+      flags.add(flag)
+      inc i
+
+      if (flag and 0x8) != 0 and i < totalOfCoordinates:
+        let repeat = f.readUint8()
+        for j in 0..<int(repeat):
+          flags.add(flag)
+          inc i
+
+    # xCoordinates
+    var prevX = 0
+    for i, flag in flags:
+      var x = 0
+      if (flag and 0x2) != 0:
+        x = int f.readUint8()
+        if (flag and 16) == 0:
+          x = -x
+      elif (flag and 16) != 0:
+        x = 0
+      else:
+        x = int f.readInt16()
+      prevX += x
+      coordinates[i].x = prevX
+      coordinates[i].isOnCurve = (flag and 1) != 0
+
+    # yCoordinates
+    var prevY = 0
+    for i, flag in flags:
+      var y = 0
+      if (flag and 0x4) != 0:
+        y = int f.readUint8()
+        if (flag and 32) == 0:
+          y = -y
+      elif (flag and 32) != 0:
+        y = 0
+      else:
+        y = int f.readInt16()
+      prevY += y
+      coordinates[i].y = prevY
+
+    # make an svg path out of this crazy stuff
+    var path = newSeq[PathCommand]()
+
+    proc cmd(kind: PathCommandKind, x, y: int) =
+      path.add PathCommand(kind: kind, numbers: @[float x, float y])
+
+    proc cmd(kind: PathCommandKind) =
+      path.add PathCommand(kind: kind, numbers: @[])
+
+    proc cmd(x, y: int) =
+      path[^1].numbers.add float(x)
+      path[^1].numbers.add float(y)
+
+    var
+      startPts = 0
+      currentPts = 0
+      endPts = 0
+      prevPoint: TtfCoridante
+      currentPoint: TtfCoridante
+      nextPoint: TtfCoridante
+
+    for i in 0..<endPtsOfContours.len:
+      endPts = endPtsOfContours[i]
+      while currentPts < endPts + 1:
+        currentPoint = coordinates[currentPts]
+        if currentPts != startPts:
+          prevPoint = coordinates[currentPts - 1]
+        else:
+          prevPoint = coordinates[endPts]
+        if currentPts != endPts and currentPts + 1 < coordinates.len:
+          nextPoint = coordinates[currentPts + 1]
+        else:
+          nextPoint = coordinates[startPts]
+
+        if currentPts == startPts:
+          if currentPoint.isOnCurve:
+            cmd(Move, currentPoint.x, currentPoint.y)
+          else:
+            cmd(Move, prevPoint.x, prevPoint.y)
+            cmd(Quad, currentPoint.x, currentPoint.y)
+        else:
+          if currentPoint.isOnCurve and prevPoint.isOnCurve:
+            cmd(Line)
+          elif not currentPoint.isOnCurve and not prevPoint.isOnCurve:
+            var midx = (prevPoint.x + currentPoint.x) div 2
+            var midy = (prevPoint.y + currentPoint.y) div 2
+            cmd(midx, midy)
+          elif not currentPoint.isOnCurve:
+            cmd(Quad)
+          cmd(currentPoint.x, currentPoint.y)
+
+        inc currentPts
+
+      if not currentPoint.isOnCurve:
+        if coordinates[startPts].isOnCurve:
+         cmd(coordinates[startPts].x, coordinates[startPts].y)
+        else:
+          var midx = (prevPoint.x + currentPoint.x) div 2
+          var midy = (prevPoint.y + currentPoint.y) div 2
+          cmd(midx, midy)
+      cmd(End)
+      startPts = endPtsOfContours[i] + 1
+
+    glyph.commands = path
 
 proc readFontOtf*(filename: string): Font =
   ## Reads OTF font

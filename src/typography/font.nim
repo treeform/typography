@@ -1,4 +1,4 @@
-import tables, strutils
+import tables, strutils, streams
 import chroma, vmath, flippy, print
 
 type
@@ -17,19 +17,28 @@ type
     kind*: PathCommandKind
     numbers*: seq[float]
 
-  Glyph* = object
+  Glyph* = ref object
     ## Contains information about Glyphs or "letters"
     ## SVG Path, command buffer, and line-shape
     name*: string
     code*: string
     advance*: float
-    path*: string
     commands*: seq[PathCommand]
     lines*: seq[Segment]
     bboxMin*: Vec2
     bboxMax*: Vec2
+    ready*: bool
+    isEmpty*: bool
+    numberOfContours*: int
 
-  Font* = object
+    # SVG
+    path*: string
+
+    # TTF
+    ttfStream*: Stream
+    ttfOffset*: int
+
+  Font* = ref object
     ## Main font object contains font information and Glyphs
     filename*: string
     name*: string
@@ -185,7 +194,6 @@ proc glyphPathToCommands*(glyph: var Glyph) =
 
 proc commandsToShapes*(glyph: var Glyph) =
   ## Converts SVG-like commands to shape made out of lines
-
   var lines = newSeq[Segment]()
   var start, at, to, ctr, ctr2: Vec2
   var prevCommand: PathCommandKind
@@ -217,7 +225,6 @@ proc commandsToShapes*(glyph: var Glyph) =
     if devsq < 0.333:
         drawLine(p0, p2)
         return
-
     let tol = 3.0
     let n = 1 + (tol * (devx * devx + devy * devy)).sqrt().sqrt().floor()
     var p = p0

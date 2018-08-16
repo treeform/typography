@@ -16,6 +16,15 @@ proc alphaWhite(image: var Image) =
       c.a = 255
       image.putrgba(x, y, c)
 
+
+proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
+  var wh = wh - vec2(1, 1) # line width
+  image.line(at, at + vec2(wh.x, 0), color)
+  image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), color)
+  image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), color)
+  image.line(at + vec2(0, wh.y), at, color)
+
+
 block:
   var image = newImage(500, 40, 4)
   var font = readFontSvg("fonts/Ubuntu.svg")
@@ -67,6 +76,29 @@ block:
 
   image.alphaWhite()
   image.save("ru.png")
+
+block:
+  var image = newImage(800, 200, 4)
+  var font = readFontTtf("fonts/Ubuntu.ttf")
+
+  font.size = 16
+  font.lineHeight = 20
+  font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+
+  image.alphaWhite()
+  image.save("ttf.png")
+
+
+block:
+  var image = newImage(600, 620, 4)
+  var font = readFontTtf("fonts/hanazono/HanaMinA.ttf")
+  font.size = 16
+  font.lineHeight = 20
+
+  font.drawText(image, vec2(10, 10), readFile("sample.ch.txt"))
+
+  image.alphaWhite()
+  image.save("ch.png")
 
 
 block:
@@ -129,6 +161,23 @@ block:
   image.save("subpixelglyphs.png")
 
 
+
+block:
+  var font = readFontTtf("fonts/Moon Bold.otf")
+  font.size = 300
+  font.lineHeight = 300
+
+  var image = font.getGlyphOutlineImage("Q")
+
+  echo font.glyphs["Q"].path
+
+  image.save("qOutLine.png")
+
+  image = font.getGlyphImage("Q")
+  image.alphaWhite()
+  image.save("qFill.png")
+
+
 block:
   var image = newImage(200, 100, 4)
 
@@ -151,19 +200,13 @@ To where it bent in the undergrowth;""")
   image = image.magnify(int mag)
   image.alphaWhite()
 
-  proc drawRect(at, wh: Vec2, color: ColorRGBA) =
-    image.line(at, at + vec2(wh.x, 0), color)
-    image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), color)
-    image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), color)
-    image.line(at + vec2(0, wh.y), at, color)
-
   # draw layout boxes
   for pos in layout:
     var font = pos.font
     var glyph = font.glyphs[pos.character]
     var glyphOffset: Vec2
     let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-    drawRect(
+    image.drawRect(
       (pos.at + glyphOffset) * mag,
       vec2(float img.width, float img.height) * mag,
       rgba(255, 0, 0, 255)
@@ -177,7 +220,7 @@ To where it bent in the undergrowth;""")
     var glyph = font.glyphs[pos.character]
     var glyphOffset: Vec2
     let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-    drawRect(
+    image.drawRect(
       (pos.at + glyphOffset) * mag,
       vec2(float img.width, float img.height) * mag,
       rgba(255, 0, 0, 255)
@@ -186,16 +229,30 @@ To where it bent in the undergrowth;""")
 
 
 block:
-  var font = readFontTtf("fonts/Moon Bold.otf")
-  font.size = 300
-  font.lineHeight = 300
+  var image = newImage(500, 200, 4)
 
-  var image = font.getGlyphOutlineImage("Q")
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 11 # 11px or 8pt
+  font.lineHeight = 20
 
-  echo font.glyphs["Q"].path
+  image.drawText(font.typeset("Left, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Top))
+  image.drawText(font.typeset("Left, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Middle))
+  image.drawText(font.typeset("Left, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Bottom))
 
-  image.save("qOutLine.png")
+  image.drawText(font.typeset("Center, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Top))
+  image.drawText(font.typeset("Center, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Middle))
+  image.drawText(font.typeset("Center, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Bottom))
 
-  image = font.getGlyphImage("Q")
+  image.drawText(font.typeset("Right, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Top))
+  image.drawText(font.typeset("Right, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Middle))
+  image.drawText(font.typeset("Right, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Bottom))
+
   image.alphaWhite()
-  image.save("qFill.png")
+
+  image.drawRect(
+    vec2(20, 20),
+    vec2(460, 160),
+    rgba(255, 0, 0, 255)
+  )
+
+  image.save("alignment.png")

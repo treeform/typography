@@ -114,6 +114,23 @@ You can then use the simple drawing included to draw to an image, or use some ot
   image.drawText(layout)
 ```
 
+## Centered Aligned
+
+```nim
+var layout = font.typeset("This will be centered Center", at=vec(0,0), at=vec(200,200), align: Center)
+```
+
+## Right Aligned
+
+## Fixed width
+
+## Fixed height
+
+## Vertical Centering
+
+## Bottom Aligned
+
+
 ![example output](tests/layout.png?raw=true)
 
 
