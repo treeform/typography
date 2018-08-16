@@ -1260,17 +1260,22 @@ function main() {
   kind*: PathCommandKind
   numbers*: seq[float]"><wbr />Path<wbr />Command<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#Glyph"
-    title="Glyph = object
+    title="Glyph = ref object
   name*: string
   code*: string
   advance*: float
-  path*: string
   commands*: seq[PathCommand]
   lines*: seq[Segment]
   bboxMin*: Vec2
-  bboxMax*: Vec2"><wbr />Glyph<span class="attachedType" style="visibility:hidden"></span></a></li>
+  bboxMax*: Vec2
+  ready*: bool
+  isEmpty*: bool
+  numberOfContours*: int
+  path*: string
+  ttfStream*: Stream
+  ttfOffset*: int"><wbr />Glyph<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#Font"
-    title="Font = object
+    title="Font = ref object
   filename*: string
   name*: string
   bboxMin*: Vec2
@@ -1289,16 +1294,21 @@ function main() {
     title="Span = object
   font: Font
   fontSize: float
-  lineHeight: float
-  tracking: float
   text: string"><wbr />Span<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#GlyphPosition"
     title="GlyphPosition = object
-  font: Font
-  fontSize: float
-  lineHeight: float
-  subPixelShift: float
-  at: Vec2"><wbr />Glyph<wbr />Position<span class="attachedType" style="visibility:hidden"></span></a></li>
+  font*: Font
+  fontSize*: float
+  subPixelShift*: float
+  at*: Vec2
+  size*: Vec2
+  character*: string"><wbr />Glyph<wbr />Position<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#HAlignMode"
+    title="HAlignMode = enum
+  Left, Center, Right"><wbr />HAlign<wbr />Mode<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#VAlignMode"
+    title="VAlignMode = enum
+  Top, Middle, Bottom"><wbr />VAlign<wbr />Mode<span class="attachedType" style="visibility:hidden"></span></a></li>
 
   </ul>
 </li>
@@ -1327,10 +1337,16 @@ function main() {
     title="readFontSvg(filename: string): Font"><wbr />read<wbr />Font<wbr />Svg<span class="attachedType" style="visibility:hidden">Font</span></a></li>
   <li><a class="reference" href="#readFontTtf,string"
     title="readFontTtf(filename: string): Font"><wbr />read<wbr />Font<wbr />Ttf<span class="attachedType" style="visibility:hidden">Font</span></a></li>
+  <li><a class="reference" href="#ttfGlyphToPath,Glyph"
+    title="ttfGlyphToPath(glyph: var Glyph)"><wbr />ttf<wbr />Glyph<wbr />To<wbr />Path<span class="attachedType" style="visibility:hidden">Glyph</span></a></li>
+  <li><a class="reference" href="#ttfGlyphToCommands,Glyph"
+    title="ttfGlyphToCommands(glyph: var Glyph)"><wbr />ttf<wbr />Glyph<wbr />To<wbr />Commands<span class="attachedType" style="visibility:hidden">Glyph</span></a></li>
   <li><a class="reference" href="#readFontOtf,string"
     title="readFontOtf(filename: string): Font"><wbr />read<wbr />Font<wbr />Otf<span class="attachedType" style="visibility:hidden">Font</span></a></li>
   <li><a class="reference" href="#makeReady,Glyph"
     title="makeReady(glyph: var Glyph)"><wbr />make<wbr />Ready<span class="attachedType" style="visibility:hidden">Glyph</span></a></li>
+  <li><a class="reference" href="#getGlyphSize,Font,Glyph"
+    title="getGlyphSize(font: var Font; glyph: var Glyph): Vec2"><wbr />get<wbr />Glyph<wbr />Size<span class="attachedType" style="visibility:hidden">Font</span></a></li>
   <li><a class="reference" href="#getGlyphImage,Font,Glyph,Vec2,int,float"
     title="getGlyphImage(font: var Font; glyph: var Glyph; glyphOffset: var Vec2; quality = 4;
               subPixelShift: float = 0.0): Image"><wbr />get<wbr />Glyph<wbr />Image<span class="attachedType" style="visibility:hidden">Font</span></a></li>
@@ -1348,8 +1364,13 @@ function main() {
                     subPixelShift: float = 0.0): Vec2"><wbr />get<wbr />Glyph<wbr />Image<wbr />Offset<span class="attachedType" style="visibility:hidden">Font</span></a></li>
   <li><a class="reference" href="#kerningAdjustment,Font,string,string"
     title="kerningAdjustment(font: var Font; prev, c: string): float"><wbr />kerning<wbr />Adjustment<span class="attachedType" style="visibility:hidden">Font</span></a></li>
+  <li><a class="reference" href="#typeset,Font,string,Vec2,Vec2,HAlignMode,VAlignMode"
+    title="typeset(font: var Font; text: string; pos: Vec2 = vec2(0, 0); size: Vec2 = vec2(0, 0);
+        hAlign: HAlignMode = Left; vAlign: VAlignMode = Top): seq[GlyphPosition]"><wbr />typeset<span class="attachedType" style="visibility:hidden">Font</span></a></li>
+  <li><a class="reference" href="#drawText,Image,seq[GlyphPosition]"
+    title="drawText(image: var Image; layout: seq[GlyphPosition])"><wbr />draw<wbr />Text<span class="attachedType" style="visibility:hidden">GlyphPosition</span></a></li>
   <li><a class="reference" href="#drawText,Font,Image,Vec2,string"
-    title="drawText(font: var Font; image: var Image; start: Vec2; text: string)"><wbr />draw<wbr />Text<span class="attachedType" style="visibility:hidden">Font</span></a></li>
+    title="drawText(font: var Font; image: var Image; pos: Vec2; text: string)"><wbr />draw<wbr />Text<span class="attachedType" style="visibility:hidden">Font</span></a></li>
 
   </ul>
 </li>
@@ -1363,7 +1384,7 @@ function main() {
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
-<a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="chroma.html">chroma</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="xmlparser.html">xmlparser</a>, <a class="reference external" href="xmltree.html">xmltree</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="streams.html">streams</a>, <a class="reference external" href="os.html">os</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="streams.html">streams</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="endians.html">endians</a>, <a class="reference external" href="unicode.html">unicode</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="algorithm.html">algorithm</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="chroma.html">chroma</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="unicode.html">unicode</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="rasterizer.html">rasterizer</a>
+<a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="streams.html">streams</a>, <a class="reference external" href="chroma.html">chroma</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="xmlparser.html">xmlparser</a>, <a class="reference external" href="xmltree.html">xmltree</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="streams.html">streams</a>, <a class="reference external" href="os.html">os</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="streams.html">streams</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="endians.html">endians</a>, <a class="reference external" href="unicode.html">unicode</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="algorithm.html">algorithm</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="chroma.html">chroma</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="ttf.html">ttf</a>, <a class="reference external" href="tables.html">tables</a>, <a class="reference external" href="unicode.html">unicode</a>, <a class="reference external" href="flippy.html">flippy</a>, <a class="reference external" href="vmath.html">vmath</a>, <a class="reference external" href="print.html">print</a>, <a class="reference external" href="font.html">font</a>, <a class="reference external" href="rasterizer.html">rasterizer</a>
 </dl></div>
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
@@ -1391,21 +1412,26 @@ Type of binary commands
 Binary version of an SVG command
 
 </dd>
-<dt id="Glyph"><a name="Glyph"></a><pre><span class="Identifier">Glyph</span> <span class="Other">=</span> <span class="Keyword">object</span>
+<dt id="Glyph"><a name="Glyph"></a><pre><span class="Identifier">Glyph</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Keyword">object</span>
   <span class="Identifier">name</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">code</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">advance</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">path</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">commands</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">PathCommand</span><span class="Other">]</span>
   <span class="Identifier">lines</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">Segment</span><span class="Other">]</span>
   <span class="Identifier">bboxMin</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
   <span class="Identifier">bboxMax</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
+  <span class="Identifier">ready</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">bool</span>
+  <span class="Identifier">isEmpty</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">bool</span>
+  <span class="Identifier">numberOfContours</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
+  <span class="Identifier">path</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
+  <span class="Identifier">ttfStream</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Stream</span>
+  <span class="Identifier">ttfOffset</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">int</span>
 </pre></dt>
 <dd>
 Contains information about Glyphs or &quot;letters&quot; SVG Path, command buffer, and line-shape
 
 </dd>
-<dt id="Font"><a name="Font"></a><pre><span class="Identifier">Font</span> <span class="Other">=</span> <span class="Keyword">object</span>
+<dt id="Font"><a name="Font"></a><pre><span class="Identifier">Font</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Keyword">object</span>
   <span class="Identifier">filename</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">name</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
   <span class="Identifier">bboxMin</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
@@ -1428,23 +1454,34 @@ Main font object contains font information and Glyphs
 <dt id="Span"><a name="Span"></a><pre><span class="Identifier">Span</span> <span class="Other">=</span> <span class="Keyword">object</span>
   <span class="Identifier">font</span><span class="Other">:</span> <span class="Identifier">Font</span>
   <span class="Identifier">fontSize</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">lineHeight</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">tracking</span><span class="Other">:</span> <span class="Identifier">float</span>
   <span class="Identifier">text</span><span class="Other">:</span> <span class="Identifier">string</span>
 </pre></dt>
 <dd>
-
+Represents a run of litter of same size and font
 
 </dd>
 <dt id="GlyphPosition"><a name="GlyphPosition"></a><pre><span class="Identifier">GlyphPosition</span> <span class="Other">=</span> <span class="Keyword">object</span>
-  <span class="Identifier">font</span><span class="Other">:</span> <span class="Identifier">Font</span>
-  <span class="Identifier">fontSize</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">lineHeight</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">subPixelShift</span><span class="Other">:</span> <span class="Identifier">float</span>
-  <span class="Identifier">at</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
+  <span class="Identifier">font</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Font</span>
+  <span class="Identifier">fontSize</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float</span>
+  <span class="Identifier">subPixelShift</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">float</span>
+  <span class="Identifier">at</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
+  <span class="Identifier">size</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Vec2</span>
+  <span class="Identifier">character</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
 </pre></dt>
 <dd>
+Represents a glyph position after typesetting
 
+</dd>
+<dt id="HAlignMode"><a name="HAlignMode"></a><pre><span class="Identifier">HAlignMode</span> <span class="Other">=</span> <span class="Keyword">enum</span>
+  <span class="Identifier">Left</span><span class="Other">,</span> <span class="Identifier">Center</span><span class="Other">,</span> <span class="Identifier">Right</span></pre></dt>
+<dd>
+Horizontal alignment mode
+
+</dd>
+<dt id="VAlignMode"><a name="VAlignMode"></a><pre><span class="Identifier">VAlignMode</span> <span class="Other">=</span> <span class="Keyword">enum</span>
+  <span class="Identifier">Top</span><span class="Other">,</span> <span class="Identifier">Middle</span><span class="Other">,</span> <span class="Identifier">Bottom</span></pre></dt>
+<dd>
+Vertical alignment mode
 
 </dd>
 
@@ -1509,52 +1546,69 @@ Reads an SVG font
 Reads TTF font
 
 </dd>
+<dt id="ttfGlyphToPath"><a name="ttfGlyphToPath,Glyph"></a><pre><span class="Keyword">proc</span> <span class="Identifier">ttfGlyphToPath</span><span class="Other">(</span><span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+
+
+</dd>
+<dt id="ttfGlyphToCommands"><a name="ttfGlyphToCommands,Glyph"></a><pre><span class="Keyword">proc</span> <span class="Identifier">ttfGlyphToCommands</span><span class="Other">(</span><span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="readFontOtf"><a name="readFontOtf,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">readFontOtf</span><span class="Other">(</span><span class="Identifier">filename</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Font</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">KeyError</span><span class="Other">]</span><span class="Other">,</span>
                                        <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Reads OTF font
 
 </dd>
-<dt id="makeReady"><a name="makeReady,Glyph"></a><pre><span class="Keyword">proc</span> <span class="Identifier">makeReady</span><span class="Other">(</span><span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dt id="makeReady"><a name="makeReady,Glyph"></a><pre><span class="Keyword">proc</span> <span class="Identifier">makeReady</span><span class="Other">(</span><span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span>
+                               <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Make sure the glyph is ready to render
 
 </dd>
+<dt id="getGlyphSize"><a name="getGlyphSize,Font,Glyph"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphSize</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Vec2</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+
+
+</dd>
 <dt id="getGlyphImage"><a name="getGlyphImage,Font,Glyph,Vec2,int,float"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphImage</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">;</span> <span class="Identifier">glyphOffset</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Vec2</span><span class="Other">;</span> <span class="Identifier">quality</span> <span class="Other">=</span> <span class="DecNumber">4</span><span class="Other">;</span>
                   <span class="Identifier">subPixelShift</span><span class="Other">:</span> <span class="Identifier">float</span> <span class="Other">=</span> <span class="FloatNumber">0.0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Image</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Get image for this glyph
 
 </dd>
 <dt id="getGlyphOutlineImage"><a name="getGlyphOutlineImage,Font,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphOutlineImage</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">unicode</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Image</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Get an outine of the glyph with contorls points. Useful for debugging.
 
 </dd>
 <dt id="getGlyphImage"><a name="getGlyphImage,Font,string,Vec2,float"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphImage</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">unicode</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">glyphOffset</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Vec2</span><span class="Other">;</span>
                   <span class="Identifier">subPixelShift</span> <span class="Other">=</span> <span class="FloatNumber">0.0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Image</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Get an image of the glyph and the glyph offset the image should be drawn
 
 </dd>
 <dt id="getGlyphImage"><a name="getGlyphImage,Font,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphImage</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">unicode</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Image</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Get an image of the glyph
 
 </dd>
 <dt id="drawGlyph"><a name="drawGlyph,Font,Image,Vec2,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">drawGlyph</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">image</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Image</span><span class="Other">;</span> <span class="Identifier">at</span><span class="Other">:</span> <span class="Identifier">Vec2</span><span class="Other">;</span> <span class="Identifier">c</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Draw glyph at a location on the image
 
 </dd>
 <dt id="getGlyphImageOffset"><a name="getGlyphImageOffset,Font,Glyph,int,float"></a><pre><span class="Keyword">proc</span> <span class="Identifier">getGlyphImageOffset</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">glyph</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Glyph</span><span class="Other">;</span> <span class="Identifier">quality</span> <span class="Other">=</span> <span class="DecNumber">4</span><span class="Other">;</span>
-                        <span class="Identifier">subPixelShift</span><span class="Other">:</span> <span class="Identifier">float</span> <span class="Other">=</span> <span class="FloatNumber">0.0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Vec2</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+                        <span class="Identifier">subPixelShift</span><span class="Other">:</span> <span class="Identifier">float</span> <span class="Other">=</span> <span class="FloatNumber">0.0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Vec2</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Get image for this glyph
 
@@ -1565,8 +1619,21 @@ Get image for this glyph
 Get Kerning Adjustment between two letters
 
 </dd>
-<dt id="drawText"><a name="drawText,Font,Image,Vec2,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">drawText</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">image</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Image</span><span class="Other">;</span> <span class="Identifier">start</span><span class="Other">:</span> <span class="Identifier">Vec2</span><span class="Other">;</span> <span class="Identifier">text</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dt id="typeset"><a name="typeset,Font,string,Vec2,Vec2,HAlignMode,VAlignMode"></a><pre><span class="Keyword">proc</span> <span class="Identifier">typeset</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">text</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pos</span><span class="Other">:</span> <span class="Identifier">Vec2</span> <span class="Other">=</span> <span class="Identifier">vec2</span><span class="Other">(</span><span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">;</span> <span class="Identifier">size</span><span class="Other">:</span> <span class="Identifier">Vec2</span> <span class="Other">=</span> <span class="Identifier">vec2</span><span class="Other">(</span><span class="DecNumber">0</span><span class="Other">,</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">;</span>
+            <span class="Identifier">hAlign</span><span class="Other">:</span> <span class="Identifier">HAlignMode</span> <span class="Other">=</span> <span class="Identifier">Left</span><span class="Other">;</span> <span class="Identifier">vAlign</span><span class="Other">:</span> <span class="Identifier">VAlignMode</span> <span class="Other">=</span> <span class="Identifier">Top</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">GlyphPosition</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Draw text string
+
+</dd>
+<dt id="drawText"><a name="drawText,Image,seq[GlyphPosition]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">drawText</span><span class="Other">(</span><span class="Identifier">image</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Image</span><span class="Other">;</span> <span class="Identifier">layout</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">GlyphPosition</span><span class="Other">]</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Draws layout
+
+</dd>
+<dt id="drawText"><a name="drawText,Font,Image,Vec2,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">drawText</span><span class="Other">(</span><span class="Identifier">font</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Font</span><span class="Other">;</span> <span class="Identifier">image</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">Image</span><span class="Other">;</span> <span class="Identifier">pos</span><span class="Other">:</span> <span class="Identifier">Vec2</span><span class="Other">;</span> <span class="Identifier">text</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
+    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Draw text string
 
@@ -1581,7 +1648,7 @@ Draw text string
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2018-08-11 09:50:40 UTC</small>
+        <small>Made with Nim. Generated: 2018-08-16 09:30:30 UTC</small>
       </div>
     </div>
   </div>
