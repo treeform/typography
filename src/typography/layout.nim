@@ -23,13 +23,13 @@ type
     character*: string
 
   HAlignMode* = enum
-    ## Text align mode
+    ## Horizontal alignment mode
     Left
     Center
     Right
 
   VAlignMode* = enum
-    ## Text align mode
+    ## Vertical alignment mode
     Top
     Middle
     Bottom
