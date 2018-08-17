@@ -107,7 +107,7 @@ This produces a layout.
 
 ![example output](tests/layoutNoText.png?raw=true)
 
-
+## Drawing the layout
 You can then use the simple drawing included to draw to an image, or use some other graphical librarry like openGL, canvas, or even HTML:
 
 ```nim
@@ -115,10 +115,32 @@ image.drawText(layout)
 ```
 ![example output](tests/layout.png?raw=true)
 
+## Wrapping and Clipping
 
-# Alignment
+You can also give the typeset region width and hieght so that text wraps and clips:
+
+```nim
+font.typeset(
+  readFile("sample.wrap.txt"),
+  pos=vec2(100, 20),
+  size=vec2(300, 160)
+)
+```
+
+![example output](tests/wordwrap.png?raw=true)
+
+## Alignment
 
 There are 3 horizontal and 3 vertical alignment modes:
+
+```nim
+font.typeset("Center, Bottom",
+  pos=vec2(20, 20),
+  size=vec2(460, 160),
+  hAlign=Center,
+  vAlign=Bottom
+)
+```
 
 ![example output](tests/alignment.png?raw=true)
 

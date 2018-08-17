@@ -71,12 +71,19 @@ proc typeset*(
 
   at.y += font.size - smallAdj
 
+  var
+    index = 0
+    lastSpaceAt = 0
+
   for rune in runes(text):
     var c = $rune
     if rune == Rune(10):
       at.x = lineStart
       at.y += font.lineHeight
       continue
+
+    if rune == Rune(32):
+      lastSpaceAt = index
 
     if c notin font.glyphs:
       c = "\uFFFD" # if glyph is missing use missing glyph
@@ -86,33 +93,56 @@ proc typeset*(
 
     var glyphOffset: Vec2
     var subPixelShift = at.x - floor(at.x)
-    let pos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
-    let size = font.getGlyphSize(glyph)
-    if size.x != 0 and size.y != 0:
+    var glyphPos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
+    let glyphSize = font.getGlyphSize(glyph)
+    if glyphSize.x != 0 and glyphSize.y != 0:
+      # does it need to wrap?
+      if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
+        # wrap to next line
+        at.y += font.lineHeight
+
+        let goBack = lastSpaceAt - index + 1
+        if goBack < 0:
+          let shift = result[result.len + goBack].at.x - pos.x
+          for i in result.len + goBack ..< result.len:
+            print i
+            result[i].at.x -= shift
+            result[i].at.y += font.lineHeight
+          at.x -= shift
+        else:
+          at.x = lineStart
+
+        glyphPos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
+
+      if size.y != 0 and at.y - pos.y > size.y:
+        # reached the bottom of the area
+        return
+
       result.add GlyphPosition(
         font: font,
         fontSize: font.size,
         subPixelShift: subPixelShift,
-        at: pos,
-        size: size,
+        at: glyphPos,
+        size: glyphSize,
         character: c
       )
       if glyphCount == 0:
         # first glyph
-        boundsMax.x = at.x + size.x
+        boundsMax.x = at.x + glyphSize.x
         boundsMin.x = at.x
         boundsMax.y = at.y + font.size
         boundsMin.y = at.y
       else:
-        boundsMax.x = max(boundsMax.x, at.x + size.x)
+        boundsMax.x = max(boundsMax.x, at.x + glyphSize.x)
         boundsMin.x = min(boundsMin.x, at.x)
         boundsMax.y = max(boundsMax.y, at.y + font.size + smallAdj)
         boundsMin.y = min(boundsMin.y, at.y)
-      inc glyphCount
 
+      inc index
 
     at.x += glyph.advance * scale
     prev = c
+    inc glyphCount
 
   ## Shifts layout by alignMode
   if result.len == 0: return

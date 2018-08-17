@@ -256,3 +256,27 @@ block:
   )
 
   image.save("alignment.png")
+
+
+block:
+  var image = newImage(500, 200, 4)
+
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 16
+  font.lineHeight = 20
+
+  image.drawText(font.typeset(
+    readFile("sample.wrap.txt"),
+    pos=vec2(100, 20),
+    size=vec2(300, 160)
+  ))
+
+  image.alphaWhite()
+
+  image.drawRect(
+    vec2(100, 20),
+    vec2(300, 160),
+    rgba(255, 0, 0, 255)
+  )
+
+  image.save("wordwrap.png")
