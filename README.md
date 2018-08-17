@@ -117,7 +117,7 @@ image.drawText(layout)
 
 ## Wrapping and Clipping
 
-You can also give the typeset region width and hieght so that text wraps and clips:
+You can also give the typeset region width and height so that text wraps and clips:
 
 ```nim
 font.typeset(
