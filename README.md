@@ -146,7 +146,7 @@ font.typeset("Center, Bottom",
 
 ## Selection
 
-When selecting text is useful to know where to the highlighting rectangles.
+When selecting text is useful to know where to highlighting rectangles.
 
 ```nim
 layout.getSelection(23, 120) # selects char 23 to char 120 (not glyphs)
@@ -156,7 +156,7 @@ layout.getSelection(23, 120) # selects char 23 to char 120 (not glyphs)
 
 ## Picking
 
-When clicking on text is useful to know where to the highlighting what glyph and what is the string index.
+When clicking on text is useful to know where to highlighting what glyph and what is the string index.
 
 ```nim
 layout.getPicking(vec2(120, 48)) # selects glyph at cordiantes
