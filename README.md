@@ -144,6 +144,26 @@ font.typeset("Center, Bottom",
 
 ![example output](tests/alignment.png?raw=true)
 
+## Selection
+
+When selecting text is useful to know where to the highlighting rectangles.
+
+```nim
+layout.getSelection(23, 120) # selects char 23 to char 120 (not glyphs)
+```
+
+![example output](tests/selection.png?raw=true)
+
+## Picking
+
+When clicking on text is useful to know where to the highlighting what glyph and what is the string index.
+
+```nim
+layout.getPicking(vec2(120, 48)) # selects glyph at cordiantes
+```
+
+![example output](tests/picking.png?raw=true)
+
 
 # Comparison to different OSs.
 

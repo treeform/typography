@@ -107,7 +107,7 @@ proc getGlyphImage*(
       hits.sort(system.cmp)
 
       if hits.len mod 2 != 0:
-        echo "issue!", hits
+        #echo "issue!", hits
         continue
 
       var i = 0
@@ -141,7 +141,7 @@ proc getGlyphImage*(
         hits.sort(system.cmp)
 
         if hits.len mod 2 != 0:
-          echo "issue!", hits
+          #echo "issue!", hits
           continue
 
         var i = 0
@@ -240,8 +240,8 @@ proc drawGlyph*(font: var Font, image: var Image, at: Vec2, c: string) =
       var img = font.getGlyphImage(glyph, origin)
       img.blit(
         image,
-        rect(0, 0, img.width, img.height),
-        rect(int(at.x + origin.x), int(at.y + origin.y), img.width, img.height)
+        rect(0, 0, float img.width, float img.height),
+        rect(at.x + origin.x, at.y + origin.y, float img.width, float img.height)
       )
 
 proc getGlyphImageOffset*(

@@ -24,6 +24,9 @@ proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), color)
   image.line(at + vec2(0, wh.y), at, color)
 
+proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
+  image.drawRect(rect.xy, rect.wh, color)
+
 
 block:
   var image = newImage(500, 40, 4)
@@ -139,8 +142,8 @@ block:
     var glyphImage = font.getGlyphImage(glyph, glyphOffset, quality=4, subPixelShift=float(i)/10.0)
     image.blit(
       glyphImage,
-      rect(0, 0, glyphImage.width, glyphImage.height),
-      rect(int(at.x + glyphOffset.x), int(at.y + glyphOffset.y), glyphImage.width, glyphImage.height)
+      rect(0, 0, float glyphImage.width, float glyphImage.height),
+      rect(at.x + glyphOffset.x, at.y + glyphOffset.y, float glyphImage.width, float glyphImage.height)
     )
 
   image = image.magnify(6)
@@ -207,7 +210,7 @@ To where it bent in the undergrowth;""")
     var glyphOffset: Vec2
     let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
     image.drawRect(
-      (pos.at + glyphOffset) * mag,
+      (pos.rect.xy + glyphOffset) * mag,
       vec2(float img.width, float img.height) * mag,
       rgba(255, 0, 0, 255)
     )
@@ -221,7 +224,7 @@ To where it bent in the undergrowth;""")
     var glyphOffset: Vec2
     let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
     image.drawRect(
-      (pos.at + glyphOffset) * mag,
+      (pos.rect.xy + glyphOffset) * mag,
       vec2(float img.width, float img.height) * mag,
       rgba(255, 0, 0, 255)
     )
@@ -280,3 +283,89 @@ block:
   )
 
   image.save("wordwrap.png")
+
+
+
+block:
+  var image = newImage(500, 200, 4)
+
+  var font = readFontTtf("fonts/hanazono/HanaMinA.ttf")
+  font.size = 16
+  font.lineHeight = 20
+
+  image.drawText(font.typeset(
+    readFile("sample.ch.txt"),
+    pos=vec2(100, 20),
+    size=vec2(300, 160)
+  ))
+
+  image.alphaWhite()
+
+  image.drawRect(
+    vec2(100, 20),
+    vec2(300, 160),
+    rgba(255, 0, 0, 255)
+  )
+
+  image.save("wordwrapch.png")
+
+
+
+block:
+  var image = newImage(300, 120, 4)
+
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 16 # 11px or 8pt
+  font.lineHeight = 20
+
+  # compute layout
+  var layout = font.typeset("""
+Two roads diverged in a yellow wood,
+And sorry I could not travel both
+And be one traveler, long I stood
+And looked down one as far as I could
+To where it bent in the undergrowth;""",
+  vec2(10, 10))
+
+  # draw text at a layout
+  image.drawText(layout)
+
+  image.alphaWhite()
+
+  let selectionRects = layout.getSelection(23, 120)
+  # draw selection boxes
+  for rect in selectionRects:
+    image.drawRect(rect, rgba(255, 0, 0, 255))
+
+  image.save("selection.png")
+
+
+block:
+
+  var image = newImage(300, 120, 4)
+
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 16 # 11px or 8pt
+  font.lineHeight = 20
+
+  # compute layout
+  var layout = font.typeset("""
+Two roads diverged in a yellow wood,
+And sorry I could not travel both
+And be one traveler, long I stood
+And looked down one as far as I could
+To where it bent in the undergrowth;""",
+  vec2(10, 10))
+
+  # draw text at a layout
+  image.drawText(layout)
+
+  image.alphaWhite()
+
+  let at = vec2(120, 48)
+  let g = layout.getPicking(at)
+  # draw g
+  image.drawRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
+  image.drawRect(g.selectRect, rgba(255, 0, 0, 255))
+
+  image.save("picking.png")
