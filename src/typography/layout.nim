@@ -228,7 +228,6 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
         if onSameLine and notTooFar:
           result[^1].w = g.selectRect.x - result[^1].x + g.selectRect.w
           continue
-
       result.add g.selectRect
 
 
