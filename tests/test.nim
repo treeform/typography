@@ -363,7 +363,7 @@ To where it bent in the undergrowth;""",
   image.alphaWhite()
 
   let at = vec2(120, 48)
-  let g = layout.getPicking(at)
+  let g = layout.pickGlyphAt(at)
   # draw g
   image.drawRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
   image.drawRect(g.selectRect, rgba(255, 0, 0, 255))

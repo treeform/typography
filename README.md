@@ -159,7 +159,7 @@ layout.getSelection(23, 120) # selects char 23 to char 120 (not glyphs)
 When clicking on text is useful to know where to highlighting what glyph and what is the string index.
 
 ```nim
-layout.getPicking(vec2(120, 48)) # selects glyph at cordiantes
+layout.pickGlyphAt(vec2(120, 48)) # selects glyph at cordiantes
 ```
 
 ![example output](tests/picking.png?raw=true)

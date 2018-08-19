@@ -231,7 +231,8 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
 
       result.add g.selectRect
 
-proc getPicking*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
+
+proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
   ## Given X,Y cordiante, return the GlyphPosition picked
   for g in layout:
     if g.selectRect.intersects(pos):
