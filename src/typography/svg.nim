@@ -8,7 +8,7 @@ proc readFontSvg*(filename: string): Font =
   if not fileExists(filename):
     raise newException(OSError, "File " & filename & " not found")
 
-  var font = new Font
+  var font = Font()
 
   font.size = 16
   font.lineHeight = 20
@@ -45,7 +45,7 @@ proc readFontSvg*(filename: string): Font =
       font.descent = parseFloat(descent)
 
   for tag in xml.findAll "glyph":
-    var glyph = new Glyph
+    var glyph = Glyph()
     glyph.code = tag.attr "unicode"
     glyph.name = tag.attr "glyph-name"
     var advance = tag.attr "horiz-adv-x"

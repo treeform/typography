@@ -73,7 +73,7 @@ proc readLongDateTime(stream: Stream): float64 =
 
 proc readFontTtf*(filename: string): Font =
   ## Reads TTF font
-  var font = new Font
+  var font = Font()
 
   var f = newFileStream(filename, fmRead)
   var version = f.readFixed32()
@@ -222,7 +222,7 @@ proc readFontTtf*(filename: string): Font =
     f.setPosition(int offset)
     if not glyphTabe.hasKey(offset):
 
-      glyphTabe[offset] = new Glyph
+      glyphTabe[offset] = Glyph()
       glyphTabe[offset].ready = false
 
       var isNull = glyphIndex + 1 < loca.len and loca[glyphIndex] == loca[glyphIndex + 1]
