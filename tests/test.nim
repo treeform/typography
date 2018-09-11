@@ -29,6 +29,14 @@ proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
 
 
 block:
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 16
+  var image = font.getGlyphImage("h")
+  image.alphaWhite()
+  image.save("hFill.png")
+
+
+block:
   var image = newImage(500, 40, 4)
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16

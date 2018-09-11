@@ -104,6 +104,7 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
   return false
 
 
+
 proc glyphPathToCommands*(glyph: var Glyph) =
   ## Converts a glphy into lines-shape
   glyph.commands = newSeq[PathCommand]()

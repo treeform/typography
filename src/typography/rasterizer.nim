@@ -89,10 +89,11 @@ proc getGlyphImage*(
 
   proc trans(v: Vec2): Vec2 = (v + origin) / scale
 
+  const ep = 0.0001 * PI
+
   if quality == 0:
     # fill
     for y in 0..<image.height:
-      var ep = 0.00000000001
       var scan = Segment(at: vec2(-10000, float(y) + ep), to: vec2(100000, float(y) + ep))
 
       scan.at = trans(scan.at)
@@ -124,7 +125,6 @@ proc getGlyphImage*(
     for y in 1..image.height:
       var alphas = newSeq[float](image.width)
       for m in 0..<quality:
-        var ep = 0.00000000001
         var yline = (float(y) + ep) + float(m)/float(quality) - 1
         var scan = Segment(at: vec2(-10000, yline), to: vec2(100000, yline))
 
