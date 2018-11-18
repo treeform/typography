@@ -109,7 +109,6 @@ proc readFontTtf*(filename: string): Font =
     chunk.offset = f.readUInt32()
     chunk.length = f.readUInt32()
     chunks[chunk.tag] = chunk
-    print chunk.tag
 
   # head
   f.setPosition(int chunks["head"].offset)
