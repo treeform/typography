@@ -1,4 +1,4 @@
-import tables, streams, strutils, endians, unicode
+import tables, streams, strutils, endians, unicode, os
 import font
 import vmath, print
 
@@ -75,6 +75,9 @@ proc readFontTtf*(filename: string): Font =
   ## Reads TTF font
   var font = Font()
 
+  if not existsFile(filename):
+    raise newException(IOError, "File name " & filename & " not found")
+
   var f = newFileStream(filename, fmRead)
   var version = f.readFixed32()
   #assert version == 1.0
@@ -106,6 +109,7 @@ proc readFontTtf*(filename: string): Font =
     chunk.offset = f.readUInt32()
     chunk.length = f.readUInt32()
     chunks[chunk.tag] = chunk
+    print chunk.tag
 
   # head
   f.setPosition(int chunks["head"].offset)
