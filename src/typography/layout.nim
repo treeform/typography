@@ -117,7 +117,7 @@ proc typeset*(
     at.x += font.kerningAdjustment(prev, c)
 
     var subPixelShift = at.x - floor(at.x)
-    var glyphPos = vec2(floor(at.x), floor(at.y + font.descent * scale))
+    var glyphPos = vec2(floor(at.x), floor(at.y))
     var glyphSize = font.getGlyphSize(glyph)
     # if glyphSize.x == 0 or glyphSize.y == 0:
     #   echo "too small", c
@@ -150,7 +150,7 @@ proc typeset*(
         else:
           at.x = lineStart
 
-        glyphPos = vec2(floor(at.x), floor(at.y + font.descent * scale))
+        glyphPos = vec2(floor(at.x), floor(at.y))
 
       if size.y != 0 and at.y - pos.y > size.y:
         # reached the bottom of the area, clip
@@ -207,7 +207,7 @@ proc typeset*(
       pos.rect.x += offset
 
   if vAlign == Bottom:
-    let offset = floor(size.y - boundsSize.y)
+    let offset = floor(size.y - boundsSize.y + font.descent * scale)
     for pos in result.mitems:
       pos.rect.y += offset
 
@@ -221,20 +221,21 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout
   for pos in layout:
     var font = pos.font
-    var glyph = font.glyphs[pos.character]
-    var glyphOffset: Vec2
-    let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-    image.blit(
-      img,
-      rect(
-        0, 0,
-        float img.width, float img.height
-      ),
-      rect(
-        pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y,
-        float img.width, float img.height
+    if pos.character in font.glyphs:
+      var glyph = font.glyphs[pos.character]
+      var glyphOffset: Vec2
+      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      image.blit(
+        img,
+        rect(
+          0, 0,
+          float img.width, float img.height
+        ),
+        rect(
+          pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y,
+          float img.width, float img.height
+        )
       )
-    )
 
 
 proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
@@ -263,14 +264,12 @@ proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
   var minG: GlyphPosition
   var minDist = -1.0
   for i, g in layout:
-    if g.selectRect.y < pos.y and pos.y < g.selectRect.y + g.selectRect.h:
+    if g.selectRect.y < pos.y and pos.y < g.selectRect.y + g.font.lineHeight:
       # on same line
       let dist = abs(pos.x - (g.selectRect.x))
       # closet character
-      echo dist, " ", g.character
       if minDist < 0 or dist < minDist:
         # min distance here
         minDist = dist
         minG = g
-        echo "using ", g.character
   return minG

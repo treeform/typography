@@ -30,7 +30,7 @@ proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
-  font.size = 16
+  font.size = 100
   var image = font.getGlyphImage("h")
   image.alphaWhite()
   image.save("hFill.png")
@@ -214,28 +214,30 @@ To where it bent in the undergrowth;""")
   # draw layout boxes
   for pos in layout:
     var font = pos.font
-    var glyph = font.glyphs[pos.character]
-    var glyphOffset: Vec2
-    let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-    image.drawRect(
-      (pos.rect.xy + glyphOffset) * mag,
-      vec2(float img.width, float img.height) * mag,
-      rgba(255, 0, 0, 255)
-    )
+    if pos.character in font.glyphs:
+      var glyph = font.glyphs[pos.character]
+      var glyphOffset: Vec2
+      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      image.drawRect(
+        (pos.rect.xy + glyphOffset) * mag,
+        vec2(float img.width, float img.height) * mag,
+        rgba(255, 0, 0, 255)
+      )
   image.save("layout.png")
 
   image.fill(rgba(255, 255, 255, 255))
   # draw layout boxes only
   for pos in layout:
     var font = pos.font
-    var glyph = font.glyphs[pos.character]
-    var glyphOffset: Vec2
-    let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-    image.drawRect(
-      (pos.rect.xy + glyphOffset) * mag,
-      vec2(float img.width, float img.height) * mag,
-      rgba(255, 0, 0, 255)
-    )
+    if pos.character in font.glyphs:
+      var glyph = font.glyphs[pos.character]
+      var glyphOffset: Vec2
+      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      image.drawRect(
+        (pos.rect.xy + glyphOffset) * mag,
+        vec2(float img.width, float img.height) * mag,
+        rgba(255, 0, 0, 255)
+      )
   image.save("layoutNoText.png")
 
 
@@ -353,7 +355,7 @@ block:
   var image = newImage(300, 120, 4)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
-  font.size = 16 # 11px or 8pt
+  font.size = 16
   font.lineHeight = 20
 
   # compute layout
@@ -370,7 +372,7 @@ To where it bent in the undergrowth;""",
 
   image.alphaWhite()
 
-  let at = vec2(120, 48)
+  let at = vec2(120, 52)
   let g = layout.pickGlyphAt(at)
   # draw g
   image.drawRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
