@@ -34,7 +34,7 @@ type
     Middle
     Bottom
 
-proc kerningAdjustment*(font: var Font, prev, c: string): float =
+proc kerningAdjustment*(font: Font, prev, c: string): float =
   ## Get Kerning Adjustment between two letters
   var fontHeight = font.ascent - font.descent
   var scale = font.size / fontHeight
@@ -52,7 +52,7 @@ proc canWrap(rune: Rune): bool =
 
 
 proc typeset*(
-    font: var Font,
+    font: Font,
     text: string,
     pos: Vec2 = vec2(0, 0),
     size: Vec2 = vec2(0, 0),
@@ -72,10 +72,7 @@ proc typeset*(
     boundsMax = vec2(0, 0)
     glyphCount = 0
 
-  let smallAdj = floor(font.capHeight - font.xHeight) * scale
-  #let smallAdj = 1.0 # WHY?
-
-  at.y += font.size - smallAdj
+  at.y += font.size
 
   var
     strIndex = 0
@@ -85,6 +82,26 @@ proc typeset*(
   for rune in runes(text):
     var c = $rune
     if rune == Rune(10):
+      # add special 0 width glyph on this line
+      var selectRect = rect(
+        floor(at.x),
+        floor(at.y) - font.size,
+        0,
+        font.size
+      )
+      result.add GlyphPosition(
+        font: font,
+        fontSize: font.size,
+        subPixelShift: 0,
+        rect: rect(0,0,0,0),
+        selectRect: selectRect,
+        character: c,
+        index: strIndex
+      )
+      prev = c
+      inc glyphCount
+      strIndex += c.len
+
       at.x = lineStart
       at.y += font.lineHeight
       continue
@@ -93,15 +110,20 @@ proc typeset*(
       lastCanWrap = glyphIndex
 
     if c notin font.glyphs:
+      # echo "missing", c
       c = "\uFFFD" # if glyph is missing use missing glyph
 
     var glyph = font.glyphs[c]
     at.x += font.kerningAdjustment(prev, c)
 
-    var glyphOffset: Vec2
     var subPixelShift = at.x - floor(at.x)
-    var glyphPos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
-    let glyphSize = font.getGlyphSize(glyph)
+    var glyphPos = vec2(floor(at.x), floor(at.y + font.descent * scale))
+    var glyphSize = font.getGlyphSize(glyph)
+    # if glyphSize.x == 0 or glyphSize.y == 0:
+    #   echo "too small", c
+    if rune == Rune(32):
+      glyphSize.x = glyph.advance * scale
+
     if glyphSize.x != 0 and glyphSize.y != 0 and rune != Rune(32):
       # does it need to wrap?
       if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
@@ -121,44 +143,48 @@ proc typeset*(
           for i in result.len + goBack ..< result.len:
             result[i].rect.x -= shift
             result[i].rect.y += font.lineHeight
+            result[i].selectRect.x -= shift
+            result[i].selectRect.y += font.lineHeight
+
           at.x -= shift
         else:
           at.x = lineStart
 
-        glyphPos = vec2(floor(at.x), floor(at.y + glyphOffset.y))
+        glyphPos = vec2(floor(at.x), floor(at.y + font.descent * scale))
 
       if size.y != 0 and at.y - pos.y > size.y:
         # reached the bottom of the area, clip
         return
 
-      var selectRect =
-        rect(floor(at.x),
-        floor(at.y) - font.size / 2 - font.lineHeight / 2,
-        glyphSize.x,
-        font.lineHeight)
+    var selectRect = rect(
+      floor(at.x),
+      floor(at.y) - font.size,
+      glyphSize.x + 1,
+      font.size
+    )
 
-      result.add GlyphPosition(
-        font: font,
-        fontSize: font.size,
-        subPixelShift: subPixelShift,
-        rect: rect(glyphPos, glyphSize),
-        selectRect: selectRect,
-        character: c,
-        index: strIndex
-      )
-      if glyphCount == 0:
-        # first glyph
-        boundsMax.x = at.x + glyphSize.x
-        boundsMin.x = at.x
-        boundsMax.y = at.y + font.size
-        boundsMin.y = at.y
-      else:
-        boundsMax.x = max(boundsMax.x, at.x + glyphSize.x)
-        boundsMin.x = min(boundsMin.x, at.x)
-        boundsMax.y = max(boundsMax.y, at.y + font.size + smallAdj)
-        boundsMin.y = min(boundsMin.y, at.y)
+    result.add GlyphPosition(
+      font: font,
+      fontSize: font.size,
+      subPixelShift: subPixelShift,
+      rect: rect(glyphPos, glyphSize),
+      selectRect: selectRect,
+      character: c,
+      index: strIndex
+    )
+    if glyphCount == 0:
+      # first glyph
+      boundsMax.x = at.x + glyphSize.x
+      boundsMin.x = at.x
+      boundsMax.y = at.y + font.size
+      boundsMin.y = at.y
+    else:
+      boundsMax.x = max(boundsMax.x, at.x + glyphSize.x)
+      boundsMin.x = min(boundsMin.x, at.x)
+      boundsMax.y = max(boundsMax.y, at.y + font.size)
+      boundsMin.y = min(boundsMin.y, at.y)
 
-      inc glyphIndex
+    inc glyphIndex
 
     at.x += glyph.advance * scale
     prev = c
@@ -191,7 +217,7 @@ proc typeset*(
       pos.rect.y += offset
 
 
-proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
+proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout
   for pos in layout:
     var font = pos.font
@@ -211,7 +237,7 @@ proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
     )
 
 
-proc drawText*(font: var Font, image: var Image, pos: Vec2, text: string) =
+proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
   ## Draw text string
   var layout = font.typeset(text, pos)
   image.drawText(layout)
@@ -233,6 +259,18 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
 
 proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
   ## Given X,Y cordiante, return the GlyphPosition picked
-  for g in layout:
-    if g.selectRect.intersects(pos):
-      return g
+  # direct click not happend find closest to the right
+  var minG: GlyphPosition
+  var minDist = -1.0
+  for i, g in layout:
+    if g.selectRect.y < pos.y and pos.y < g.selectRect.y + g.selectRect.h:
+      # on same line
+      let dist = abs(pos.x - (g.selectRect.x))
+      # closet character
+      echo dist, " ", g.character
+      if minDist < 0 or dist < minDist:
+        # min distance here
+        minDist = dist
+        minG = g
+        echo "using ", g.character
+  return minG

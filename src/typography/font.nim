@@ -61,7 +61,7 @@ proc `sizePt`*(font: Font): float =
   ## Gets font size in Pt or Point units.
   font.size * 0.75
 
-proc `sizePt=`*(font: var Font, sizePoints: float) =
+proc `sizePt=`*(font: Font, sizePoints: float) =
   ## Sets font size in Pt or Point units.
   font.size = sizePoints / 0.75
 
@@ -70,7 +70,7 @@ proc `sizeEm`*(font: Font): float =
   ## Gets font size in em units.
   font.size / 12
 
-proc `sizeEm=`*(font: var Font, sizeEm: float) =
+proc `sizeEm=`*(font: Font, sizeEm: float) =
   ## Gets font size in em units.
   font.size = sizeEm * 12
 
@@ -79,7 +79,7 @@ proc `sizePr`*(font: Font): float =
   ## Gets font size in % or Percent units.
   font.size / 1200
 
-proc `sizePr=`*(font: var Font, sizePercent: float) =
+proc `sizePr=`*(font: Font, sizePercent: float) =
   ## Gets font size in % or Percent units.
   font.size = sizePercent * 1200
 

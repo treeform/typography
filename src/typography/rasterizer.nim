@@ -46,7 +46,7 @@ proc makeReady*(glyph: var Glyph) =
   glyph.ready = true
 
 proc getGlyphSize*(
-    font: var Font,
+    font: Font,
     glyph: var Glyph
   ): Vec2 =
 
@@ -62,7 +62,7 @@ proc getGlyphSize*(
   return vec2(float w, float h)
 
 proc getGlyphImage*(
-    font: var Font,
+    font: Font,
     glyph: var Glyph,
     glyphOffset: var Vec2,
     quality = 4,
@@ -180,7 +180,7 @@ proc getGlyphImage*(
 
   return image
 
-proc getGlyphOutlineImage*(font: var Font, unicode: string): Image =
+proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
   ## Get an outine of the glyph with contorls points. Useful for debugging.
   var glyph = font.glyphs[unicode]
 
@@ -217,19 +217,19 @@ proc getGlyphOutlineImage*(font: var Font, unicode: string): Image =
   return image
 
 
-proc getGlyphImage*(font: var Font, unicode: string, glyphOffset: var Vec2, subPixelShift=0.0): Image =
+proc getGlyphImage*(font: Font, unicode: string, glyphOffset: var Vec2, subPixelShift=0.0): Image =
   ## Get an image of the glyph and the glyph offset the image should be drawn
   var glyph = font.glyphs[unicode]
   return font.getGlyphImage(glyph, glyphOffset)
 
 
-proc getGlyphImage*(font: var Font, unicode: string): Image =
+proc getGlyphImage*(font: Font, unicode: string): Image =
   ## Get an image of the glyph
   var glyphOffset: Vec2
   return font.getGlyphImage(unicode, glyphOffset)
 
 
-proc drawGlyph*(font: var Font, image: var Image, at: Vec2, c: string) =
+proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
   ## Draw glyph at a location on the image
   var at = at
   at.y += font.lineHeight
@@ -245,7 +245,7 @@ proc drawGlyph*(font: var Font, image: var Image, at: Vec2, c: string) =
       )
 
 proc getGlyphImageOffset*(
-    font: var Font,
+    font: Font,
     glyph: var Glyph,
     quality = 4,
     subPixelShift: float = 0.0,
