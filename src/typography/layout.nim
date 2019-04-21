@@ -128,11 +128,10 @@ proc typeset*(
       # does it need to wrap?
       if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
         # wrap to next line
-        at.y += font.lineHeight
-
         let goBack = lastCanWrap - glyphIndex
-        if goBack < 0:
-
+        if lastCanWrap != -1 and goBack < 0:
+          lastCanWrap = -1
+          at.y += font.lineHeight
           if size.y != 0 and at.y - pos.y > size.y:
             # delete glyphs that would wrap into next line that is clipped
             result.setLen(result.len + goBack)
@@ -148,7 +147,9 @@ proc typeset*(
 
           at.x -= shift
         else:
+          at.y += font.lineHeight
           at.x = lineStart
+
 
         glyphPos = vec2(floor(at.x), floor(at.y))
 
