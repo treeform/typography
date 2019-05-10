@@ -110,7 +110,7 @@ proc typeset*(
       lastCanWrap = glyphIndex
 
     if c notin font.glyphs:
-      # echo "missing", c
+      echo "missing", c
       c = "\uFFFD" # if glyph is missing use missing glyph
 
     var glyph = font.glyphs[c]

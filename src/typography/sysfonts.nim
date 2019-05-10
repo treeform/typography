@@ -8,20 +8,24 @@ when defined(MacOSX):
     "/Library/Fonts/",
     getHomeDir() & "/Library/Fonts/"
   ]
+elif defined(windows):
+  let fontDirecotires* = @[
+    r"C:\Windows\Fonts",
+  ]
+else:
+  let fontDirecotires* = @[]
 
-proc getSystemFonts(): seq[string] =
+proc getSystemFonts*(): seq[string] =
   for fontDir in fontDirecotires:
     for kind, path in walkDir(fontDir):
       result.add path
 
-
-proc findFont(fontName: string): string =
+proc findFont*(fontName: string): string =
   for fontDir in fontDirecotires:
     for kind, path in walkDir(fontDir):
       let (dir, name, ext) = path.splitFile()
-      if name == fontName:
+      if name.toLowerAscii() == fontName.toLowerAscii():
         return path
-
 
 when isMainModule:
   echo getSystemFonts()

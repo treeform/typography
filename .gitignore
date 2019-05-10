@@ -6,3 +6,4 @@
 # normal ignores:
 *.exe
 nimcache
+tests/samples/*

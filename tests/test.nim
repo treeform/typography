@@ -99,6 +99,16 @@ block:
   image.alphaWhite()
   image.save("ttf.png")
 
+block:
+  var image = newImage(800, 200, 4)
+  var font = readFontOtf("fonts/Ubuntu.ttf")
+
+  font.size = 16
+  font.lineHeight = 20
+  font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+
+  image.alphaWhite()
+  image.save("otf.png")
 
 block:
   var image = newImage(600, 620, 4)

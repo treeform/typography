@@ -132,6 +132,29 @@ proc readFontTtf*(filename: string): Font =
   let headIndexToLocFormat = f.readInt16()
   let headGlyphDataFormat = f.readInt16()
 
+  # name
+  f.setPosition(int chunks["name"].offset)
+  let at = f.getPosition()
+  let nameFormat = f.readUint16()
+  assert nameFormat == 0
+  let nameCount = f.readUint16()
+  let nameStringOffset = f.readUint16()
+  var baseName, fullName: string
+  for i in 0..<(int nameCount):
+    let platformID = f.readUint16() #Platform identifier code.
+    let platformSpecificID = f.readUint16() #Platform-specific encoding identifier.
+    let languageID = f.readUint16() #Language identifier.
+    let nameID = f.readUint16() #Name identifiers.
+    let length = f.readUint16() #Name string length in bytes.
+    let offset = f.readUint16() #Name string offset in bytes from stringOffset.
+    let save = f.getPosition()
+    f.setPosition(at + int(nameStringOffset + offset))
+    if nameID in {1, 4} and platformId in {0, 1, 2}:
+      let name = f.readString(int length)
+      if name.len > 0:
+        font.name = name
+    f.setPosition(save)
+
   # maxp
   f.setPosition(int chunks["maxp"].offset)
   let maxpVersion = f.readFixed32()
@@ -659,6 +682,3 @@ proc ttfGlyphToCommands*(glyph: var Glyph) =
 
     glyph.commands = path
 
-proc readFontOtf*(filename: string): Font =
-  ## Reads OTF font
-  readFontTtf(filename)
