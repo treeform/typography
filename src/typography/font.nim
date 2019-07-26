@@ -186,6 +186,9 @@ proc glyphPathToCommands*(glyph: var Glyph) =
       of ' ', ',':
         finishDigit()
       else:
+        if command == Move and numbers.len == 2:
+          finishCommand()
+          command = Line
         number &= c
 
   finishCommand()
