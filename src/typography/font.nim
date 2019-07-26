@@ -189,6 +189,9 @@ proc glyphPathToCommands*(glyph: var Glyph) =
         if command == Move and numbers.len == 2:
           finishCommand()
           command = Line
+        elif command == Line and numbers.len == 2:
+          finishCommand()
+          command = Line
         number &= c
 
   finishCommand()
@@ -292,6 +295,17 @@ proc commandsToShapes*(glyph: var Glyph) =
         to.y = command.numbers[1]
         ctr = at - (ctr - at)
         drawQuad(at, ctr, to)
+        at = to
+
+      of Cubic:
+        assert command.numbers.len == 6
+        ctr.x = command.numbers[0]
+        ctr.y = command.numbers[1]
+        ctr2.x = command.numbers[2]
+        ctr2.y = command.numbers[3]
+        to.x = command.numbers[4]
+        to.y = command.numbers[5]
+        drawCurve(@[at, ctr, ctr2, to])
         at = to
 
       of End:
