@@ -20,6 +20,7 @@ type
     rect*: Rect # Where to draw the image character
     selectRect*: Rect # Were to draw or hit selection
     character*: string
+    count*: int
     index*: int
 
   HAlignMode* = enum
@@ -86,8 +87,8 @@ proc typeset*(
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.size,
-        0,
-        font.size
+        font.glyphs[" "].advance * scale,
+        font.lineHeight
       )
       result.add GlyphPosition(
         font: font,
@@ -96,6 +97,7 @@ proc typeset*(
         rect: rect(0,0,0,0),
         selectRect: selectRect,
         character: c,
+        count: glyphCount,
         index: strIndex
       )
       prev = c
@@ -107,11 +109,11 @@ proc typeset*(
       continue
 
     if canWrap(rune):
-      lastCanWrap = glyphIndex
+      lastCanWrap = glyphIndex + 1
 
     if c notin font.glyphs:
-      echo "missing", c
-      c = "\uFFFD" # if glyph is missing use missing glyph
+      # TODO: make missing glyphs work better
+      c = " " # if glyph is missing use space for now
 
     var glyph = font.glyphs[c]
     at.x += font.kerningAdjustment(prev, c)
@@ -161,7 +163,7 @@ proc typeset*(
       floor(at.x),
       floor(at.y) - font.size,
       glyphSize.x + 1,
-      font.size
+      font.lineHeight
     )
 
     result.add GlyphPosition(
@@ -171,6 +173,7 @@ proc typeset*(
       rect: rect(glyphPos, glyphSize),
       selectRect: selectRect,
       character: c,
+      count: glyphCount,
       index: strIndex
     )
     if glyphCount == 0:
