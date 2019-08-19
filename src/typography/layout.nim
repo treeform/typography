@@ -126,7 +126,7 @@ proc typeset*(
     if rune == Rune(32):
       glyphSize.x = glyph.advance * scale
 
-    if glyphSize.x != 0 and glyphSize.y != 0 and rune != Rune(32):
+    if glyphSize.x != 0 and glyphSize.y != 0:
       # does it need to wrap?
       if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
         # wrap to next line
