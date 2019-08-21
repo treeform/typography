@@ -1,0 +1,334 @@
+import unicode, strutils, sequtils
+import typography, vmath, print
+
+#[
+It's hard to implement a text. Text box has many complex features one does not think about
+because it is so natural. Here is a small list of the most important ones:
+
+* Typing at location of cursor
+* Cursor going left and right
+* Backspace and delete
+* Cursor going up and down must take into account font and line wrap
+* Clicking should select a character edge. Closet edge wins.
+* Click and drag should select text, selected text will be between text cursor and select cursor
+* Any insert when typing or copy pasting and have selected text, it should get removed and then do normal action
+* Copy text should set it to system clipboard
+* Cut text should copy and remove selected text
+* Paste text should paste at current text cursor, if there is selection it needs to be removed
+* Clicking before text should select first character
+* Clicking at the end of text should select last character
+* Click at the end of the end of the line should select character before the new line
+* Click at the end of the start of the line should select character first character and not the newline
+* Double click should select current word
+* Double click again should select current peragraph
+* Double click again should select everything
+* Text area needs to be able to have margins that can be clicked
+* There should be a scroll bar and a scroll window
+* Scroll window should stay with the text cursor
+* Backspace and delete with selected text remove selected text and don't perform their normal action
+]#
+
+type TextBox* = ref object
+  cursor*: int # the typing cursor
+  selector*: int # the selection cursor
+  runes*: seq[Rune] # the runes we are typing
+  width*: int # width of text box in px
+  height*: int # height of text box in px
+  scrollY*: int # Y scroll position
+  font*: Font
+  mousePos*: Vec2
+
+  glyphs: seq[GlyphPosition]
+  savedX: float
+
+proc clamp(v, a, b: int): int =
+ max(a, min(b, v))
+
+proc newTextBox*(font: Font, width, height: int): TextBox =
+  ## Creates new empty textbox
+  result = TextBox()
+  result.font = font
+  result.width = width
+  result.height = height
+
+proc newTextBox*(font: Font, width, height: int, text: string): TextBox =
+  ## Creates new text box with existing text
+  result = TextBox()
+  result.font = font
+  result.width = width
+  result.height = height
+  result.runes = toRunes(text)
+  result.cursor = result.runes.len
+  result.selector = result.cursor
+
+proc cursorWidth*(font: Font): float =
+  min(font.size / 12, 1)
+
+proc text*(textBox: TextBox): string =
+  ## Converts internal runes to string
+  $textBox.runes
+
+proc size*(textBox: TextBox): Vec2 =
+  ## Returns with and height as a Vec2
+  vec2(float textBox.width, float textBox.height)
+
+proc selection*(textBox: TextBox): HSlice[int, int] =
+  ## Returns current selection from
+  result.a = min(textBox.cursor, textBox.selector)
+  result.b = max(textBox.cursor, textBox.selector)
+
+proc layout*(textBox: TextBox): seq[GlyphPosition] =
+  if textBox.glyphs.len == 0:
+    textBox.glyphs = textBox.font.typeset(
+      textBox.runes,
+      vec2(0, 0),
+      size=textBox.size,
+      clip=false
+    )
+  return textBox.glyphs
+
+proc innerHeight*(textBox: TextBox): int =
+  ## Rectangle where selection cursor should be drawn
+  let layout = textBox.layout()
+  if layout.len > 0:
+    let lastPos = layout[^1].selectRect
+    return int(lastPos.y + lastPos.h)
+  else:
+    return int(textBox.font.lineHeight)
+
+proc locationRect*(textBox: TextBox, loc: int): Rect =
+  ## Rectangle where cursor should be drawn
+  let layout = textBox.layout()
+  if layout.len > 0:
+    if loc >= layout.len:
+      let g = layout[^1]
+      result = g.selectRect
+      result.x += g.selectRect.w
+    else:
+      let g = layout[loc]
+      result = g.selectRect
+  result.w = textBox.font.cursorWidth
+  result.h = textBox.font.lineHeight
+
+proc cursorRect*(textBox: TextBox): Rect =
+  ## Rectangle where cursor should be drawn
+  textBox.locationRect(textBox.cursor)
+
+proc cursorPos*(textBox: TextBox): Vec2 =
+  ## Position where cursor should be drawn
+  textBox.cursorRect.xy
+
+proc selectorRect*(textBox: TextBox): Rect =
+  ## Rectangle where selection cursor should be drawn
+  textBox.locationRect(textBox.selector)
+
+proc selectorPos*(textBox: TextBox): Vec2 =
+  ## Position where selection cursor should be drawn
+  textBox.cursorRect.xy
+
+proc selectionRegions*(textBox: TextBox): seq[Rect] =
+  ## Selection regions to draw selection of text
+  let sel = textBox.selection
+  textBox.layout.getSelection(sel.a, sel.b)
+
+proc removedSelection*(textBox: TextBox): bool =
+  ## Removes selected runes if they are selected.
+  ## Returns true if anything was removed.
+  let sel = textBox.selection
+  if sel.a != sel.b:
+    print "removing", sel
+    textBox.runes.delete(sel.a, sel.b - 1)
+    textBox.glyphs.setLen(0)
+    textBox.cursor = sel.a
+    textBox.selector = textBox.cursor
+    return true
+  return false
+
+proc removeSelection(textBox: TextBox) =
+  ## Removes selected runes if they are selected.
+  discard textBox.removedSelection()
+
+proc adjustScroll*(textBox: TextBox) =
+  ## Adjust scrollY to make sure cursor is in the window
+  let
+    r = textBox.selectorRect
+    cursorYTop = int(r.y)
+    cursorYBottom = int(r.y + r.h)
+  # is pos.y inside the window of scrollY and height?
+  if cursorYTop < textBox.scrollY:
+    textBox.scrollY = cursorYTop
+    print "scroll up", textBox.scrollY
+  if cursorYBottom > textBox.scrollY + textBox.height:
+    textBox.scrollY = cursorYBottom - textBox.height
+    print "scroll down", textBox.scrollY
+
+proc typeCharacter*(textBox: TextBox, rune: Rune) =
+  ## Add a character to the text box.
+  textBox.removeSelection()
+  print textBox.cursor, textBox.runes.len
+  if textBox.cursor == textBox.runes.len:
+     textBox.runes.add(rune)
+  else:
+    textBox.runes.insert(rune, textBox.cursor)
+  textBox.glyphs.setLen(0)
+  textBox.adjustScroll()
+  inc textBox.cursor
+  textBox.selector = textBox.cursor
+
+proc typeCharacter*(textBox: TextBox, letter: char) =
+  ## Add a character to the text box.
+  textBox.typeCharacter(Rune(letter))
+
+proc typeCharacters*(textBox: TextBox, s: string) =
+  ## Add a character to the text box.
+  textBox.removeSelection()
+  for rune in runes(s):
+    textBox.runes.insert(rune, textBox.cursor)
+    inc textBox.cursor
+  textBox.glyphs.setLen(0)
+  textBox.adjustScroll()
+  textBox.selector = textBox.cursor
+
+proc copy*(textBox: TextBox): string =
+  ## Returns the text that was copied
+  let sel = textBox.selection
+  if sel.a != sel.b:
+    return $textBox.runes[sel.a ..< sel.b]
+
+proc paste*(textBox: TextBox, s: string) =
+  ## Pastes a string
+  textBox.typeCharacters(s)
+  textBox.savedX = textBox.cursorPos.x
+
+proc cut*(textBox: TextBox): string =
+  ## Returns the text that was cut
+  result = textBox.copy()
+  textBox.removeSelection()
+  textBox.savedX = textBox.cursorPos.x
+
+proc setCursor*(textBox: TextBox, loc: int) =
+  textBox.cursor = clamp(loc, 0, textBox.runes.len + 1)
+  textBox.selector = textBox.cursor
+
+proc backspace*(textBox: TextBox, shift = false) =
+  ## Backspace command.
+  if textBox.removedSelection(): return
+  if textBox.cursor > 0:
+    textBox.runes.delete(textBox.cursor - 1)
+    textBox.glyphs.setLen(0)
+    textBox.adjustScroll()
+    dec textBox.cursor
+    textBox.selector = textBox.cursor
+
+proc delete*(textBox: TextBox, shift = false) =
+  ## Delete command.
+  if textBox.removedSelection(): return
+  if textBox.cursor < textBox.runes.len:
+    textBox.runes.delete(textBox.cursor)
+    textBox.glyphs.setLen(0)
+    textBox.adjustScroll()
+
+proc left*(textBox: TextBox, shift = false) =
+  ## Move cursor left
+  if textBox.cursor > 0:
+    dec textBox.cursor
+    if not shift:
+      textBox.selector = textBox.cursor
+    textBox.savedX = textBox.cursorPos.x
+    textBox.adjustScroll()
+
+proc right*(textBox: TextBox, shift = false) =
+  ## Move cursor right
+  if textBox.cursor < textBox.runes.len:
+    inc textBox.cursor
+    if not shift:
+      textBox.selector = textBox.cursor
+    textBox.savedX = textBox.cursorPos.x
+    textBox.adjustScroll()
+
+proc down*(textBox: TextBox, shift = false) =
+  ## Move cursor down
+  let pos = textBox.layout.pickGlyphAt(
+    vec2(textBox.savedX, textBox.cursorPos.y + textBox.font.lineHeight * 1.5))
+  if pos.character != "":
+    textBox.cursor = pos.count
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+  elif textBox.cursorPos.y == textBox.layout[^1].selectRect.y:
+    # are we on the last line? then jump to start location last
+    textBox.cursor = textBox.runes.len
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+
+proc up*(textBox: TextBox, shift = false) =
+  ## Move cursor up
+  let pos = textBox.layout.pickGlyphAt(
+    vec2(textBox.savedX, textBox.cursorPos.y - textBox.font.lineHeight * 0.5))
+  if pos.character != "":
+    textBox.cursor = pos.count
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+  elif textBox.cursorPos.y == textBox.layout[0].selectRect.y:
+    # are we on the first line? then jump to start location 0
+    textBox.cursor = 0
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+
+proc mouse*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
+  ## Click on this with a mouse
+  textBox.mousePos = mousePos
+  # pick where to place the cursor
+  let pos = textBox.layout.pickGlyphAt(mousePos)
+  if pos.character != "":
+    textBox.cursor = pos.count
+    textBox.savedX = mousePos.x
+
+    # when selecting the last character, select the end
+    let pickOffset = mousePos - pos.selectRect.xy
+    if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
+      inc textBox.cursor
+
+    textBox.adjustScroll()
+
+    if click:
+      textBox.selector = textBox.cursor
+
+proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
+  ## Select word under the cursor (double click)
+  textBox.mouse(mousePos, click=true)
+  while textBox.cursor > 0 and
+    not textBox.runes[textBox.cursor - 1].isWhiteSpace():
+      dec textBox.cursor
+  while textBox.selector < textBox.runes.len and
+    not textBox.runes[textBox.selector].isWhiteSpace():
+      inc textBox.selector
+  if extraSpace:
+    # Select extra space to the right if its there
+    if textBox.selector < textBox.runes.len and
+      textBox.runes[textBox.selector] == Rune(32):
+        inc textBox.selector
+
+
+proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
+  ## Select peragraph under the cursor (triple click)
+  textBox.mouse(mousePos, click=true)
+  while textBox.cursor > 0 and
+    textBox.runes[textBox.cursor - 1] != Rune(10):
+      dec textBox.cursor
+  while textBox.selector < textBox.runes.len and
+    textBox.runes[textBox.selector] != Rune(10):
+      inc textBox.selector
+
+
+proc selectAll*(textBox: TextBox) =
+  ## Select all text (quad click)
+  textBox.cursor = 0
+  textBox.selector = textBox.runes.len
+
+
+
+
