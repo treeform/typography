@@ -150,8 +150,9 @@ proc removeSelection(textBox: TextBox) =
 
 proc adjustScroll*(textBox: TextBox) =
   ## Adjust scrollY to make sure cursor is in the window
+  print "adjustScroll"
   let
-    r = textBox.selectorRect
+    r = textBox.cursorRect
     cursorYTop = int(r.y)
     cursorYBottom = int(r.y + r.h)
   # is pos.y inside the window of scrollY and height?
@@ -232,19 +233,19 @@ proc left*(textBox: TextBox, shift = false) =
   ## Move cursor left
   if textBox.cursor > 0:
     dec textBox.cursor
+    textBox.adjustScroll()
     if not shift:
       textBox.selector = textBox.cursor
     textBox.savedX = textBox.cursorPos.x
-    textBox.adjustScroll()
 
 proc right*(textBox: TextBox, shift = false) =
   ## Move cursor right
   if textBox.cursor < textBox.runes.len:
     inc textBox.cursor
+    textBox.adjustScroll()
     if not shift:
       textBox.selector = textBox.cursor
     textBox.savedX = textBox.cursorPos.x
-    textBox.adjustScroll()
 
 proc down*(textBox: TextBox, shift = false) =
   ## Move cursor down
@@ -278,17 +279,18 @@ proc up*(textBox: TextBox, shift = false) =
     if not shift:
       textBox.selector = textBox.cursor
 
-proc mouse*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
+proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos
+  textBox.mousePos.y += float(textBox.scrollY)
   # pick where to place the cursor
-  let pos = textBox.layout.pickGlyphAt(mousePos)
+  let pos = textBox.layout.pickGlyphAt(textBox.mousePos)
   if pos.character != "":
     textBox.cursor = pos.count
-    textBox.savedX = mousePos.x
+    textBox.savedX = textBox.mousePos.x
 
     # when selecting the last character, select the end
-    let pickOffset = mousePos - pos.selectRect.xy
+    let pickOffset = textBox.mousePos - pos.selectRect.xy
     if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
       inc textBox.cursor
 
@@ -299,7 +301,7 @@ proc mouse*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
 
 proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
   ## Select word under the cursor (double click)
-  textBox.mouse(mousePos, click=true)
+  textBox.mouseAction(mousePos, click=true)
   while textBox.cursor > 0 and
     not textBox.runes[textBox.cursor - 1].isWhiteSpace():
       dec textBox.cursor
@@ -315,7 +317,7 @@ proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
 
 proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
   ## Select peragraph under the cursor (triple click)
-  textBox.mouse(mousePos, click=true)
+  textBox.mouseAction(mousePos, click=true)
   while textBox.cursor > 0 and
     textBox.runes[textBox.cursor - 1] != Rune(10):
       dec textBox.cursor
@@ -330,5 +332,21 @@ proc selectAll*(textBox: TextBox) =
   textBox.selector = textBox.runes.len
 
 
+proc resize*(textBox: TextBox, size: Vec2) =
+  ## Resize text box
+  textBox.width = int size.x
+  textBox.height = int size.y
+  textBox.glyphs.setLen(0)
+  textBox.adjustScroll()
 
 
+proc scroll*(textBox: TextBox, amount: float) =
+  ## Scroll text box with a scroll wheel
+  textBox.scrollY += int(amount)
+  # make sure it does not scroll off the top
+  textBox.scrollY = max(0, textBox.scrollY)
+  # or the bottom
+  textBox.scrollY = min(textBox.innerHeight - textBox.height, textBox.scrollY)
+  # Check if there is not enough text to scroll
+  if textBox.innerHeight < textBox.height:
+    textBox.scrollY = 0

@@ -158,10 +158,10 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.mouse(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(30, 30), click=true)
   # mouse dragging to select
   for i in 0..10:
-    textBox.mouse(vec2(float 30+i*10, float 30+i*5), click=false)
+    textBox.mouseAction(vec2(float 30+i*10, float 30+i*5), click=false)
     textBox.draw(&"textbox/picking_{i}.png")
 
 
@@ -170,8 +170,8 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.mouse(vec2(30, 30), click=true)
-  textBox.mouse(vec2(230, 30), click=false)
+  textBox.mouseAction(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(230, 30), click=false)
   print textBox.copy()
   textBox.draw("textbox/copy.png")
 
@@ -180,8 +180,8 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.mouse(vec2(30, 30), click=true)
-  textBox.mouse(vec2(230, 30), click=false)
+  textBox.mouseAction(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(230, 30), click=false)
   textBox.draw("textbox/paste_0.png")
   textBox.paste("<PASTED>")
   textBox.draw("textbox/paste_1.png")
@@ -191,8 +191,8 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.mouse(vec2(30, 30), click=true)
-  textBox.mouse(vec2(230, 30), click=false)
+  textBox.mouseAction(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(230, 30), click=false)
   print textBox.cut()
   textBox.draw("textbox/cut.png")
 
@@ -225,7 +225,7 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.mouse(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(30, 30), click=true)
   textBox.draw("textbox/jump_up_0.png")
   textBox.up()
   textBox.draw("textbox/jump_up_1.png")
@@ -238,7 +238,7 @@ block:
   print "jump to last on down"
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis quam odio, tempor a facilisis massa ac ipsum eff!""")
-  textBox.mouse(vec2(30, 30), click=true)
+  textBox.mouseAction(vec2(30, 30), click=true)
   textBox.draw("textbox/jump_down_0.png")
   textBox.down()
   textBox.draw("textbox/jump_down_1.png")

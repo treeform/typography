@@ -135,7 +135,7 @@ proc typeset*(
         if lastCanWrap != -1 and goBack < 0:
           lastCanWrap = -1
           at.y += font.lineHeight
-          if size.y != 0 and at.y - pos.y > size.y:
+          if clip and size.y != 0 and at.y - pos.y > size.y:
             # delete glyphs that would wrap into next line that is clipped
             result.setLen(result.len + goBack)
             return
