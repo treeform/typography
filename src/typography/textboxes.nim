@@ -279,6 +279,50 @@ proc up*(textBox: TextBox, shift = false) =
     if not shift:
       textBox.selector = textBox.cursor
 
+proc leftWord*(textBox: TextBox, shift = false) =
+  ## Move cursor left by a word
+  if textBox.cursor > 0:
+    dec textBox.cursor
+  while textBox.cursor > 0 and
+    not textBox.runes[textBox.cursor - 1].isWhiteSpace():
+      dec textBox.cursor
+  textBox.adjustScroll()
+  if not shift:
+    textBox.selector = textBox.cursor
+  textBox.savedX = textBox.cursorPos.x
+
+proc rightWord*(textBox: TextBox, shift = false) =
+  ## Move cursor right by a word
+  if textBox.cursor < textBox.runes.len:
+    inc textBox.cursor
+  while textBox.cursor < textBox.runes.len and
+    not textBox.runes[textBox.cursor].isWhiteSpace():
+      inc textBox.cursor
+  textBox.adjustScroll()
+  if not shift:
+    textBox.selector = textBox.cursor
+  textBox.savedX = textBox.cursorPos.x
+
+proc startOfLine*(textBox: TextBox, shift = false) =
+  ## Move cursor left by a word
+  while textBox.cursor > 0 and
+    textBox.runes[textBox.cursor - 1] != Rune(10):
+      dec textBox.cursor
+  textBox.adjustScroll()
+  if not shift:
+    textBox.selector = textBox.cursor
+  textBox.savedX = textBox.cursorPos.x
+
+proc endOfLine*(textBox: TextBox, shift = false) =
+  ## Move cursor right by a word
+  while textBox.cursor < textBox.runes.len and
+    textBox.runes[textBox.cursor] != Rune(10):
+      inc textBox.cursor
+  textBox.adjustScroll()
+  if not shift:
+    textBox.selector = textBox.cursor
+  textBox.savedX = textBox.cursorPos.x
+
 proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos
