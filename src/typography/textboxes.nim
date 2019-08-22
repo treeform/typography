@@ -366,16 +366,24 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   if pos.character != "":
     textBox.cursor = pos.count
     textBox.savedX = textBox.mousePos.x
-
     # when selecting the last character, select the end
     let pickOffset = textBox.mousePos - pos.selectRect.xy
     if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
       inc textBox.cursor
+  else:
+    # if above the text select first character
+    if textBox.mousePos.y < 0:
+      textBox.cursor = 0
+    # if below text select last character + 1
+    if textBox.mousePos.y > float textBox.innerHeight:
+      textBox.cursor = textBox.glyphs.len
 
-    textBox.adjustScroll()
+  textBox.savedX = textBox.mousePos.x
+  textBox.adjustScroll()
 
-    if click:
-      textBox.selector = textBox.cursor
+  if click:
+    textBox.selector = textBox.cursor
+
 
 proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
   ## Select word under the cursor (double click)
