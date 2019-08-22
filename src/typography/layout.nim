@@ -262,10 +262,12 @@ proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
 
 
 proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
-  ## Given a layout gives selection from start to stop
-  ## If start == stop, just a caret position is given
+  ## Given a layout gives selection from start to stop in glyph positions
+  ## If start == stop returns []
+  if start == stop:
+    return
   for g in layout:
-    if g.index >= start and g.index < stop:
+    if g.count >= start and g.count < stop:
       if result.len > 0:
         let onSameLine = result[^1].y == g.selectRect.y and result[^1].h == g.selectRect.h
         let notTooFar = g.selectRect.x - result[^1].x < result[^1].w * 2
