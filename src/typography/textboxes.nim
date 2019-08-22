@@ -323,6 +323,40 @@ proc endOfLine*(textBox: TextBox, shift = false) =
     textBox.selector = textBox.cursor
   textBox.savedX = textBox.cursorPos.x
 
+proc pageUp*(textBox: TextBox, shift = false) =
+  ## Move cursor up by half a text box height
+  let
+    pos = vec2(textBox.savedX, textBox.cursorPos.y - float(textBox.height) * 0.5)
+    g = textBox.layout.pickGlyphAt(pos)
+  if g.character != "":
+    textBox.cursor = g.count
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+  elif pos.y <= textBox.layout[0].selectRect.y:
+    # above the first line? then jump to start location 0
+    textBox.cursor = 0
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+
+proc pageDown*(textBox: TextBox, shift = false) =
+  ## Move cursor down up by half a text box height
+  let
+    pos = vec2(textBox.savedX, textBox.cursorPos.y + float(textBox.height) * 0.5)
+    g = textBox.layout.pickGlyphAt(pos)
+  if g.character != "":
+    textBox.cursor = g.count
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+  elif pos.y > textBox.layout[^1].selectRect.y:
+    # bellow the last line? then jump to start location last
+    textBox.cursor = textBox.runes.len
+    textBox.adjustScroll()
+    if not shift:
+      textBox.selector = textBox.cursor
+
 proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos
