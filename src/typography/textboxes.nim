@@ -136,7 +136,6 @@ proc removedSelection*(textBox: TextBox): bool =
   ## Returns true if anything was removed.
   let sel = textBox.selection
   if sel.a != sel.b:
-    print "removing", sel
     textBox.runes.delete(sel.a, sel.b - 1)
     textBox.glyphs.setLen(0)
     textBox.cursor = sel.a
@@ -150,7 +149,6 @@ proc removeSelection(textBox: TextBox) =
 
 proc adjustScroll*(textBox: TextBox) =
   ## Adjust scrollY to make sure cursor is in the window
-  print "adjustScroll"
   let
     r = textBox.cursorRect
     cursorYTop = int(r.y)
@@ -158,15 +156,12 @@ proc adjustScroll*(textBox: TextBox) =
   # is pos.y inside the window of scrollY and height?
   if cursorYTop < textBox.scrollY:
     textBox.scrollY = cursorYTop
-    print "scroll up", textBox.scrollY
   if cursorYBottom > textBox.scrollY + textBox.height:
     textBox.scrollY = cursorYBottom - textBox.height
-    print "scroll down", textBox.scrollY
 
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.
   textBox.removeSelection()
-  print textBox.cursor, textBox.runes.len
   if textBox.cursor == textBox.runes.len:
      textBox.runes.add(rune)
   else:
