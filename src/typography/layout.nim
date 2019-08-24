@@ -84,7 +84,7 @@ proc typeset*(
   for rune in runes:
     var c = $rune
     if rune == Rune(10):
-      # add special 0 width glyph on this line
+      # add special small width glyph on this line
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.size,

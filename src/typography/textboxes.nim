@@ -53,13 +53,17 @@ proc newTextBox*(font: Font, width, height: int): TextBox =
   result.font = font
   result.width = width
   result.height = height
+  result.multiline = true
+  result.wordWrap = true
 
-proc newTextBox*(font: Font, width, height: int, text: string): TextBox =
+proc newTextBox*(font: Font, width, height: int, text: string, multiline = true): TextBox =
   ## Creates new text box with existing text
   result = TextBox()
   result.font = font
   result.width = width
   result.height = height
+  result.multiline = multiline
+  result.wordWrap = multiline
   result.runes = toRunes(text)
   result.cursor = result.runes.len
   result.selector = result.cursor
@@ -70,6 +74,11 @@ proc cursorWidth*(font: Font): float =
 proc text*(textBox: TextBox): string =
   ## Converts internal runes to string
   $textBox.runes
+
+proc multilineCheck(textBox: TextBox) =
+  ## Makes sure there are not new lines in a single line text box
+  if not textBox.multiline:
+    textBox.runes.keepIf(proc (r: Rune): bool = r != Rune(10))
 
 proc size*(textBox: TextBox): Vec2 =
   ## Returns with and height as a Vec2
@@ -82,10 +91,14 @@ proc selection*(textBox: TextBox): HSlice[int, int] =
 
 proc layout*(textBox: TextBox): seq[GlyphPosition] =
   if textBox.glyphs.len == 0:
+    textBox.multilineCheck()
+    var size = vec2(1E10, 1E10)
+    if textBox.wordWrap:
+      size = textBox.size
     textBox.glyphs = textBox.font.typeset(
       textBox.runes,
       vec2(0, 0),
-      size=textBox.size,
+      size=size,
       clip=false
     )
   return textBox.glyphs
@@ -105,8 +118,13 @@ proc locationRect*(textBox: TextBox, loc: int): Rect =
   if layout.len > 0:
     if loc >= layout.len:
       let g = layout[^1]
-      result = g.selectRect
-      result.x += g.selectRect.w
+      # if last char is a new line go to next line
+      if g.character == "\n":
+        result.x = 0
+        result.y = g.selectRect.y + textBox.font.lineHeight
+      else:
+        result = g.selectRect
+        result.x += g.selectRect.w
     else:
       let g = layout[loc]
       result = g.selectRect
@@ -151,20 +169,26 @@ proc removeSelection(textBox: TextBox) =
   discard textBox.removedSelection()
 
 proc adjustScroll*(textBox: TextBox) =
-  ## Adjust scroll.y to make sure cursor is in the window
+  ## Adjust scroll to make sure cursor is in the window
   let
     r = textBox.cursorRect
-    cursorYTop = r.y
-    cursorYBottom = r.y + r.h
-  # is pos.y inside the window of scroll.y and height?
-  if cursorYTop < textBox.scroll.y:
-    textBox.scroll.y = cursorYTop
-  if cursorYBottom > textBox.scroll.y + float textBox.height:
-    textBox.scroll.y = cursorYBottom - float textBox.height
+  # is pos.y inside the window?
+  if r.y < textBox.scroll.y:
+    textBox.scroll.y = r.y
+  if r.y + r.h > textBox.scroll.y + float textBox.height:
+    textBox.scroll.y = r.y + r.h - float textBox.height
+  # is pos.x inside the window?
+  if r.x < textBox.scroll.x:
+    textBox.scroll.x = r.x
+  if r.x + r.w > textBox.scroll.x + float textBox.width:
+    textBox.scroll.x = r.x + r.w - float textBox.width
 
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.
   textBox.removeSelection()
+  # dont add new lines in a single line box
+  if not textBox.multiline and rune == Rune(10):
+    return
   if textBox.cursor == textBox.runes.len:
      textBox.runes.add(rune)
   else:
@@ -357,17 +381,17 @@ proc pageDown*(textBox: TextBox, shift = false) =
 
 proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   ## Click on this with a mouse
-  textBox.mousePos = mousePos
-  textBox.mousePos.y += float(textBox.scroll.y)
+  textBox.mousePos = mousePos + textBox.scroll
   # pick where to place the cursor
   let pos = textBox.layout.pickGlyphAt(textBox.mousePos)
   if pos.character != "":
     textBox.cursor = pos.count
     textBox.savedX = textBox.mousePos.x
-    # when selecting the last character, select the end
-    let pickOffset = textBox.mousePos - pos.selectRect.xy
-    if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
-      inc textBox.cursor
+    if pos.character != "\n":
+      # select to the right or left of the character based on what is closer
+      let pickOffset = textBox.mousePos - pos.selectRect.xy
+      if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
+        inc textBox.cursor
   else:
     # if above the text select first character
     if textBox.mousePos.y < 0:
@@ -375,12 +399,13 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
     # if below text select last character + 1
     if textBox.mousePos.y > float textBox.innerHeight:
       textBox.cursor = textBox.glyphs.len
-
   textBox.savedX = textBox.mousePos.x
   textBox.adjustScroll()
 
-  if click:
+  if not shift and click:
     textBox.selector = textBox.cursor
+
+  print "mouseAction", textBox.cursor, textBox.selector, click, textBox.mousePos
 
 
 proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
