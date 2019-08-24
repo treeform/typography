@@ -221,9 +221,9 @@ This library does not support Subpixel Antialising.
 
 # Text Boxes
 
-Full backend implementation of a text area.
+Full backend implementation of a text area. You need to connect your own rendering, keyboard and mouse input.
 
-Often when displaying text you also need to edit text. This is where the textbox part of this library comes in. This implemented the backend of a text box/text area/input element/text field. All you need to do is to wire up the graphics, keybaord and mouse input. Text boxes are surprisingly hard to implement right and the users are very familiar with how they work.
+Often when displaying text you also need to edit text. This is where the textbox part of this library comes in. This implemented the backend of a text box/text area/input element/text field. Text boxes are surprisingly hard to implement right because the users are very familiar with how they work, so any missing features or inconsistencies are painfully obvious.
 
 Here is a small list of some of the features:
 

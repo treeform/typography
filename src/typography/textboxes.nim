@@ -34,9 +34,12 @@ type TextBox* = ref object
   runes*: seq[Rune] # the runes we are typing
   width*: int # width of text box in px
   height*: int # height of text box in px
-  scrollY*: int # Y scroll position
+  scroll*: Vec2 # scroll position
   font*: Font
   mousePos*: Vec2
+
+  multiline*: bool # single line only (good for input fields)
+  wordWrap*: bool # should the lines wrap or not
 
   glyphs: seq[GlyphPosition]
   savedX: float
@@ -148,16 +151,16 @@ proc removeSelection(textBox: TextBox) =
   discard textBox.removedSelection()
 
 proc adjustScroll*(textBox: TextBox) =
-  ## Adjust scrollY to make sure cursor is in the window
+  ## Adjust scroll.y to make sure cursor is in the window
   let
     r = textBox.cursorRect
-    cursorYTop = int(r.y)
-    cursorYBottom = int(r.y + r.h)
-  # is pos.y inside the window of scrollY and height?
-  if cursorYTop < textBox.scrollY:
-    textBox.scrollY = cursorYTop
-  if cursorYBottom > textBox.scrollY + textBox.height:
-    textBox.scrollY = cursorYBottom - textBox.height
+    cursorYTop = r.y
+    cursorYBottom = r.y + r.h
+  # is pos.y inside the window of scroll.y and height?
+  if cursorYTop < textBox.scroll.y:
+    textBox.scroll.y = cursorYTop
+  if cursorYBottom > textBox.scroll.y + float textBox.height:
+    textBox.scroll.y = cursorYBottom - float textBox.height
 
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.
@@ -355,7 +358,7 @@ proc pageDown*(textBox: TextBox, shift = false) =
 proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos
-  textBox.mousePos.y += float(textBox.scrollY)
+  textBox.mousePos.y += float(textBox.scroll.y)
   # pick where to place the cursor
   let pos = textBox.layout.pickGlyphAt(textBox.mousePos)
   if pos.character != "":
@@ -421,13 +424,13 @@ proc resize*(textBox: TextBox, size: Vec2) =
   textBox.adjustScroll()
 
 
-proc scroll*(textBox: TextBox, amount: float) =
+proc scrollBy*(textBox: TextBox, amount: float) =
   ## Scroll text box with a scroll wheel
-  textBox.scrollY += int(amount)
+  textBox.scroll.y += amount
   # make sure it does not scroll off the top
-  textBox.scrollY = max(0, textBox.scrollY)
+  textBox.scroll.y = max(0, textBox.scroll.y)
   # or the bottom
-  textBox.scrollY = min(textBox.innerHeight - textBox.height, textBox.scrollY)
+  textBox.scroll.y = min(float(textBox.innerHeight - textBox.height), textBox.scroll.y)
   # Check if there is not enough text to scroll
   if textBox.innerHeight < textBox.height:
-    textBox.scrollY = 0
+    textBox.scroll.y = 0
