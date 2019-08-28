@@ -36,6 +36,8 @@ type TextBox* = ref object
   height*: int # height of text box in px
   scroll*: Vec2 # scroll position
   font*: Font
+  fontSize*: float
+  lineHeight*: float
   mousePos*: Vec2
 
   multiline*: bool # single line only (good for input fields)
@@ -51,6 +53,8 @@ proc newTextBox*(font: Font, width, height: int): TextBox =
   ## Creates new empty textbox
   result = TextBox()
   result.font = font
+  result.fontSize = font.size
+  result.lineHeight = font.lineHeight
   result.width = width
   result.height = height
   result.multiline = true
@@ -60,6 +64,8 @@ proc newTextBox*(font: Font, width, height: int, text: string, multiline = true)
   ## Creates new text box with existing text
   result = TextBox()
   result.font = font
+  result.fontSize = font.size
+  result.lineHeight = font.lineHeight
   result.width = width
   result.height = height
   result.multiline = multiline
@@ -91,6 +97,8 @@ proc selection*(textBox: TextBox): HSlice[int, int] =
 
 proc layout*(textBox: TextBox): seq[GlyphPosition] =
   if textBox.glyphs.len == 0:
+    textBox.font.size = textBox.fontSize
+    textBox.font.lineHeight = textBox.lineHeight
     textBox.multilineCheck()
     var size = vec2(1E10, 1E10)
     if textBox.wordWrap:
@@ -193,10 +201,10 @@ proc typeCharacter*(textBox: TextBox, rune: Rune) =
      textBox.runes.add(rune)
   else:
     textBox.runes.insert(rune, textBox.cursor)
-  textBox.glyphs.setLen(0)
-  textBox.adjustScroll()
   inc textBox.cursor
   textBox.selector = textBox.cursor
+  textBox.glyphs.setLen(0)
+  textBox.adjustScroll()
 
 proc typeCharacter*(textBox: TextBox, letter: char) =
   ## Add a character to the text box.
@@ -208,9 +216,9 @@ proc typeCharacters*(textBox: TextBox, s: string) =
   for rune in runes(s):
     textBox.runes.insert(rune, textBox.cursor)
     inc textBox.cursor
+  textBox.selector = textBox.cursor
   textBox.glyphs.setLen(0)
   textBox.adjustScroll()
-  textBox.selector = textBox.cursor
 
 proc copy*(textBox: TextBox): string =
   ## Returns the text that was copied
@@ -404,8 +412,6 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
 
   if not shift and click:
     textBox.selector = textBox.cursor
-
-  print "mouseAction", textBox.cursor, textBox.selector, click, textBox.mousePos
 
 
 proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
