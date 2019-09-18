@@ -219,6 +219,31 @@ This library does not support Subpixel Antialising.
 
 [Apple removes Subpixel Antialising](https://www.reddit.com/r/apple/comments/8wpk18/macos_mojave_nukes_subpixel_antialiasing_making/)
 
+# Text Boxes
+
+Full backend implementation of a text area. You need to connect your own rendering, keyboard and mouse input.
+
+Often when displaying text you also need to edit text. This is where the textbox part of this library comes in. This implemented the backend of a text box/text area/input element/text field. Text boxes are surprisingly hard to implement right because the users are very familiar with how they work, so any missing features or inconsistencies are painfully obvious.
+
+Here is a small list of some of the features:
+
+* Typing, arrow keys, backspace and delete.
+* Mouse clicking, dragging to select.
+* Almost everything can be used to select with shift.
+* Double click to select word, triple click to select paragraph, quad click to select all.
+* Page up and page down.
+* Move left/right by word.
+* Move to start or end of lines.
+* Copy, Cut and Paste.
+* Scrolling and scroll to cursor when typing or selecting.
+* Resizing of the text box while it’s being added.
+* Remember your horizontal position when going up or down with short lines.
+
+![example output](tests/textbox/left_right.gif?raw=true)
+
+![example output](tests/textbox/select.gif?raw=true)
+
+
 # How to convert any font to SVG font using FontForge:
 
 SVG fonts are really nice. The are simple to parse and understand and debug. They are very uncommon though. But they are good as a debug input, output, or intermediate step.

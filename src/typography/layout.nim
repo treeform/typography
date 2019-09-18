@@ -54,13 +54,14 @@ proc canWrap(rune: Rune): bool =
 
 proc typeset*(
     font: Font,
-    text: string,
+    runes: seq[Rune],
     pos: Vec2 = vec2(0, 0),
     size: Vec2 = vec2(0, 0),
     hAlign: HAlignMode = Left,
-    vAlign: VAlignMode = Top
+    vAlign: VAlignMode = Top,
+    clip = true
   ): seq[GlyphPosition] =
-  ## Draw text string
+  ## Typeset runes and return glyph positions that is ready to draw
 
   result = @[]
   var
@@ -80,10 +81,10 @@ proc typeset*(
     glyphIndex = 0
     lastCanWrap = 0
 
-  for rune in runes(text):
+  for rune in runes:
     var c = $rune
     if rune == Rune(10):
-      # add special 0 width glyph on this line
+      # add special small width glyph on this line
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.size,
@@ -134,7 +135,7 @@ proc typeset*(
         if lastCanWrap != -1 and goBack < 0:
           lastCanWrap = -1
           at.y += font.lineHeight
-          if size.y != 0 and at.y - pos.y > size.y:
+          if clip and size.y != 0 and at.y - pos.y > size.y:
             # delete glyphs that would wrap into next line that is clipped
             result.setLen(result.len + goBack)
             return
@@ -155,7 +156,7 @@ proc typeset*(
 
         glyphPos = vec2(floor(at.x), floor(at.y))
 
-      if size.y != 0 and at.y - pos.y > size.y:
+      if clip and size.y != 0 and at.y - pos.y > size.y:
         # reached the bottom of the area, clip
         return
 
@@ -221,6 +222,18 @@ proc typeset*(
       pos.rect.y += offset
 
 
+proc typeset*(
+    font: Font,
+    text: string,
+    pos: Vec2 = vec2(0, 0),
+    size: Vec2 = vec2(0, 0),
+    hAlign: HAlignMode = Left,
+    vAlign: VAlignMode = Top
+  ): seq[GlyphPosition] =
+  ## Typeset string and return glyph positions that is ready to draw
+  typeset(font, toRunes(text), pos, size, hAlign, vAlign)
+
+
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout
   for pos in layout:
@@ -249,10 +262,12 @@ proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
 
 
 proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
-  ## Given a layout gives selection from start to stop
-  ## If start == stop, just a caret position is given
+  ## Given a layout gives selection from start to stop in glyph positions
+  ## If start == stop returns []
+  if start == stop:
+    return
   for g in layout:
-    if g.index >= start and g.index < stop:
+    if g.count >= start and g.count < stop:
       if result.len > 0:
         let onSameLine = result[^1].y == g.selectRect.y and result[^1].h == g.selectRect.h
         let notTooFar = g.selectRect.x - result[^1].x < result[^1].w * 2
@@ -268,7 +283,7 @@ proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
   var minG: GlyphPosition
   var minDist = -1.0
   for i, g in layout:
-    if g.selectRect.y < pos.y and pos.y < g.selectRect.y + g.font.lineHeight:
+    if g.selectRect.y <= pos.y and pos.y < g.selectRect.y + g.selectRect.h:
       # on same line
       let dist = abs(pos.x - (g.selectRect.x))
       # closet character
