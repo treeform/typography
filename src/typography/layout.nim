@@ -277,3 +277,11 @@ proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
         minDist = dist
         minG = g
   return minG
+
+
+proc textBounds*(layout: seq[GlyphPosition]): Vec2 =
+  ## Given a layout, return how large the rectange is
+  ## You can use this to get text width or height.
+  for i, g in layout:
+    result.x = max(result.x, g.selectRect.x + g.selectRect.w)
+    result.y = max(result.y, g.selectRect.y + g.selectRect.h)
