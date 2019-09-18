@@ -59,7 +59,8 @@ proc typeset*(
     size: Vec2 = vec2(0, 0),
     hAlign: HAlignMode = Left,
     vAlign: VAlignMode = Top,
-    clip = true
+    clip = true,
+    tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
   ## Typeset runes and return glyph positions that is ready to draw
 
@@ -73,8 +74,14 @@ proc typeset*(
     boundsMin = vec2(0, 0)
     boundsMax = vec2(0, 0)
     glyphCount = 0
+    tabWidth = tabWidth
+
+  if tabWidth == 0.0:
+    tabWidth = font.size * 4
 
   at.y += font.size
+
+
 
   var
     strIndex = 0
@@ -83,7 +90,7 @@ proc typeset*(
 
   for rune in runes:
     var c = $rune
-    if rune == Rune(10):
+    if rune == Rune(10): # new line \n
       # add special small width glyph on this line
       var selectRect = rect(
         floor(at.x),
@@ -107,6 +114,9 @@ proc typeset*(
 
       at.x = lineStart
       at.y += font.lineHeight
+      continue
+    elif rune == Rune(9): # tab \t
+      at.x = ceil(at.x / tabWidth) * tabWidth
       continue
 
     if canWrap(rune):
@@ -228,10 +238,12 @@ proc typeset*(
     pos: Vec2 = vec2(0, 0),
     size: Vec2 = vec2(0, 0),
     hAlign: HAlignMode = Left,
-    vAlign: VAlignMode = Top
+    vAlign: VAlignMode = Top,
+    clip = true,
+    tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
   ## Typeset string and return glyph positions that is ready to draw
-  typeset(font, toRunes(text), pos, size, hAlign, vAlign)
+  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth)
 
 
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =

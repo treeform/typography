@@ -391,3 +391,25 @@ To where it bent in the undergrowth;""",
   image.drawRect(g.selectRect, rgba(255, 0, 0, 255))
 
   image.save("picking.png")
+
+
+block:
+  var image = newImage(500, 120, 4)
+
+  var font = readFontSvg("fonts/Ubuntu.svg")
+  font.size = 16
+  font.lineHeight = 20
+
+  # compute layout
+  var layout = font.typeset(
+    "name\tstate\tnumber\tcount\n" &
+    "cat\tT\t3.14\t0\n" &
+    "dog\tF\t2.11\t1\n" &
+    "really loong cat\tG\t123.678\t2",
+    vec2(10, 10),
+    tabWidth = 100)
+
+  # draw text at a layout
+  image.drawText(layout)
+  image.alphaWhite()
+  image.save("tabs.png")
