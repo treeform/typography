@@ -24,12 +24,12 @@ for fontPath in getSystemFonts():
     echo fontPath
 
     let (dir, name, ext) = fontPath.splitFile()
-    if fileExists("samples/" & name & ".png"):
-      continue
+    # if fileExists("samples/" & name & ".png"):
+    #   continue
 
     var font = readFontTtf(fontPath)
     echo font.name
-    font.size = 20
+    font.size = 30
     echo font.glyphs.len
 
     let
@@ -41,9 +41,11 @@ for fontPath in getSystemFonts():
     var x, y: int
     var names = toSeq(font.glyphs.keys)
     names.sort(cmp)
-    for name in names:
+    for i, name in names:
+
       try:
         var img = font.getGlyphImage(name)
+        #img.save("samples/letter" & $i & ".png")
         ctx.blitWithMask(
           img,
           rect(
@@ -56,11 +58,18 @@ for fontPath in getSystemFonts():
           ),
           rgba(0,0,0,255)
         )
-        x += 100
-        if x >= 1000:
-          x = 0
-          y += 100
       except:
-        echo "error on: ", repr(name)
-        break
+        echo "error on: ", i
+        ctx.fillRect(
+          rect(
+            float(x) + 20.0, float(y) + 20.0,
+            float 20, float 20
+          ),
+          rgba(255,0,0,255)
+        )
+
+      x += 100
+      if x >= 1000:
+        x = 0
+        y += 100
     ctx.save("samples/" & name & ".png")

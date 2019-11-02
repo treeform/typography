@@ -5,7 +5,7 @@ import vmath, print
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
-    quit("cannot read from stream at " & $s.getPosition())
+    raise newException(ValueError, "cannot read from stream at " & $s.getPosition())
 
 proc readUInt8(stream: Stream): uint8 =
   var val: uint8 = 0
@@ -227,7 +227,7 @@ proc readFontTtf*(filename: string): Font =
   if headIndexToLocFormat == 0:
     # locaType Uint16
     for i in 0..<int(maxpNumGlyphs):
-      loca.add int f.readUint16() * 2
+      loca.add int(f.readUint16()) * 2
       locaOffsetSize.add int locaOffset
       locaOffset += 2
   else:
@@ -540,7 +540,6 @@ proc ttfGlyphToCommands*(glyph: var Glyph) =
     f = glyph.ttfStream
     offset = glyph.ttfOffset
 
-  f.setPosition(0)
   f.setPosition(int offset)
   let numberOfContours = f.readInt16()
   assert numberOfContours == glyph.numberOfContours
@@ -630,55 +629,47 @@ proc ttfGlyphToCommands*(glyph: var Glyph) =
       path[^1].numbers.add float(x)
       path[^1].numbers.add float(y)
 
-    var
-      startPts = 0
-      currentPts = 0
-      endPts = 0
-      prevPoint: TtfCoridante
-      currentPoint: TtfCoridante
-      nextPoint: TtfCoridante
+    var contours: seq[seq[TtfCoridante]]
+    var currIdx = 0
+    for endIdx in endPtsOfContours:
+      contours.add(coordinates[currIdx .. endIdx])
+      currIdx = endIdx + 1
 
-    for i in 0..<endPtsOfContours.len:
-      endPts = endPtsOfContours[i]
-      while currentPts < endPts + 1:
-        currentPoint = coordinates[currentPts]
-        if currentPts != startPts:
-          prevPoint = coordinates[currentPts - 1]
-        else:
-          prevPoint = coordinates[endPts]
-        if currentPts != endPts and currentPts + 1 < coordinates.len:
-          nextPoint = coordinates[currentPts + 1]
-        else:
-          nextPoint = coordinates[startPts]
+    for contour in contours:
+      var prev: TtfCoridante
+      var curr: TtfCoridante = contour[^1]
+      var next: TtfCoridante = contour[0]
 
-        if currentPts == startPts:
-          if currentPoint.isOnCurve:
-            cmd(Move, currentPoint.x, currentPoint.y)
-          else:
-            cmd(Move, prevPoint.x, prevPoint.y)
-            cmd(Quad, currentPoint.x, currentPoint.y)
+      if curr.isOnCurve:
+        cmd(Move, curr.x, curr.y)
+      else:
+        if next.isOnCurve:
+          cmd(Move, next.x, next.y)
         else:
-          if currentPoint.isOnCurve and prevPoint.isOnCurve:
-            cmd(Line)
-          elif not currentPoint.isOnCurve and not prevPoint.isOnCurve:
-            var midx = (prevPoint.x + currentPoint.x) div 2
-            var midy = (prevPoint.y + currentPoint.y) div 2
-            cmd(midx, midy)
-          elif not currentPoint.isOnCurve:
-            cmd(Quad)
-          cmd(currentPoint.x, currentPoint.y)
+          # If both first and last points are off-curve, start at their middle.
+          cmd(Move, (curr.x + next.x) div 2, (curr.y + next.y) div 2)
 
-        inc currentPts
+      for i in 0 ..< contour.len:
+        prev = curr
+        curr = next
+        next = contour[(i + 1) mod contour.len]
 
-      if not currentPoint.isOnCurve:
-        if coordinates[startPts].isOnCurve:
-         cmd(coordinates[startPts].x, coordinates[startPts].y)
+        if curr.isOnCurve:
+          # This is a straight line.
+          cmd(Line, curr.x, curr.y)
         else:
-          var midx = (prevPoint.x + currentPoint.x) div 2
-          var midy = (prevPoint.y + currentPoint.y) div 2
-          cmd(midx, midy)
+          var prev2 = prev
+          var next2 = next
+
+          if not prev.isOnCurve:
+            prev2 = TtfCoridante(x: (curr.x + prev.x) div 2, y: (curr.y + prev.y) div 2)
+          if not next.isOnCurve:
+            next2 = TtfCoridante(x: (curr.x + next.x) div 2, y: (curr.y + next.y) div 2)
+
+          cmd(Quad, curr.x, curr.y)
+          cmd(next2.x, next2.y)
+
       cmd(End)
-      startPts = endPtsOfContours[i] + 1
 
     glyph.commands = path
 
