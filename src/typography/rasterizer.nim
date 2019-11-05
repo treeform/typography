@@ -3,7 +3,7 @@ import flippy, vmath, chroma, print
 import font, ttf
 
 
-proc makeReady*(glyph: var Glyph) =
+proc makeReady*(glyph: var Glyph, font: Font) =
   ## Make sure the glyph is ready to render
 
   if glyph.ready:
@@ -11,14 +11,12 @@ proc makeReady*(glyph: var Glyph) =
 
   if glyph.ttfStream != nil:
     #perfBegin "ttfGlyphToCommands"
-    glyph.ttfGlyphToCommands()
+    glyph.ttfGlyphToCommands(font)
     #perfEnd()
-
   if glyph.path.len > 0:
     #perfBegin "glyphPathToCommands"
     glyph.glyphPathToCommands()
     #perfEnd()
-
   if glyph.commands.len > 0:
     #perfBegin "commandsToShapes"
     glyph.commandsToShapes()
@@ -50,7 +48,7 @@ proc getGlyphSize*(
     glyph: var Glyph
   ): Vec2 =
 
-  glyph.makeReady()
+  glyph.makeReady(font)
   var
     fontHeight = font.ascent - font.descent
     scale = font.size / fontHeight
@@ -184,7 +182,7 @@ proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
   ## Get an outine of the glyph with contorls points. Useful for debugging.
   var glyph = font.glyphs[unicode]
 
-  glyph.makeReady()
+  glyph.makeReady(font)
 
   var fontHeight = font.ascent - font.descent
   var scale = font.size / (fontHeight)
@@ -251,7 +249,7 @@ proc getGlyphImageOffset*(
     subPixelShift: float = 0.0,
   ): Vec2 =
   ## Get image for this glyph
-  glyph.makeReady()
+  glyph.makeReady(font)
   var fontHeight = font.ascent - font.descent
   var scale = font.size / fontHeight
   var tx = int floor(glyph.bboxMin.x * scale)

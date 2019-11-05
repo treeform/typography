@@ -30,6 +30,7 @@ type
     ready*: bool
     isEmpty*: bool
     numberOfContours*: int
+    isComposite*: bool
 
     # SVG
     path*: string
@@ -55,6 +56,7 @@ type
     lineHeight*: float
     glyphs*: Table[string, Glyph]
     kerning*: Table[string, float]
+    glyphArr*: seq[Glyph]
 
 
 proc `sizePt`*(font: Font): float =
