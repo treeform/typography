@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.1"
+version       = "0.2.2"
 author        = "treeform"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
@@ -13,4 +13,4 @@ requires "flippy >= 0.2.0"
 requires "vmath >= 0.2.0"
 requires "chroma >= 0.0.1"
 requires "print >= 0.1.0"
-requires "stb_image >= 2.1"
+requires "stb_image >= 2."
