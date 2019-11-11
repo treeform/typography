@@ -447,9 +447,9 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
       component.xScale = 1
       component.yScale = 1
 
-      if (flags and 1) != 0:
+      if (flags and 1) > 0.uint8:
         # The arguments are words
-        if (flags and 2) != 0:
+        if (flags and 2) > 0.uint8:
           # values are offset
           component.dx = float32 f.readInt16()
           component.dy = float32 f.readInt16()
@@ -459,7 +459,7 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
 
       else:
         # The arguments are bytes
-        if (flags and 2) != 0:
+        if (flags and 2) > 0.uint8:
           # values are offset
           component.dx = float32 f.readInt8()
           component.dy = float32 f.readInt8()
@@ -467,15 +467,15 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
           # values are matched points
           component.matchedPoints = [int f.readInt8(), int f.readInt8()]
 
-      if (flags and 8) != 0:
+      if (flags and 8) > 0.uint8:
         # We have a scale
         component.xScale = f.readFixed16()
         component.yScale = component.xScale
-      elif (flags and 64) != 0:
+      elif (flags and 64) > 0.uint8:
         # We have an X / Y scale
         component.xScale = f.readFixed16()
         component.yScale = f.readFixed16()
-      elif (flags and 128) != 0:
+      elif (flags and 128) > 0.uint8:
         # We have a 2x2 transformation
         component.xScale = f.readFixed16()
         component.scale01 = f.readFixed16()
