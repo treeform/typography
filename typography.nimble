@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0"
+version       = "0.2.1"
 author        = "treeform"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
