@@ -256,6 +256,11 @@ proc readFontTtf*(filename: string): Font =
       glyphTabe[offset] = Glyph()
       glyphTabe[offset].ready = false
 
+      var isNull = glyphIndex + 1 < loca.len and loca[glyphIndex] == loca[glyphIndex + 1]
+      if isNull:
+        glyphTabe[offset].isEmpty = true
+        glyphTabe[offset].ready = true
+
       let numberOfContours = f.readInt16()
       if numberOfContours == 0:
         glyphTabe[offset].isEmpty = true
