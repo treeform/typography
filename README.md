@@ -11,6 +11,12 @@ See api reference: https://treeform.github.io/typography/index.html
 * TTF fonts - Fair support. Most modern features are supported but font format came out in 1994 and has a bunch of formats for different OSes that are not supported.
 * OTF fonts - Basic TTF outline support only. No support for CFF or SVG outlines.
 
+# Requred Packadges
+
+* [vmath](https://github.com/treeform/vmath) - vector stuff, vec2 and matrices.
+* [flippy](https://github.com/treeform/flippy) - image stuff, saving and loading PNG
+* [chroma](https://github.com/treeform/chroma) - color stuff, mostly to save and add rgba colors.
+
 # Basic usage
 
 ```nim
