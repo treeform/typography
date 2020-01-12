@@ -3,6 +3,9 @@ import flippy, vmath, print
 import font, rasterizer
 
 
+const
+  normalLineHeight* = 0 # default line height of font.size * 1.2
+
 type
   Span* = object
     ## Represents a run of litter of same size and font
@@ -86,6 +89,9 @@ proc typeset*(
     strIndex = 0
     glyphIndex = 0
     lastCanWrap = 0
+    lineHeight = font.lineHeight
+  if lineHeight == normalLineHeight:
+    lineHeight = floor(font.size * 1.2)
 
   for rune in runes:
     var c = $rune
@@ -95,7 +101,7 @@ proc typeset*(
         floor(at.x),
         floor(at.y) - font.size,
         font.glyphs[" "].advance * scale,
-        font.lineHeight
+        lineHeight
       )
       result.add GlyphPosition(
         font: font,
@@ -113,7 +119,7 @@ proc typeset*(
       strIndex += c.len
 
       at.x = lineStart
-      at.y += font.lineHeight
+      at.y += lineHeight
       continue
     elif rune == Rune(9): # tab \t
       at.x = ceil(at.x / tabWidth) * tabWidth
@@ -144,7 +150,7 @@ proc typeset*(
         let goBack = lastCanWrap - glyphIndex
         if lastCanWrap != -1 and goBack < 0:
           lastCanWrap = -1
-          at.y += font.lineHeight
+          at.y += lineHeight
           if clip and size.y != 0 and at.y - pos.y > size.y:
             # delete glyphs that would wrap into next line that is clipped
             result.setLen(result.len + goBack)
@@ -154,13 +160,13 @@ proc typeset*(
           let shift = result[result.len + goBack].rect.x - pos.x
           for i in result.len + goBack ..< result.len:
             result[i].rect.x -= shift
-            result[i].rect.y += font.lineHeight
+            result[i].rect.y += lineHeight
             result[i].selectRect.x -= shift
-            result[i].selectRect.y += font.lineHeight
+            result[i].selectRect.y += lineHeight
 
           at.x -= shift
         else:
-          at.y += font.lineHeight
+          at.y += lineHeight
           at.x = lineStart
 
 
@@ -174,7 +180,7 @@ proc typeset*(
       floor(at.x),
       floor(at.y) - font.size,
       glyphSize.x + 1,
-      font.lineHeight
+      lineHeight
     )
 
     result.add GlyphPosition(

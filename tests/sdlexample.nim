@@ -15,7 +15,7 @@ render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsyn
 # load font
 var font = readFontTtf("fonts/Moon Bold.otf")
 font.size = 16
-font.lineHeight = 20
+#font.lineHeight = 20
 
 var
   evt = sdl2.defaultEvent
