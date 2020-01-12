@@ -37,7 +37,7 @@ proc draw(textBox: TextBox, imageName: string) =
 
   # draw scroll region
   image.drawRect(
-    rect(0, float textBox.scrollY, float textBox.width, float textBox.height),
+    rect(0, float textBox.scroll.y, float textBox.width, float textBox.height),
     rgba(0, 255, 255, 155))
 
   # draw selection regions
@@ -81,6 +81,15 @@ block:
   textBox.delete()
   textBox.draw("textbox/backspace_delete.png")
 
+
+block:
+  print "ctr backspace & ctr delete"
+  var textBox = newTextBox(font, 300, 120, "Lorem  dolor sit amet, consectetur elit.")
+  textBox.setCursor(11)
+  textBox.backspaceWord()
+  textBox.setCursor(7)
+  textBox.deleteWord()
+  textBox.draw("textbox/word_backspace_delete.png")
 
 block:
   print "left & right"

@@ -259,6 +259,28 @@ proc delete*(textBox: TextBox, shift = false) =
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
 
+proc backspaceWord*(textBox: TextBox, shift = false) =
+  ## Backspace wrod command. (Usually ctr + backspace)
+  if textBox.removedSelection(): return
+  if textBox.cursor > 0:
+    while textBox.cursor > 0 and
+      not textBox.runes[textBox.cursor - 1].isWhiteSpace():
+        textBox.runes.delete(textBox.cursor - 1)
+        dec textBox.cursor
+    textBox.glyphs.setLen(0)
+    textBox.adjustScroll()
+    textBox.selector = textBox.cursor
+
+proc deleteWord*(textBox: TextBox, shift = false) =
+  ## Delete word command. (Usually ctr + delete)
+  if textBox.removedSelection(): return
+  if textBox.cursor < textBox.runes.len:
+    while textBox.cursor < textBox.runes.len and
+      not textBox.runes[textBox.cursor].isWhiteSpace():
+        textBox.runes.delete(textBox.cursor)
+    textBox.glyphs.setLen(0)
+    textBox.adjustScroll()
+
 proc left*(textBox: TextBox, shift = false) =
   ## Move cursor left
   if textBox.cursor > 0:
@@ -310,7 +332,7 @@ proc up*(textBox: TextBox, shift = false) =
       textBox.selector = textBox.cursor
 
 proc leftWord*(textBox: TextBox, shift = false) =
-  ## Move cursor left by a word
+  ## Move cursor left by a word (Usually ctr + left)
   if textBox.cursor > 0:
     dec textBox.cursor
   while textBox.cursor > 0 and
@@ -322,7 +344,7 @@ proc leftWord*(textBox: TextBox, shift = false) =
   textBox.savedX = textBox.cursorPos.x
 
 proc rightWord*(textBox: TextBox, shift = false) =
-  ## Move cursor right by a word
+  ## Move cursor right by a word (Usually ctr + right)
   if textBox.cursor < textBox.runes.len:
     inc textBox.cursor
   while textBox.cursor < textBox.runes.len and
