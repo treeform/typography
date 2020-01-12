@@ -65,9 +65,9 @@ proc getGlyphImage*(
     glyphOffset: var Vec2,
     quality = 4,
     subPixelShift: float = 0.0,
+    color = ColorRgba(r:255, g:255, b:255, a:255),
   ): Image =
   ## Get image for this glyph
-  let white = ColorRgba(r:255, g:255, b:255, a:255)
 
   var
     size = getGlyphSize(font, glyph)
@@ -115,7 +115,7 @@ proc getGlyphImage*(
         var to = hits[i+1]
 
         for j in int(at)+1..int(to)-1:
-          image.putRgba(j, h-y, white)
+          image.putRgba(j, h-y, color)
         i += 2
 
   else:
@@ -173,7 +173,8 @@ proc getGlyphImage*(
           if a > 1.0:
             a = 1.0
           var alpha = uint8(a*255.0)
-          var color = ColorRgba(r:255, g:255, b:255, a:alpha)
+          var color = color
+          color.a = alpha
           image.putRgba(j, h-y, color)
 
   return image
