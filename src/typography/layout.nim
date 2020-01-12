@@ -174,7 +174,7 @@ proc typeset*(
       floor(at.x),
       floor(at.y) - font.size,
       glyphSize.x + 1,
-      font.lineHeight
+      max(glyphSize.y, font.lineHeight)
     )
 
     result.add GlyphPosition(
