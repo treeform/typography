@@ -137,7 +137,7 @@ proc locationRect*(textBox: TextBox, loc: int): Rect =
       let g = layout[loc]
       result = g.selectRect
   result.w = textBox.font.cursorWidth
-  result.h = textBox.font.lineHeight
+  result.h = textBox.font.lineHeight + 1.0
 
 proc cursorRect*(textBox: TextBox): Rect =
   ## Rectangle where cursor should be drawn

@@ -20,6 +20,7 @@ type
     rect*: Rect # Where to draw the image character
     selectRect*: Rect # Were to draw or hit selection
     character*: string
+    rune*: Rune
     count*: int
     index*: int
 
@@ -81,8 +82,6 @@ proc typeset*(
 
   at.y += font.size
 
-
-
   var
     strIndex = 0
     glyphIndex = 0
@@ -104,6 +103,7 @@ proc typeset*(
         subPixelShift: 0,
         rect: rect(0,0,0,0),
         selectRect: selectRect,
+        rune: rune,
         character: c,
         count: glyphCount,
         index: strIndex
@@ -184,6 +184,7 @@ proc typeset*(
       rect: rect(glyphPos, glyphSize),
       selectRect: selectRect,
       character: c,
+      rune: rune,
       count: glyphCount,
       index: strIndex
     )
