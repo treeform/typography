@@ -15,7 +15,6 @@ render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsyn
 # load font
 var font = readFontTtf("fonts/Moon Bold.otf")
 font.size = 16
-#font.lineHeight = 20
 
 var
   evt = sdl2.defaultEvent
@@ -24,7 +23,7 @@ var
 type GlyphKey = object
   rune: Rune
   size: float
-  subPixelShift: float
+  subPixelShift: int
 
 proc hash(x: GlyphKey): Hash =
   hashData(unsafeAddr x, sizeOf x)
@@ -132,12 +131,12 @@ To where it bent in the undergrowth;""")
     for pos in layout:
       var font = pos.font
       if pos.character in font.glyphs:
-        let key = GlyphKey(rune: pos.rune, size: font.size, subPixelShift: quantize(pos.subPixelShift, 10))
+        let key = GlyphKey(rune: pos.rune, size: font.size, subPixelShift: int(pos.subPixelShift * 10))
 
         if key notin glyphCache:
           var glyph = font.glyphs[pos.character]
           var glyphOffset: Vec2
-          let image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=quantize(pos.subPixelShift, 10))
+          let image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=quantize(pos.subPixelShift, 0.1))
           glyphCache[key] = GlyphEntry(
               image: image,
               texture: image.texture,
