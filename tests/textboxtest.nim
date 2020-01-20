@@ -2,7 +2,6 @@ import typography, typography/textboxes, chroma, unicode, print, strformat
 
 import flippy, vmath
 
-
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
   ## This is hard to see in tests so we convert it to white background
@@ -15,7 +14,6 @@ proc alphaWhite(image: var Image) =
       c.b = uint8(255) - c.a
       c.a = 255
       image.putrgba(x, y, c)
-
 
 proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   var wh = wh - vec2(1, 1) # line width
@@ -51,14 +49,11 @@ proc draw(textBox: TextBox, imageName: string) =
   # draw mouse pos
   image.drawRect(rect(textBox.mousePos, vec2(4, 4)), rgba(255, 128, 128, 255))
 
-
-
   image.save(imageName)
 
 var font = readFontSvg("fonts/Ubuntu.svg")
 font.size = 16
 font.lineHeight = 20
-
 
 block:
   print "plain"
@@ -80,7 +75,6 @@ block:
   textBox.setCursor(0)
   textBox.delete()
   textBox.draw("textbox/backspace_delete.png")
-
 
 block:
   print "ctr backspace & ctr delete"
@@ -105,7 +99,6 @@ block:
     textBox.right()
 
   textBox.draw("textbox/left_right.png")
-
 
 block:
   print "left & right shift"
@@ -161,6 +154,41 @@ Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilis
   textBox.up()
   textBox.draw("textbox/up_down_9.png")
 
+block:
+  print "empty text box"
+  var textBox = newTextBox(font, 300, 120, "")
+  textBox.up()
+  textBox.down()
+  textBox.left()
+  textBox.right()
+  textBox.backspace()
+  textBox.delete()
+  textBox.backspaceWord()
+  textBox.deleteWord()
+  textBox.leftWord()
+  textBox.rightWord()
+  textBox.startOfLine()
+  textBox.endOfLine()
+  textBox.pageUp()
+  textBox.pageDown()
+
+block:
+  print "1char text box"
+  var textBox = newTextBox(font, 300, 120, "?")
+  textBox.up()
+  textBox.down()
+  textBox.left()
+  textBox.right()
+  textBox.backspace()
+  textBox.delete()
+  textBox.backspaceWord()
+  textBox.deleteWord()
+  textBox.leftWord()
+  textBox.rightWord()
+  textBox.startOfLine()
+  textBox.endOfLine()
+  textBox.pageUp()
+  textBox.pageDown()
 
 block:
   print "picking"
@@ -172,7 +200,6 @@ Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilis
   for i in 0..10:
     textBox.mouseAction(vec2(float 30+i*10, float 30+i*5), click=false)
     textBox.draw(&"textbox/picking_{i}.png")
-
 
 block:
   print "copy"
@@ -255,7 +282,6 @@ Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis quam odio, temp
   textBox.draw("textbox/jump_down_2.png")
   textBox.up()
   textBox.draw("textbox/jump_down_3.png")
-
 
 block:
   print "scrolling up & down"

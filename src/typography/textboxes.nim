@@ -301,6 +301,8 @@ proc right*(textBox: TextBox, shift = false) =
 
 proc down*(textBox: TextBox, shift = false) =
   ## Move cursor down
+  if textBox.layout.len == 0:
+    return
   let pos = textBox.layout.pickGlyphAt(
     vec2(textBox.savedX, textBox.cursorPos.y + textBox.font.lineHeight * 1.5))
   if pos.character != "":
@@ -317,6 +319,8 @@ proc down*(textBox: TextBox, shift = false) =
 
 proc up*(textBox: TextBox, shift = false) =
   ## Move cursor up
+  if textBox.layout.len == 0:
+    return
   let pos = textBox.layout.pickGlyphAt(
     vec2(textBox.savedX, textBox.cursorPos.y - textBox.font.lineHeight * 0.5))
   if pos.character != "":
@@ -377,6 +381,8 @@ proc endOfLine*(textBox: TextBox, shift = false) =
 
 proc pageUp*(textBox: TextBox, shift = false) =
   ## Move cursor up by half a text box height
+  if textBox.layout.len == 0:
+    return
   let
     pos = vec2(textBox.savedX, textBox.cursorPos.y - float(textBox.height) * 0.5)
     g = textBox.layout.pickGlyphAt(pos)
@@ -394,6 +400,8 @@ proc pageUp*(textBox: TextBox, shift = false) =
 
 proc pageDown*(textBox: TextBox, shift = false) =
   ## Move cursor down up by half a text box height
+  if textBox.layout.len == 0:
+    return
   let
     pos = vec2(textBox.savedX, textBox.cursorPos.y + float(textBox.height) * 0.5)
     g = textBox.layout.pickGlyphAt(pos)
@@ -435,7 +443,6 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   if not shift and click:
     textBox.selector = textBox.cursor
 
-
 proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
   ## Select word under the cursor (double click)
   textBox.mouseAction(mousePos, click=true)
@@ -451,7 +458,6 @@ proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
       textBox.runes[textBox.selector] == Rune(32):
         inc textBox.selector
 
-
 proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
   ## Select peragraph under the cursor (triple click)
   textBox.mouseAction(mousePos, click=true)
@@ -462,12 +468,10 @@ proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
     textBox.runes[textBox.selector] != Rune(10):
       inc textBox.selector
 
-
 proc selectAll*(textBox: TextBox) =
   ## Select all text (quad click)
   textBox.cursor = 0
   textBox.selector = textBox.runes.len
-
 
 proc resize*(textBox: TextBox, size: Vec2) =
   ## Resize text box
@@ -475,7 +479,6 @@ proc resize*(textBox: TextBox, size: Vec2) =
   textBox.height = int size.y
   textBox.glyphs.setLen(0)
   textBox.adjustScroll()
-
 
 proc scrollBy*(textBox: TextBox, amount: float) =
   ## Scroll text box with a scroll wheel
