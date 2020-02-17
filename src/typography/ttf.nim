@@ -76,14 +76,10 @@ proc readLongDateTime(stream: Stream): float64 =
 # todo remove
 proc ttfGlyphToCommands*(glyph: var Glyph, font: Font)
 
-proc readFontTtf*(filename: string): Font =
+proc readFontTtf*(f: Stream): Font =
   ## Reads TTF font
   var font = Font()
 
-  if not existsFile(filename):
-    raise newException(IOError, "File name " & filename & " not found")
-
-  var f = newFileStream(filename, fmRead)
   var version = f.readFixed32()
   #assert version == 1.0
 
@@ -405,6 +401,16 @@ proc readFontTtf*(filename: string): Font =
       assert false
 
   return font
+
+proc readFontTtf*(filename: string): Font =
+  ## Reads TTF font
+  var font = Font()
+
+  if not existsFile(filename):
+    raise newException(IOError, "File name " & filename & " not found")
+
+  var f = newFileStream(filename, fmRead)
+  return readFontTtf(f)
 
 
 proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
