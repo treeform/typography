@@ -519,14 +519,9 @@ proc readGlyf(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp, l
     result.list[glyphIndex] = result.table[offset]
 
 
-proc readFontOTF*(filename: string): Font =
-  ## Reads OTF font
+proc readFontOtf*(f: Stream): Font =
+  ## Reads OTF font from a stream.
   var font = Font()
-
-  if not existsFile(filename):
-    raise newException(IOError, "File name " & filename & " not found")
-
-  var f = newFileStream(filename, fmRead)
   var version = f.readFixed32()
   #assert version == 1.0
 
@@ -738,6 +733,15 @@ proc ttfGlyphToPath*(glyph: var Glyph) =
     glyph.path = path
 
 
+proc readFontOtf*(filename: string): Font =
+  ## Reads OTF font from a file.
+  if not existsFile(filename):
+    raise newException(IOError, "File name " & filename & " not found")
+  var f = newFileStream(filename, fmRead)
+  result = readFontOtf(f)
+  result.filename = filename
+
+
 proc ttfGlyphToCommands*(glyph: var Glyph) =
   var
     f = glyph.ttfStream
@@ -884,5 +888,3 @@ proc ttfGlyphToCommands*(glyph: var Glyph) =
       startPts = endPtsOfContours[i] + 1
 
     glyph.commands = path
-
-

@@ -3,19 +3,15 @@ import vmath
 import font
 
 
-proc readFontSvg*(filename: string): Font =
-  ## Reads an SVG font
-  if not fileExists(filename):
-    raise newException(OSError, "File " & filename & " not found")
-
+proc readFontSvg*(f: Stream): Font =
+  ## Read an SVG font from a stream.
   var font = Font()
 
   font.size = 16
   font.lineHeight = 20
-  font.filename = filename
   font.glyphs = initTable[string, Glyph]()
 
-  var xml = parseXml(newFileStream(filename))
+  var xml = parseXml(f)
 
   for tag in xml.findAll "font":
     var name = tag.attr "id"
@@ -67,3 +63,12 @@ proc readFontSvg*(filename: string): Font =
       font.kerning[u1 & ":" & u2] = k
 
   return font
+
+
+proc readFontSvg*(filename: string): Font =
+  ## Read an SVG font from a file.
+  if not fileExists(filename):
+    raise newException(OSError, "File " & filename & " not found")
+  var f = newFileStream(filename)
+  result = readFontSvg(f)
+  result.filename = filename
