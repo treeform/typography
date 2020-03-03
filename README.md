@@ -2,7 +2,7 @@
 
 Typography is pure nim implementation for font rasterization (letter drawing) and text typesetting (text layout). It does *not* rely on any external library such as FreeType, stb_truetype, pango or HarfBuzz.
 
-See api reference: https://treeform.github.io/typography/index.html
+See api reference: https://treeform.github.io/typography/typography.html
 
 # Font file formats:
 * SVG fonts - Most features are supported.
