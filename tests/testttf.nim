@@ -20,7 +20,7 @@ proc alphaWhite(image: var Image) =
 block:
   var font = readFontTtf("fonts/Ubuntu.ttf")
   font.size = 16
-    
+
   var image = newImage(500, 40, 4)
 
   font.drawText(image, vec2(10, 10), "The quick brown fox jumps over the lazy dog.")
