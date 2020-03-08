@@ -1,8 +1,7 @@
-import unicode, strutils, sequtils
-import typography, vmath, print
+import unicode, sequtils, typography, vmath
 
 #[
-It's hard to implement a text. Text box has many complex features one does not think about
+It's hard to implement a text. A textbox has many complex features one does not think about
 because it is so natural. Here is a small list of the most important ones:
 
 * Typing at location of cursor

@@ -1,5 +1,3 @@
-import flippy, vmath
-
 import typography/font
 import typography/svg
 import typography/ttf

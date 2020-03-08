@@ -1,5 +1,4 @@
-import tables, strutils, streams
-import chroma, vmath, flippy, print
+import tables, strutils, streams, vmath
 
 type
   Segment* = object
@@ -58,7 +57,6 @@ type
     kerning*: Table[string, float]
     glyphArr*: seq[Glyph]
 
-
 proc `sizePt`*(font: Font): float =
   ## Gets font size in Pt or Point units.
   font.size * 0.75
@@ -66,7 +64,6 @@ proc `sizePt`*(font: Font): float =
 proc `sizePt=`*(font: Font, sizePoints: float) =
   ## Sets font size in Pt or Point units.
   font.size = sizePoints / 0.75
-
 
 proc `sizeEm`*(font: Font): float =
   ## Gets font size in em units.
@@ -76,7 +73,6 @@ proc `sizeEm=`*(font: Font, sizeEm: float) =
   ## Gets font size in em units.
   font.size = sizeEm * 12
 
-
 proc `sizePr`*(font: Font): float =
   ## Gets font size in % or Percent units.
   font.size / 1200
@@ -84,7 +80,6 @@ proc `sizePr`*(font: Font): float =
 proc `sizePr=`*(font: Font, sizePercent: float) =
   ## Gets font size in % or Percent units.
   font.size = sizePercent * 1200
-
 
 proc intersects*(a, b: Segment, at: var Vec2): bool =
   ## Checks if the a segment intersects b segment.
@@ -104,8 +99,6 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
       at.y = a.at.y + (t * s1_y)
       return true
   return false
-
-
 
 proc glyphPathToCommands*(glyph: var Glyph) =
   ## Converts a glphy into lines-shape
@@ -199,7 +192,6 @@ proc glyphPathToCommands*(glyph: var Glyph) =
   finishCommand()
 
   glyph.commands = commands
-
 
 proc commandsToShapes*(glyph: var Glyph) =
   ## Converts SVG-like commands to shape made out of lines

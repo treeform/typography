@@ -1,7 +1,4 @@
-import tables, streams, strutils, endians, unicode, os, encodings
-import font
-import vmath, print
-import opentypedata
+import tables, streams, endians, unicode, os, font, vmath, opentypedata
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
@@ -134,7 +131,6 @@ type Name = object
   stringOffset: int
   entries: Table[string, seq[LangString]]
 
-
 proc getLanguageCode(platformID, languageID: uint16): string =
   case platformID:
     of 0:  # Unicode
@@ -145,7 +141,6 @@ proc getLanguageCode(platformID, languageID: uint16): string =
         return windowsLanguages[int languageID];
     else:
       return "??"
-
 
 proc readName(f: Stream, chunks: Table[string, Chunk]): Name =
   f.setPosition(int chunks["name"].offset)
@@ -172,7 +167,6 @@ proc readName(f: Stream, chunks: Table[string, Chunk]): Name =
       result.entries[$nameIDEnum] = @[]
     result.entries[$nameIDEnum].add LangString(lang: languageCode, value: value)
     f.setPosition(save)
-
 
 type Maxp = object
   version: float
@@ -208,7 +202,6 @@ proc readMaxp(f: Stream, chunks: Table[string, Chunk]): Maxp =
   result.sizeOfInstructions = f.readUint16()
   result.maxComponentElements = f.readUint16()
   result.maxComponentDepth = f.readUint16()
-
 
 type Os2 = object
   version: uint16
@@ -293,7 +286,6 @@ proc readOs2(f: Stream, chunks: Table[string, Chunk]): Os2 =
       result.usDefaultChar = f.readUInt16()
       result.usBreakChar = f.readUInt16()
       result.usMaxContent = f.readUInt16()
-
 
 type Loca = object
   loca: seq[int]
@@ -481,7 +473,6 @@ proc readKern(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): 
     else:
       assert false
 
-
 type Glyf = object
   table: Table[int, Glyph]
   list: seq[Glyph]
@@ -517,7 +508,6 @@ proc readGlyf(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp, l
         result.table[offset].numberOfContours = numberOfContours
 
     result.list[glyphIndex] = result.table[offset]
-
 
 proc readFontOtf*(f: Stream): Font =
   ## Reads OTF font from a stream.
@@ -568,7 +558,6 @@ proc readFontOtf*(f: Stream): Font =
   echo kern
   let glyf = f.readGlyf(chunks, head, maxp, loca)
   echo glyf
-
 
   # convert tables to font vars
   font.unitsPerEm = float head.unitsPerEm
@@ -732,7 +721,6 @@ proc ttfGlyphToPath*(glyph: var Glyph) =
 
     glyph.path = path
 
-
 proc readFontOtf*(filename: string): Font =
   ## Reads OTF font from a file.
   if not existsFile(filename):
@@ -740,7 +728,6 @@ proc readFontOtf*(filename: string): Font =
   var f = newFileStream(filename, fmRead)
   result = readFontOtf(f)
   result.filename = filename
-
 
 proc ttfGlyphToCommands*(glyph: var Glyph) =
   var
