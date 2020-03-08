@@ -1,7 +1,4 @@
-import tables, unicode
-import flippy, vmath, print
-import font, rasterizer
-
+import tables, unicode, flippy, vmath, font, rasterizer
 
 const
   normalLineHeight* = 0 # default line height of font.size * 1.2
@@ -49,12 +46,10 @@ proc kerningAdjustment*(font: Font, prev, c: string): float =
       var kerning = font.kerning[key]
       return - kerning * scale
 
-
 proc canWrap(rune: Rune): bool =
   if rune == Rune(32): return true # early return for ascii space
   if rune.isWhiteSpace(): return true
   if not rune.isAlpha(): return true
-
 
 proc typeset*(
     font: Font,
@@ -169,7 +164,6 @@ proc typeset*(
           at.y += lineHeight
           at.x = lineStart
 
-
         glyphPos = vec2(floor(at.x), floor(at.y))
 
       if clip and size.y != 0 and at.y - pos.y > size.y:
@@ -238,7 +232,6 @@ proc typeset*(
     for pos in result.mitems:
       pos.rect.y += offset
 
-
 proc typeset*(
     font: Font,
     text: string,
@@ -251,7 +244,6 @@ proc typeset*(
   ): seq[GlyphPosition] =
   ## Typeset string and return glyph positions that is ready to draw
   typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth)
-
 
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout
@@ -273,12 +265,10 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         )
       )
 
-
 proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
   ## Draw text string
   var layout = font.typeset(text, pos)
   image.drawText(layout)
-
 
 proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
   ## Given a layout gives selection from start to stop in glyph positions
@@ -294,7 +284,6 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
           result[^1].w = g.selectRect.x - result[^1].x + g.selectRect.w
           continue
       result.add g.selectRect
-
 
 proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
   ## Given X,Y cordiante, return the GlyphPosition picked
@@ -312,14 +301,12 @@ proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
         minG = g
   return minG
 
-
 proc textBounds*(layout: seq[GlyphPosition]): Vec2 =
   ## Given a layout, return the bounding rectangle.
   ## You can use this to get text width or height.
   for i, g in layout:
     result.x = max(result.x, g.selectRect.x + g.selectRect.w)
     result.y = max(result.y, g.selectRect.y + g.selectRect.h)
-
 
 proc textBounds*(font: Font, text: string): Vec2 =
   ## Given a font and text, return the bounding rectangle.

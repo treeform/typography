@@ -1,7 +1,4 @@
-import algorithm, tables
-import flippy, vmath, chroma, print
-import font, ttf
-
+import algorithm, tables, flippy, vmath, chroma, font, ttf
 
 proc makeReady*(glyph: var Glyph, font: Font) =
   ## Make sure the glyph is ready to render
@@ -214,18 +211,15 @@ proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
 
   return image
 
-
 proc getGlyphImage*(font: Font, unicode: string, glyphOffset: var Vec2, subPixelShift=0.0): Image =
   ## Get an image of the glyph and the glyph offset the image should be drawn
   var glyph = font.glyphs[unicode]
   return font.getGlyphImage(glyph, glyphOffset)
 
-
 proc getGlyphImage*(font: Font, unicode: string): Image =
   ## Get an image of the glyph
   var glyphOffset: Vec2
   return font.getGlyphImage(unicode, glyphOffset)
-
 
 proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
   ## Draw glyph at a location on the image

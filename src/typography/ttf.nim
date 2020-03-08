@@ -1,7 +1,4 @@
-import tables, streams, strutils, endians, unicode, os
-import font
-import vmath, print
-
+import tables, streams, endians, unicode, os, font, vmath
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
@@ -75,7 +72,6 @@ proc readLongDateTime(stream: Stream): float64 =
 
 # todo remove
 proc ttfGlyphToCommands*(glyph: var Glyph, font: Font)
-
 
 proc readFontTtf*(f: Stream): Font =
   ## Reads TTF font from a stream
@@ -262,7 +258,6 @@ proc readFontTtf*(f: Stream): Font =
         glyphTabe[offset].isEmpty = true
         glyphTabe[offset].ready = true
 
-
       if not glyphTabe[offset].isEmpty:
         glyphTabe[offset].ttfStream = f
         glyphTabe[offset].ttfOffset = offset
@@ -402,7 +397,6 @@ proc readFontTtf*(f: Stream): Font =
 
   return font
 
-
 proc readFontTtf*(filename: string): Font =
   ## Reads TTF font from a file.
   if not existsFile(filename):
@@ -410,7 +404,6 @@ proc readFontTtf*(filename: string): Font =
   var f = newFileStream(filename, fmRead)
   result = readFontTtf(f)
   result.filename = filename
-
 
 proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
   var
@@ -489,7 +482,6 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
         component.scale01 = f.readFixed16()
         component.scale10 = f.readFixed16()
         component.yScale = f.readFixed16()
-
 
       var subGlyph = font.glyphArr[component.glyphIndex]
       if not subGlyph.isEmpty and subGlyph.commands.len == 0:

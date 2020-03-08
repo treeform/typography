@@ -1,6 +1,6 @@
 ## Utils for finding installed and system fonts.
 
-import strformat, os, strutils
+import os, strutils
 
 var fontDirecotires*: seq[string]
 

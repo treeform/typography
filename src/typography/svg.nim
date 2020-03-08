@@ -1,7 +1,4 @@
-import xmlparser, xmltree, tables, streams, os, strutils
-import vmath
-import font
-
+import xmlparser, xmltree, tables, streams, os, strutils, vmath, font
 
 proc readFontSvg*(f: Stream): Font =
   ## Read an SVG font from a stream.
@@ -63,7 +60,6 @@ proc readFontSvg*(f: Stream): Font =
       font.kerning[u1 & ":" & u2] = k
 
   return font
-
 
 proc readFontSvg*(filename: string): Font =
   ## Read an SVG font from a file.
