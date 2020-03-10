@@ -1,4 +1,4 @@
-import tables, unicode, flippy, vmath, font, rasterizer
+import flippy, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 # default line height of font.size * 1.2
@@ -17,7 +17,7 @@ type
     font*: Font
     fontSize*: float
     subPixelShift*: float
-    rect*: Rect # Where to draw the image character
+    rect*: Rect       # Where to draw the image character
     selectRect*: Rect # Were to draw or hit selection
     character*: string
     rune*: Rune
@@ -102,7 +102,7 @@ proc typeset*(
         font: font,
         fontSize: font.size,
         subPixelShift: 0,
-        rect: rect(0,0,0,0),
+        rect: rect(0, 0, 0, 0),
         selectRect: selectRect,
         rune: rune,
         character: c,
@@ -252,7 +252,11 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
     if pos.character in font.glyphs:
       var glyph = font.glyphs[pos.character]
       var glyphOffset: Vec2
-      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      let img = font.getGlyphImage(
+        glyph,
+        glyphOffset,
+        subPixelShift = pos.subPixelShift
+      )
       image.blit(
         img,
         rect(

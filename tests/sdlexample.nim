@@ -1,7 +1,6 @@
 ## Bare-bones SDL2 example
-import sdl2
 
-import typography, vmath, flippy, chroma, tables, times, unicode, hashes
+import chroma, flippy, hashes, sdl2, tables, times, typography, unicode, vmath
 
 discard sdl2.init(INIT_EVERYTHING)
 
@@ -9,8 +8,12 @@ var
   window: WindowPtr
   render: RendererPtr
 
-window = createWindow("SDL Skeleton", 100, 100, 640,480, SDL_WINDOW_SHOWN)
-render = createRenderer(window, -1, Renderer_Accelerated or Renderer_PresentVsync or Renderer_TargetTexture)
+window = createWindow("SDL Skeleton", 100, 100, 640, 480, SDL_WINDOW_SHOWN)
+render = createRenderer(
+  window,
+  -1,
+  Renderer_Accelerated or Renderer_PresentVsync or Renderer_TargetTexture
+)
 
 # load font
 var font = readFontTtf("fonts/Moon Bold.otf")
@@ -42,12 +45,19 @@ proc texture(image: Image): TexturePtr =
     gmask = uint32 0x0000ff00
     bmask = uint32 0x00ff0000
     amask = uint32 0xff000000
-  var serface = createRGBSurface(0, cint image.width, cint image.height, 32, rmask, gmask, bmask, amask)
-  serface.pixels = addr image.data[0]
-  var texture = render.createTextureFromSurface(serface)
+  var surface = createRGBSurface(
+    0,
+    cint image.width,
+    cint image.height,
+    32,
+    rmask,
+    gmask,
+    bmask,
+    amask
+  )
+  surface.pixels = addr image.data[0]
+  var texture = render.createTextureFromSurface(surface)
   return texture
-
-
 
 while runGame:
   while pollEvent(evt):
@@ -55,7 +65,7 @@ while runGame:
       runGame = false
       break
 
-  render.setDrawColor 0,0,0,255
+  render.setDrawColor 0, 0, 0, 255
   render.clear
 
   let start = epochTime()
@@ -109,7 +119,11 @@ To where it bent in the undergrowth;""")
       if pos.character in font.glyphs:
         var glyph = font.glyphs[pos.character]
         var glyphOffset: Vec2
-        let image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+        let image = font.getGlyphImage(
+          glyph,
+          glyphOffset,
+          subPixelShift = pos.subPixelShift
+        )
         var destRect = sdl2.rect(
           cint pos.rect.x + glyphOffset.x,
           cint pos.rect.y + glyphOffset.y,
@@ -131,12 +145,20 @@ To where it bent in the undergrowth;""")
     for pos in layout:
       var font = pos.font
       if pos.character in font.glyphs:
-        let key = GlyphKey(rune: pos.rune, size: font.size, subPixelShift: int(pos.subPixelShift * 10))
+        let key = GlyphKey(
+          rune: pos.rune,
+          size: font.size,
+          subPixelShift: int(pos.subPixelShift * 10)
+        )
 
         if key notin glyphCache:
           var glyph = font.glyphs[pos.character]
           var glyphOffset: Vec2
-          let image = font.getGlyphImage(glyph, glyphOffset, subPixelShift=quantize(pos.subPixelShift, 0.1))
+          let image = font.getGlyphImage(
+            glyph,
+            glyphOffset,
+            subPixelShift = quantize(pos.subPixelShift, 0.1)
+          )
           glyphCache[key] = GlyphEntry(
               image: image,
               texture: image.texture,

@@ -1,4 +1,4 @@
-import tables, strutils, streams, vmath
+import streams, strutils, tables, vmath
 
 type
   Segment* = object
@@ -91,13 +91,15 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
   s2_y = b.to.y - b.at.y
 
   var s, t: float
-  s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) / (-s2_x * s1_y + s1_x * s2_y)
-  t = ( s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) / (-s2_x * s1_y + s1_x * s2_y)
+  s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) /
+      (-s2_x * s1_y + s1_x * s2_y)
+  t = (s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) /
+      (-s2_x * s1_y + s1_x * s2_y)
 
   if s >= 0 and s < 1 and t >= 0 and t < 1:
-      at.x = a.at.x + (t * s1_x)
-      at.y = a.at.y + (t * s1_y)
-      return true
+    at.x = a.at.x + (t * s1_x)
+    at.y = a.at.y + (t * s1_y)
+    return true
   return false
 
 proc glyphPathToCommands*(glyph: var Glyph) =
@@ -200,7 +202,7 @@ proc commandsToShapes*(glyph: var Glyph) =
   var prevCommand: PathCommandKind
 
   proc drawLine(at, to: Vec2) =
-    lines.add(Segment(at:at, to:to))
+    lines.add(Segment(at: at, to: to))
 
   proc getCurvePoint(points: seq[Vec2], t: float): Vec2 =
     if points.len == 1:
@@ -224,18 +226,18 @@ proc commandsToShapes*(glyph: var Glyph) =
     let devy = p0.y - 2.0 * p1.y + p2.y
     let devsq = devx * devx + devy * devy
     if devsq < 0.333:
-        drawLine(p0, p2)
-        return
+      drawLine(p0, p2)
+      return
     let tol = 3.0
     let n = 1 + (tol * (devx * devx + devy * devy)).sqrt().sqrt().floor()
     var p = p0
     let nrecip = 1 / n
     var t = 0.0
     for i in 0..<int(n):
-        t += nrecip
-        let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
-        drawLine(p, pn);
-        p = pn
+      t += nrecip
+      let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
+      drawLine(p, pn);
+      p = pn
 
     drawLine(p, p2)
 
