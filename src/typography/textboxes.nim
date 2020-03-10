@@ -46,7 +46,7 @@ type TextBox* = ref object
   savedX: float
 
 proc clamp(v, a, b: int): int =
- max(a, min(b, v))
+  max(a, min(b, v))
 
 proc newTextBox*(font: Font, width, height: int): TextBox =
   ## Creates new empty textbox
@@ -105,8 +105,8 @@ proc layout*(textBox: TextBox): seq[GlyphPosition] =
     textBox.glyphs = textBox.font.typeset(
       textBox.runes,
       vec2(0, 0),
-      size=size,
-      clip=false
+      size = size,
+      clip = false
     )
   return textBox.glyphs
 
@@ -197,7 +197,7 @@ proc typeCharacter*(textBox: TextBox, rune: Rune) =
   if not textBox.multiline and rune == Rune(10):
     return
   if textBox.cursor == textBox.runes.len:
-     textBox.runes.add(rune)
+    textBox.runes.add(rune)
   else:
     textBox.runes.insert(rune, textBox.cursor)
   inc textBox.cursor
@@ -264,8 +264,8 @@ proc backspaceWord*(textBox: TextBox, shift = false) =
   if textBox.cursor > 0:
     while textBox.cursor > 0 and
       not textBox.runes[textBox.cursor - 1].isWhiteSpace():
-        textBox.runes.delete(textBox.cursor - 1)
-        dec textBox.cursor
+      textBox.runes.delete(textBox.cursor - 1)
+      dec textBox.cursor
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
     textBox.selector = textBox.cursor
@@ -276,7 +276,7 @@ proc deleteWord*(textBox: TextBox, shift = false) =
   if textBox.cursor < textBox.runes.len:
     while textBox.cursor < textBox.runes.len and
       not textBox.runes[textBox.cursor].isWhiteSpace():
-        textBox.runes.delete(textBox.cursor)
+      textBox.runes.delete(textBox.cursor)
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
 
@@ -340,7 +340,7 @@ proc leftWord*(textBox: TextBox, shift = false) =
     dec textBox.cursor
   while textBox.cursor > 0 and
     not textBox.runes[textBox.cursor - 1].isWhiteSpace():
-      dec textBox.cursor
+    dec textBox.cursor
   textBox.adjustScroll()
   if not shift:
     textBox.selector = textBox.cursor
@@ -352,7 +352,7 @@ proc rightWord*(textBox: TextBox, shift = false) =
     inc textBox.cursor
   while textBox.cursor < textBox.runes.len and
     not textBox.runes[textBox.cursor].isWhiteSpace():
-      inc textBox.cursor
+    inc textBox.cursor
   textBox.adjustScroll()
   if not shift:
     textBox.selector = textBox.cursor
@@ -362,7 +362,7 @@ proc startOfLine*(textBox: TextBox, shift = false) =
   ## Move cursor left by a word
   while textBox.cursor > 0 and
     textBox.runes[textBox.cursor - 1] != Rune(10):
-      dec textBox.cursor
+    dec textBox.cursor
   textBox.adjustScroll()
   if not shift:
     textBox.selector = textBox.cursor
@@ -372,7 +372,7 @@ proc endOfLine*(textBox: TextBox, shift = false) =
   ## Move cursor right by a word
   while textBox.cursor < textBox.runes.len and
     textBox.runes[textBox.cursor] != Rune(10):
-      inc textBox.cursor
+    inc textBox.cursor
   textBox.adjustScroll()
   if not shift:
     textBox.selector = textBox.cursor
@@ -416,7 +416,7 @@ proc pageDown*(textBox: TextBox, shift = false) =
     if not shift:
       textBox.selector = textBox.cursor
 
-proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
+proc mouseAction*(textBox: TextBox, mousePos: Vec2, click = true, shift = false) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos + textBox.scroll
   # pick where to place the cursor
@@ -442,30 +442,30 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click=true, shift = false) =
   if not shift and click:
     textBox.selector = textBox.cursor
 
-proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace=true) =
+proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace = true) =
   ## Select word under the cursor (double click)
-  textBox.mouseAction(mousePos, click=true)
+  textBox.mouseAction(mousePos, click = true)
   while textBox.cursor > 0 and
     not textBox.runes[textBox.cursor - 1].isWhiteSpace():
-      dec textBox.cursor
+    dec textBox.cursor
   while textBox.selector < textBox.runes.len and
     not textBox.runes[textBox.selector].isWhiteSpace():
-      inc textBox.selector
+    inc textBox.selector
   if extraSpace:
     # Select extra space to the right if its there
     if textBox.selector < textBox.runes.len and
       textBox.runes[textBox.selector] == Rune(32):
-        inc textBox.selector
+      inc textBox.selector
 
 proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
   ## Select peragraph under the cursor (triple click)
-  textBox.mouseAction(mousePos, click=true)
+  textBox.mouseAction(mousePos, click = true)
   while textBox.cursor > 0 and
     textBox.runes[textBox.cursor - 1] != Rune(10):
-      dec textBox.cursor
+    dec textBox.cursor
   while textBox.selector < textBox.runes.len and
     textBox.runes[textBox.selector] != Rune(10):
-      inc textBox.selector
+    inc textBox.selector
 
 proc selectAll*(textBox: TextBox) =
   ## Select all text (quad click)
