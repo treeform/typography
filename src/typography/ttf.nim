@@ -1,4 +1,4 @@
-import tables, streams, endians, unicode, os, font, vmath
+import endians, font, os, streams, tables, unicode, vmath
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):

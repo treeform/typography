@@ -1,4 +1,4 @@
-import strutils, unicode, tables
+import strutils, tables, unicode
 
 type
   BreakRegon = object

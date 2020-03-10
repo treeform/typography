@@ -1,7 +1,4 @@
-import tables
-import flippy, vmath, chroma, print
-import typography
-
+import chroma, flippy, print, tables, typography, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -16,7 +13,6 @@ proc alphaWhite(image: var Image) =
       c.a = 255
       image.putrgba(x, y, c)
 
-
 proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   var wh = wh - vec2(1, 1) # line width
   image.line(at, at + vec2(wh.x, 0), color)
@@ -27,14 +23,12 @@ proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
 proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
   image.drawRect(rect.xy, rect.wh, color)
 
-
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
   var image = font.getGlyphImage("h")
   image.alphaWhite()
   image.save("hFill.png")
-
 
 block:
   var image = newImage(500, 40, 4)
@@ -75,7 +69,6 @@ block:
 
   image.alphaWhite()
   image.save("sizes.png")
-
 
 block:
   var image = newImage(800, 200, 4)
@@ -121,7 +114,6 @@ block:
   image.alphaWhite()
   image.save("ch.png")
 
-
 block:
   var image = newImage(250, 20, 4)
 
@@ -132,7 +124,6 @@ block:
   image = image.magnify(4)
   image.alphaWhite()
   image.save("scaledup.png")
-
 
 block:
   var image = newImage(140, 20, 4)
@@ -145,7 +136,6 @@ block:
   image.alphaWhite()
   image.save("subpixelpos.png")
 
-
 block:
   var image = newImage(140, 20, 4)
 
@@ -157,11 +147,21 @@ block:
   for i in 0..<10:
     var glyphOffset: Vec2
     var at = vec2(12.0 + float(i)*12, 11)
-    var glyphImage = font.getGlyphImage(glyph, glyphOffset, quality=4, subPixelShift=float(i)/10.0)
+    var glyphImage = font.getGlyphImage(
+      glyph,
+      glyphOffset,
+      quality = 4,
+      subPixelShift = float(i)/10.0
+    )
     image.blit(
       glyphImage,
       rect(0, 0, float glyphImage.width, float glyphImage.height),
-      rect(at.x + glyphOffset.x, at.y + glyphOffset.y, float glyphImage.width, float glyphImage.height)
+      rect(
+        at.x + glyphOffset.x,
+        at.y + glyphOffset.y,
+        float glyphImage.width,
+        float glyphImage.height
+      )
     )
 
   image = image.magnify(6)
@@ -181,8 +181,6 @@ block:
 
   image.save("subpixelglyphs.png")
 
-
-
 block:
   var font = readFontTtf("fonts/Moon Bold.otf")
   font.size = 300
@@ -197,7 +195,6 @@ block:
   image = font.getGlyphImage("Q")
   image.alphaWhite()
   image.save("qFill.png")
-
 
 block:
   var image = newImage(200, 100, 4)
@@ -229,7 +226,11 @@ To where it bent in the undergrowth;""")
     if pos.character in font.glyphs:
       var glyph = font.glyphs[pos.character]
       var glyphOffset: Vec2
-      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      let img = font.getGlyphImage(
+        glyph,
+        glyphOffset,
+        subPixelShift = pos.subPixelShift
+      )
       image.drawRect(
         (pos.rect.xy + glyphOffset) * mag,
         vec2(float img.width, float img.height) * mag,
@@ -244,14 +245,17 @@ To where it bent in the undergrowth;""")
     if pos.character in font.glyphs:
       var glyph = font.glyphs[pos.character]
       var glyphOffset: Vec2
-      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
+      let img = font.getGlyphImage(
+        glyph,
+        glyphOffset,
+        subPixelShift = pos.subPixelShift
+      )
       image.drawRect(
         (pos.rect.xy + glyphOffset) * mag,
         vec2(float img.width, float img.height) * mag,
         rgba(255, 0, 0, 255)
       )
   image.save("layoutNoText.png")
-
 
 block:
   var image = newImage(500, 200, 4)
@@ -260,17 +264,89 @@ block:
   font.size = 11 # 11px or 8pt
   font.lineHeight = 20
 
-  image.drawText(font.typeset("Left, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Top))
-  image.drawText(font.typeset("Left, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Middle))
-  image.drawText(font.typeset("Left, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Left, vAlign=Bottom))
+  image.drawText(
+    font.typeset(
+      "Left, Top",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Left,
+      vAlign = Top
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Left, Middle",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Left,
+      vAlign = Middle
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Left, Bottom",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Left,
+      vAlign = Bottom
+    )
+  )
 
-  image.drawText(font.typeset("Center, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Top))
-  image.drawText(font.typeset("Center, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Middle))
-  image.drawText(font.typeset("Center, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Center, vAlign=Bottom))
+  image.drawText(
+    font.typeset(
+      "Center, Top",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Center,
+      vAlign = Top
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Center, Middle",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Center,
+      vAlign = Middle
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Center, Bottom",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Center,
+      vAlign = Bottom
+    )
+  )
 
-  image.drawText(font.typeset("Right, Top", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Top))
-  image.drawText(font.typeset("Right, Middle", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Middle))
-  image.drawText(font.typeset("Right, Bottom", pos=vec2(20, 20), size=vec2(460, 160), hAlign=Right, vAlign=Bottom))
+  image.drawText(
+    font.typeset(
+      "Right, Top",
+      pos = vec2(20, 20),
+      size = vec2(460,160),
+      hAlign = Right,
+      vAlign = Top
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Right, Middle",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Right,
+      vAlign = Middle
+    )
+  )
+  image.drawText(
+    font.typeset(
+      "Right, Bottom",
+      pos = vec2(20, 20),
+      size = vec2(460, 160),
+      hAlign = Right,
+      vAlign = Bottom
+    )
+  )
 
   image.alphaWhite()
 
@@ -282,7 +358,6 @@ block:
 
   image.save("alignment.png")
 
-
 block:
   var image = newImage(500, 200, 4)
 
@@ -292,8 +367,8 @@ block:
 
   image.drawText(font.typeset(
     readFile("sample.wrap.txt"),
-    pos=vec2(100, 20),
-    size=vec2(300, 160)
+    pos = vec2(100, 20),
+    size = vec2(300, 160)
   ))
 
   image.alphaWhite()
@@ -306,8 +381,6 @@ block:
 
   image.save("wordwrap.png")
 
-
-
 block:
   var image = newImage(500, 200, 4)
 
@@ -317,8 +390,8 @@ block:
 
   image.drawText(font.typeset(
     readFile("sample.ch.txt"),
-    pos=vec2(100, 20),
-    size=vec2(300, 160)
+    pos = vec2(100, 20),
+    size = vec2(300, 160)
   ))
 
   image.alphaWhite()
@@ -330,8 +403,6 @@ block:
   )
 
   image.save("wordwrapch.png")
-
-
 
 block:
   var image = newImage(300, 120, 4)
@@ -360,7 +431,6 @@ To where it bent in the undergrowth;""",
     image.drawRect(rect, rgba(255, 0, 0, 255))
 
   image.save("selection.png")
-
 
 block:
 
@@ -391,7 +461,6 @@ To where it bent in the undergrowth;""",
   image.drawRect(g.selectRect, rgba(255, 0, 0, 255))
 
   image.save("picking.png")
-
 
 block:
   var image = newImage(500, 120, 4)

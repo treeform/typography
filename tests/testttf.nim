@@ -1,7 +1,4 @@
-import tables
-import flippy, vmath, chroma, print
-import typography
-
+import chroma, flippy, print, tables, typography, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -16,14 +13,17 @@ proc alphaWhite(image: var Image) =
       c.a = 255
       image.putrgba(x, y, c)
 
-
 block:
   var font = readFontTtf("fonts/Ubuntu.ttf")
   font.size = 16
 
   var image = newImage(500, 40, 4)
 
-  font.drawText(image, vec2(10, 10), "The quick brown fox jumps over the lazy dog.")
+  font.drawText(
+    image,
+    vec2(10, 10),
+    "The quick brown fox jumps over the lazy dog."
+  )
 
   image.alphaWhite()
   image.save("basicTtf.png")

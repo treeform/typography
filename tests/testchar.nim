@@ -1,6 +1,4 @@
-import tables
-import flippy, vmath, chroma, print, strformat
-import typography
+import chroma, flippy, print, strformat, tables, typography, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -14,7 +12,6 @@ proc alphaWhite(image: var Image) =
       c.b = uint8(255) - c.a
       c.a = 255
       image.putrgba(x, y, c)
-
 
 block:
   var font = readFontTtf(r"C:\Windows\Fonts\AmiriQuran.ttf")

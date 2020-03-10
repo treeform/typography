@@ -1,4 +1,4 @@
-import xmlparser, xmltree, tables, streams, os, strutils, vmath, font
+import font, os, streams, strutils, tables, vmath, xmlparser, xmltree
 
 proc readFontSvg*(f: Stream): Font =
   ## Read an SVG font from a stream.
