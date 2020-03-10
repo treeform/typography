@@ -59,7 +59,13 @@ proc newTextBox*(font: Font, width, height: int): TextBox =
   result.multiline = true
   result.wordWrap = true
 
-proc newTextBox*(font: Font, width, height: int, text: string, multiline = true): TextBox =
+proc newTextBox*(
+  font: Font,
+  width,
+  height: int,
+  text: string,
+  multiline = true
+): TextBox =
   ## Creates new text box with existing text
   result = TextBox()
   result.font = font
@@ -416,7 +422,12 @@ proc pageDown*(textBox: TextBox, shift = false) =
     if not shift:
       textBox.selector = textBox.cursor
 
-proc mouseAction*(textBox: TextBox, mousePos: Vec2, click = true, shift = false) =
+proc mouseAction*(
+  textBox: TextBox,
+  mousePos: Vec2,
+  click = true,
+  shift = false
+) =
   ## Click on this with a mouse
   textBox.mousePos = mousePos + textBox.scroll
   # pick where to place the cursor
@@ -427,7 +438,8 @@ proc mouseAction*(textBox: TextBox, mousePos: Vec2, click = true, shift = false)
     if pos.character != "\n":
       # select to the right or left of the character based on what is closer
       let pickOffset = textBox.mousePos - pos.selectRect.xy
-      if pickOffset.x > pos.selectRect.w / 2 and textBox.cursor == textBox.runes.len - 1:
+      if pickOffset.x > pos.selectRect.w / 2 and
+          textBox.cursor == textBox.runes.len - 1:
         inc textBox.cursor
   else:
     # if above the text select first character
@@ -485,7 +497,10 @@ proc scrollBy*(textBox: TextBox, amount: float) =
   # make sure it does not scroll off the top
   textBox.scroll.y = max(0, textBox.scroll.y)
   # or the bottom
-  textBox.scroll.y = min(float(textBox.innerHeight - textBox.height), textBox.scroll.y)
+  textBox.scroll.y = min(
+    float(textBox.innerHeight - textBox.height),
+    textBox.scroll.y
+  )
   # Check if there is not enough text to scroll
   if textBox.innerHeight < textBox.height:
     textBox.scroll.y = 0

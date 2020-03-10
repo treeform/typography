@@ -64,7 +64,7 @@ proc getGlyphImage*(
     subPixelShift: float = 0.0,
   ): Image =
   ## Get image for this glyph
-  let white = ColorRgba(r:255, g:255, b:255, a:255)
+  let white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
 
   var
     size = getGlyphSize(font, glyph)
@@ -76,7 +76,7 @@ proc getGlyphImage*(
     ty = floor(glyph.bboxMin.y * scale)
 
   var image = newImage(w, h, 4)
-  image.fill(ColorRgba(r:255, g:255, b:255, a:0))
+  image.fill(ColorRgba(r: 255, g: 255, b: 255, a: 0))
   let origin = vec2(float tx, float ty)
 
   glyphOffset.x = origin.x
@@ -89,7 +89,10 @@ proc getGlyphImage*(
   if quality == 0:
     # fill
     for y in 0..<image.height:
-      var scan = Segment(at: vec2(-10000, float(y) + ep), to: vec2(100000, float(y) + ep))
+      var scan = Segment(
+        at: vec2(-10000, float(y) + ep),
+        to: vec2(100000, float(y) + ep)
+      )
 
       scan.at = trans(scan.at)
       scan.to = trans(scan.to)
@@ -170,7 +173,7 @@ proc getGlyphImage*(
           if a > 1.0:
             a = 1.0
           var alpha = uint8(a*255.0)
-          var color = ColorRgba(r:255, g:255, b:255, a:alpha)
+          var color = ColorRgba(r: 255, g: 255, b: 255, a: alpha)
           image.putRgba(j, h-y, color)
 
   return image
@@ -197,21 +200,34 @@ proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
     result.x = v.x
     result.y = float(h) - v.y
   for s in glyph.lines:
-    var red = ColorRgba(r:255,g:0,b:0,a:255)
+    var red = ColorRgba(r: 255, g: 0, b: 0, a: 255)
     image.line(flip(atrans(s.at)), flip(atrans(s.to)), red)
   # draw points
   for ruleNum, c in glyph.commands:
-    var blue = ColorRgba(r:0,g:0,b:255,a:255)
+    var blue = ColorRgba(r: 0, g: 0, b: 255, a: 255)
     for i in 0..<c.numbers.len div 2:
       var at: Vec2
       at.x = c.numbers[i*2+0]
       at.y = c.numbers[i*2+1]
-      image.line(flip(atrans(at)) + vec2(1,1), flip(atrans(at)) + vec2(-1,-1), blue)
-      image.line(flip(atrans(at)) + vec2(-1,1), flip(atrans(at)) + vec2(1,-1), blue)
+      image.line(
+        flip(atrans(at)) + vec2(1, 1),
+        flip(atrans(at)) + vec2(-1, -1),
+        blue
+      )
+      image.line(
+        flip(atrans(at)) + vec2(-1, 1),
+        flip(atrans(at)) + vec2(1, -1),
+        blue
+      )
 
   return image
 
-proc getGlyphImage*(font: Font, unicode: string, glyphOffset: var Vec2, subPixelShift=0.0): Image =
+proc getGlyphImage*(
+  font: Font,
+  unicode: string,
+  glyphOffset: var Vec2,
+  subPixelShift = 0.0
+): Image =
   ## Get an image of the glyph and the glyph offset the image should be drawn
   var glyph = font.glyphs[unicode]
   return font.getGlyphImage(glyph, glyphOffset)
@@ -233,15 +249,20 @@ proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
       img.blit(
         image,
         rect(0, 0, float img.width, float img.height),
-        rect(at.x + origin.x, at.y + origin.y, float img.width, float img.height)
+        rect(
+          at.x + origin.x,
+          at.y + origin.y,
+          float img.width,
+          float img.height
+        )
       )
 
 proc getGlyphImageOffset*(
-    font: Font,
-    glyph: var Glyph,
-    quality = 4,
-    subPixelShift: float = 0.0,
-  ): Vec2 =
+  font: Font,
+  glyph: var Glyph,
+  quality = 4,
+  subPixelShift: float = 0.0,
+): Vec2 =
   ## Get image for this glyph
   glyph.makeReady(font)
   var fontHeight = font.ascent - font.descent
