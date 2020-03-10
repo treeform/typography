@@ -1,6 +1,7 @@
 ## Loads ttf system fonts and prodces a grid of their glphys
 
-import algorithm, chroma, flippy, math, os, ospaths, print, sequtils, strutils, tables, typography, typography/sysfonts, vmath
+import algorithm, chroma, flippy, math, os, ospaths, print, sequtils, strutils,
+    tables, typography, typography/sysfonts, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -45,7 +46,7 @@ for fontPath in getSystemFonts():
             float(x) + 20.0, float(y) + 20.0,
             float 20, float 20
           ),
-          rgba(128,128,128,255)
+          rgba(128, 128, 128, 255)
         )
       else:
         try:
@@ -61,7 +62,7 @@ for fontPath in getSystemFonts():
               float(x) + 20.0, float(y) + 20.0,
               float img.width, float img.height
             ),
-            rgba(0,0,0,255)
+            rgba(0, 0, 0, 255)
           )
         except:
           echo "error on: ", i
@@ -70,7 +71,7 @@ for fontPath in getSystemFonts():
               float(x) + 20.0, float(y) + 20.0,
               float 20, float 20
             ),
-            rgba(255,0,0,255)
+            rgba(255, 0, 0, 255)
           )
 
       x += 100
