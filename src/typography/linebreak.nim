@@ -121,7 +121,7 @@ for line in lineBreakText.splitLines:
   else:
     start = parseHexInt(range[0])
     stop = parseHexInt(range[1])
-  breakRegons.add BreakRegon(start:start, stop:stop, code:table[code])
+  breakRegons.add BreakRegon(start: start, stop: stop, code: table[code])
 
 proc getBreakCode*(rune: Rune): BreakCode =
   for b in breakRegons:
