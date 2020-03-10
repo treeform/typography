@@ -2,7 +2,10 @@ import endians, font, os, streams, tables, unicode, vmath
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
-    raise newException(ValueError, "cannot read from stream at " & $s.getPosition())
+    raise newException(
+      ValueError,
+      "cannot read from stream at " & $s.getPosition()
+    )
 
 proc readUInt8(stream: Stream): uint8 =
   var val: uint8 = 0
@@ -190,13 +193,18 @@ proc readFontTtf*(f: Stream): Font =
   let os2_sFamilyClass = f.readInt16()
 
   for i in 0..<10:
-      let os2_panose = f.readUInt8()
+    let os2_panose = f.readUInt8()
 
   let os2_ulUnicodeRange1 = f.readUInt32()
   let os2_ulUnicodeRange2 = f.readUInt32()
   let os2_ulUnicodeRange3 = f.readUInt32()
   let os2_ulUnicodeRange4 = f.readUInt32()
-  let os2_achVendID = @[f.readUInt8(), f.readUInt8(), f.readUInt8(), f.readUInt8()]
+  let os2_achVendID = @[
+    f.readUInt8(),
+    f.readUInt8(),
+    f.readUInt8(),
+    f.readUInt8()
+  ]
   let os2_fsSelection = f.readUInt16()
   let os2_usFirstCharIndex = f.readUInt16()
   let os2_usLastCharIndex = f.readUInt16()
@@ -206,14 +214,14 @@ proc readFontTtf*(f: Stream): Font =
   let os2_usWinAscent = f.readUInt16()
   let os2_usWinDescent = f.readUInt16()
   if os2_version >= 1.uint16:
-      let os2_ulCodePageRange1 = f.readUInt32()
-      let os2_ulCodePageRange2 = f.readUInt32()
+    let os2_ulCodePageRange1 = f.readUInt32()
+    let os2_ulCodePageRange2 = f.readUInt32()
   if os2_version >= 2.uint16:
-      let os2_sxHeight = f.readInt16()
-      let os2_sCapHeight = f.readInt16()
-      let os2_usDefaultChar = f.readUInt16()
-      let os2_usBreakChar = f.readUInt16()
-      let os2_usMaxContent = f.readUInt16()
+    let os2_sxHeight = f.readInt16()
+    let os2_sCapHeight = f.readInt16()
+    let os2_usDefaultChar = f.readUInt16()
+    let os2_usBreakChar = f.readUInt16()
+    let os2_usMaxContent = f.readUInt16()
 
   # loca
   f.setPosition(int chunks["loca"].offset)
@@ -248,7 +256,8 @@ proc readFontTtf*(f: Stream): Font =
       glyphTabe[offset] = Glyph()
       glyphTabe[offset].ready = false
 
-      var isNull = glyphIndex + 1 < loca.len and loca[glyphIndex] == loca[glyphIndex + 1]
+      var isNull = glyphIndex + 1 < loca.len and
+          loca[glyphIndex] == loca[glyphIndex + 1]
       if isNull:
         glyphTabe[offset].isEmpty = true
         glyphTabe[offset].ready = true
@@ -333,7 +342,7 @@ proc readFontTtf*(f: Stream): Font =
         discard f.readUint16()
         let startCountSeq = f.readUint16Seq(int segCount)
         let idDeltaSeq = f.readUint16Seq(int segCount)
-        let idRangeAddress =  f.getPosition()
+        let idRangeAddress = f.getPosition()
         let idRangeOffsetSeq = f.readUint16Seq(int segCount)
         var glyphIndexAddress = f.getPosition()
         for j in 0..<int(segCount):
@@ -345,13 +354,13 @@ proc readFontTtf*(f: Stream): Font =
 
           for c in startCount..endCount:
             if idRangeOffset != 0:
-                var glyphIndexOffset = idRangeAddress + j * 2
-                glyphIndexOffset += int(idRangeOffset)
-                glyphIndexOffset += int(c - startCount) * 2
-                f.setPosition(glyphIndexOffset)
-                glyphIndex = int f.readUint16()
-                if glyphIndex != 0:
-                    glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
+              var glyphIndexOffset = idRangeAddress + j * 2
+              glyphIndexOffset += int(idRangeOffset)
+              glyphIndexOffset += int(c - startCount) * 2
+              f.setPosition(glyphIndexOffset)
+              glyphIndex = int f.readUint16()
+              if glyphIndex != 0:
+                glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
 
             else:
               glyphIndex = int((c + idDelta) and 0xFFFF)
@@ -491,9 +500,9 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
 
       # transform commands path
       let mat = mat3(
-        component.xScale,  component.scale01, 0.0,
-        component.scale10, component.yScale,  0.0,
-        component.dx,      component.dy,      1.0
+        component.xScale, component.scale01, 0.0,
+        component.scale10, component.yScale, 0.0,
+        component.dx, component.dy, 1.0
       )
       # copy commands
       for command in subGlyph.commands:
@@ -616,9 +625,15 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
             var next2 = next
 
             if not prev.isOnCurve:
-              prev2 = TtfCoridante(x: (curr.x + prev.x) div 2, y: (curr.y + prev.y) div 2)
+              prev2 = TtfCoridante(
+                x: (curr.x + prev.x) div 2,
+                y: (curr.y + prev.y) div 2
+              )
             if not next.isOnCurve:
-              next2 = TtfCoridante(x: (curr.x + next.x) div 2, y: (curr.y + next.y) div 2)
+              next2 = TtfCoridante(
+                x: (curr.x + next.x) div 2,
+                y: (curr.y + next.y) div 2
+              )
 
             cmd(Quad, curr.x, curr.y)
             cmd(next2.x, next2.y)
