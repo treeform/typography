@@ -1,4 +1,4 @@
-import unicode, sequtils, typography, vmath
+import sequtils, typography, unicode, vmath
 
 #[
 It's hard to implement a text. A textbox has many complex features one does not think about

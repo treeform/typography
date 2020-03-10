@@ -1,4 +1,4 @@
-import tables, unicode, flippy, vmath, font, rasterizer
+import flippy, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 # default line height of font.size * 1.2

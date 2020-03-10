@@ -1,6 +1,4 @@
-import typography, typography/textboxes, chroma, unicode, print, strformat
-
-import flippy, vmath
+import chroma, flippy, print, strformat, typography, typography/textboxes, unicode, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text

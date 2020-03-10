@@ -1,7 +1,6 @@
 ## Bare-bones SDL2 example
-import sdl2
 
-import typography, vmath, flippy, chroma, tables, times, unicode, hashes
+import chroma, flippy, hashes, sdl2, tables, times, typography, unicode, vmath
 
 discard sdl2.init(INIT_EVERYTHING)
 
@@ -46,8 +45,6 @@ proc texture(image: Image): TexturePtr =
   serface.pixels = addr image.data[0]
   var texture = render.createTextureFromSurface(serface)
   return texture
-
-
 
 while runGame:
   while pollEvent(evt):

@@ -1,4 +1,4 @@
-import algorithm, tables, flippy, vmath, chroma, font, ttf
+import algorithm, chroma, flippy, font, tables, ttf, vmath
 
 proc makeReady*(glyph: var Glyph, font: Font) =
   ## Make sure the glyph is ready to render

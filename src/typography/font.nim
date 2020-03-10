@@ -1,4 +1,4 @@
-import tables, strutils, streams, vmath
+import streams, strutils, tables, vmath
 
 type
   Segment* = object

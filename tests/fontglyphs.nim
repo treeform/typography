@@ -1,9 +1,6 @@
 ## Loads ttf system fonts and prodces a grid of their glphys
 
-import strutils, tables, ospaths, math, sequtils, algorithm, os
-import flippy, vmath, chroma, print
-import typography, typography/sysfonts
-
+import algorithm, chroma, flippy, math, os, ospaths, print, sequtils, strutils, tables, typography, typography/sysfonts, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -17,7 +14,6 @@ proc alphaWhite(image: var Image) =
       c.b = uint8(255) - c.a
       c.a = 255
       image.putrgba(x, y, c)
-
 
 for fontPath in getSystemFonts():
   if fontPath.endsWith(".ttf"):

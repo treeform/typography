@@ -1,7 +1,4 @@
-import tables
-import flippy, vmath, chroma, print
-import typography
-
+import chroma, flippy, print, tables, typography, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -16,7 +13,6 @@ proc alphaWhite(image: var Image) =
       c.a = 255
       image.putrgba(x, y, c)
 
-
 proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   var wh = wh - vec2(1, 1) # line width
   image.line(at, at + vec2(wh.x, 0), color)
@@ -27,14 +23,12 @@ proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
 proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
   image.drawRect(rect.xy, rect.wh, color)
 
-
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
   var image = font.getGlyphImage("h")
   image.alphaWhite()
   image.save("hFill.png")
-
 
 block:
   var image = newImage(500, 40, 4)
@@ -75,7 +69,6 @@ block:
 
   image.alphaWhite()
   image.save("sizes.png")
-
 
 block:
   var image = newImage(800, 200, 4)
@@ -121,7 +114,6 @@ block:
   image.alphaWhite()
   image.save("ch.png")
 
-
 block:
   var image = newImage(250, 20, 4)
 
@@ -133,7 +125,6 @@ block:
   image.alphaWhite()
   image.save("scaledup.png")
 
-
 block:
   var image = newImage(140, 20, 4)
 
@@ -144,7 +135,6 @@ block:
   image = image.magnify(6)
   image.alphaWhite()
   image.save("subpixelpos.png")
-
 
 block:
   var image = newImage(140, 20, 4)
@@ -181,8 +171,6 @@ block:
 
   image.save("subpixelglyphs.png")
 
-
-
 block:
   var font = readFontTtf("fonts/Moon Bold.otf")
   font.size = 300
@@ -197,7 +185,6 @@ block:
   image = font.getGlyphImage("Q")
   image.alphaWhite()
   image.save("qFill.png")
-
 
 block:
   var image = newImage(200, 100, 4)
@@ -252,7 +239,6 @@ To where it bent in the undergrowth;""")
       )
   image.save("layoutNoText.png")
 
-
 block:
   var image = newImage(500, 200, 4)
 
@@ -282,7 +268,6 @@ block:
 
   image.save("alignment.png")
 
-
 block:
   var image = newImage(500, 200, 4)
 
@@ -306,8 +291,6 @@ block:
 
   image.save("wordwrap.png")
 
-
-
 block:
   var image = newImage(500, 200, 4)
 
@@ -330,8 +313,6 @@ block:
   )
 
   image.save("wordwrapch.png")
-
-
 
 block:
   var image = newImage(300, 120, 4)
@@ -360,7 +341,6 @@ To where it bent in the undergrowth;""",
     image.drawRect(rect, rgba(255, 0, 0, 255))
 
   image.save("selection.png")
-
 
 block:
 
@@ -391,7 +371,6 @@ To where it bent in the undergrowth;""",
   image.drawRect(g.selectRect, rgba(255, 0, 0, 255))
 
   image.save("picking.png")
-
 
 block:
   var image = newImage(500, 120, 4)
