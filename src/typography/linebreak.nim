@@ -7,50 +7,50 @@ type
     code: BreakCode
 
   BreakCode {.pure.} = enum
-    MandatoryBreak # table["BK"] = BreakCode.Cause a line break (after)
-    CarriageReturn # CR Cause a line break (after), except between CR and LF
-    LineFeed # LF Cause a line break (after)
+    MandatoryBreak           # table["BK"] = BreakCode.Cause a line break (after)
+    CarriageReturn           # CR Cause a line break (after), except between CR and LF
+    LineFeed                 # LF Cause a line break (after)
     CombiningMark # CM Prohibit a line break between the character and the preceding character
-    NextLine # NL Cause a line break (after)
-    Surrogate # SG Do not occur in well-formed text
-    WordJoiner # WJ Prohibit line breaks before and after
-    ZeroWidthSpace # ZW Provide a break opportunity
-    NonBreaking # GL Prohibit line breaks before and after
-    Space # SP Enable indirect line breaks
-    ZeroWidthJoiner # ZWJ Prohibit line breaks within joiner sequences
-    # Break Opportunities
+    NextLine                 # NL Cause a line break (after)
+    Surrogate                # SG Do not occur in well-formed text
+    WordJoiner               # WJ Prohibit line breaks before and after
+    ZeroWidthSpace           # ZW Provide a break opportunity
+    NonBreaking              # GL Prohibit line breaks before and after
+    Space                    # SP Enable indirect line breaks
+    ZeroWidthJoiner          # ZWJ Prohibit line breaks within joiner sequences
+                             # Break Opportunities
     BreakOpportunityBeforeAndAfter # B2 Provide a line break opportunity before and after the character
     BreakAfter # BA Generally provide a line break opportunity after the character
     BreakBefore # BB Generally provide a line break opportunity before the character
     Hyphen # HY Provide a line break opportunity after the character, except in numeric context
     ContingentBreakOpportunity # CB Provide a line break opportunity contingent on additional information
-    # Characters Prohibiting Certain Breaks
-    ClosePunctuation # CL Prohibit line breaks before
-    CloseParenthesis # CP Prohibit line breaks before
+                             # Characters Prohibiting Certain Breaks
+    ClosePunctuation         # CL Prohibit line breaks before
+    CloseParenthesis         # CP Prohibit line breaks before
     ExclamationInterrogation # EX Prohibit line breaks before
-    Inseparable # IN Allow only indirect line breaks between pairs
-    Nonstarter # NS Allow only indirect line breaks before
-    OpenPunctuation # OP Prohibit line breaks after
-    Quotation # QU Act like they are both opening and closing
-    # Numeric Context
-    InfixNumericSeparator # IS Prevent breaks after any and before numeric
-    Numeric # NU Form numeric expressions for line breaking purposes
-    PostfixNumeric # PO Do not break following a numeric expression
-    PrefixNumeric # PR Do not break in front of a numeric expression
+    Inseparable              # IN Allow only indirect line breaks between pairs
+    Nonstarter               # NS Allow only indirect line breaks before
+    OpenPunctuation          # OP Prohibit line breaks after
+    Quotation                # QU Act like they are both opening and closing
+                             # Numeric Context
+    InfixNumericSeparator    # IS Prevent breaks after any and before numeric
+    Numeric                  # NU Form numeric expressions for line breaking purposes
+    PostfixNumeric           # PO Do not break following a numeric expression
+    PrefixNumeric            # PR Do not break in front of a numeric expression
     SymbolsAllowingBreakAfter # SY Prevent a break before, and allow a break after
-    # Other Characters
+                             # Other Characters
     Ambiguous # (Alphabetic or Ideographic) AI Act like AL when the resolved EAW is N; otherwise, act as ID
     Alphabetic # AL Are alphabetic characters or symbols that are used with alphabetic characters
     ConditionalJapaneseStarter # CJ Treat as NS or ID for strict or normal breaking.
-    EmojiBase # EB Do not break from following Emoji Modifier
-    EmojiModifier # EM Do not break from preceding Emoji Base
-    HangulLVSyllable # H2 Form Korean syllable blocks
-    HangulLVTSyllable # H3 Form Korean syllable blocks
+    EmojiBase                # EB Do not break from following Emoji Modifier
+    EmojiModifier            # EM Do not break from preceding Emoji Base
+    HangulLVSyllable         # H2 Form Korean syllable blocks
+    HangulLVTSyllable        # H3 Form Korean syllable blocks
     HebrewLetter # HL Do not break around a following hyphen; otherwise act as Alphabetic
-    Ideographic # ID Break before or after, except in some numeric context
-    HangulLJamo # JL Form Korean syllable blocks
-    HangulVJamo # JV Form Korean syllable blocks
-    HangulTJamo # JT Form Korean syllable blocks
+    Ideographic              # ID Break before or after, except in some numeric context
+    HangulLJamo              # JL Form Korean syllable blocks
+    HangulVJamo              # JV Form Korean syllable blocks
+    HangulTJamo              # JT Form Korean syllable blocks
     RegionalIndicator # RI Keep pairs together. For pairs, break before and after other classes
     ComplexContextDependent # South East Asian SA Provide a line break opportunity contingent on additional, language-specific context analysis
     Unknown # XX Have as yet unknown line breaking behavior or unassigned code positions

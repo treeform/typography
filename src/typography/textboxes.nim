@@ -28,19 +28,19 @@ because it is so natural. Here is a small list of the most important ones:
 ]#
 
 type TextBox* = ref object
-  cursor*: int # the typing cursor
-  selector*: int # the selection cursor
+  cursor*: int      # the typing cursor
+  selector*: int    # the selection cursor
   runes*: seq[Rune] # the runes we are typing
-  width*: int # width of text box in px
-  height*: int # height of text box in px
-  scroll*: Vec2 # scroll position
+  width*: int       # width of text box in px
+  height*: int      # height of text box in px
+  scroll*: Vec2     # scroll position
   font*: Font
   fontSize*: float
   lineHeight*: float
   mousePos*: Vec2
 
-  multiline*: bool # single line only (good for input fields)
-  wordWrap*: bool # should the lines wrap or not
+  multiline*: bool  # single line only (good for input fields)
+  wordWrap*: bool   # should the lines wrap or not
 
   glyphs: seq[GlyphPosition]
   savedX: float
