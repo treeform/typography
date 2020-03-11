@@ -236,7 +236,7 @@ proc commandsToShapes*(glyph: var Glyph) =
     for i in 0..<int(n):
       t += nrecip
       let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
-      drawLine(p, pn);
+      drawLine(p, pn)
       p = pn
 
     drawLine(p, p2)
