@@ -324,7 +324,7 @@ block:
     font.typeset(
       "Right, Top",
       pos = vec2(20, 20),
-      size = vec2(460,160),
+      size = vec2(460, 160),
       hAlign = Right,
       vAlign = Top
     )
