@@ -18,13 +18,13 @@ type
     NonBreaking              # GL Prohibit line breaks before and after
     Space                    # SP Enable indirect line breaks
     ZeroWidthJoiner          # ZWJ Prohibit line breaks within joiner sequences
-                             # Break Opportunities
+    ## Break Opportunities
     BreakOpportunityBeforeAndAfter # B2 Provide a line break opportunity before and after the character
     BreakAfter # BA Generally provide a line break opportunity after the character
     BreakBefore # BB Generally provide a line break opportunity before the character
     Hyphen # HY Provide a line break opportunity after the character, except in numeric context
     ContingentBreakOpportunity # CB Provide a line break opportunity contingent on additional information
-                             # Characters Prohibiting Certain Breaks
+    ## Characters Prohibiting Certain Breaks
     ClosePunctuation         # CL Prohibit line breaks before
     CloseParenthesis         # CP Prohibit line breaks before
     ExclamationInterrogation # EX Prohibit line breaks before
@@ -32,13 +32,13 @@ type
     Nonstarter               # NS Allow only indirect line breaks before
     OpenPunctuation          # OP Prohibit line breaks after
     Quotation                # QU Act like they are both opening and closing
-                             # Numeric Context
+    ## Numeric Context
     InfixNumericSeparator    # IS Prevent breaks after any and before numeric
     Numeric                  # NU Form numeric expressions for line breaking purposes
     PostfixNumeric           # PO Do not break following a numeric expression
     PrefixNumeric            # PR Do not break in front of a numeric expression
     SymbolsAllowingBreakAfter # SY Prevent a break before, and allow a break after
-                             # Other Characters
+    ## Other Characters
     Ambiguous # (Alphabetic or Ideographic) AI Act like AL when the resolved EAW is N; otherwise, act as ID
     Alphabetic # AL Are alphabetic characters or symbols that are used with alphabetic characters
     ConditionalJapaneseStarter # CJ Treat as NS or ID for strict or normal breaking.
