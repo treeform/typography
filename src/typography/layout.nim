@@ -17,7 +17,7 @@ type
     font*: Font
     fontSize*: float
     subPixelShift*: float
-    rect*: Rect # Where to draw the image character
+    rect*: Rect       # Where to draw the image character
     selectRect*: Rect # Were to draw or hit selection
     character*: string
     rune*: Rune
