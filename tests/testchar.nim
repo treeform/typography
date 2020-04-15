@@ -14,7 +14,7 @@ proc alphaWhite(image: var Image) =
       image.putrgba(x, y, c)
 
 block:
-  var font = readFontTtf(r"C:\Windows\Fonts\AmiriQuran.ttf")
+  var font = readFontTtf(r"C:\Windows\Fonts\Ubuntu.ttf")
   font.size = 300
   font.lineHeight = 300
 
@@ -24,8 +24,15 @@ block:
   for i, glyph in font.glyphArr:
     let name = glyph.name
 
+    if i != 5: continue
     #if name != "\219\184": continue
     print i, repr(name)
+
+
+    # var g = glyph
+    # g.ttfGlyphToCommands(font)
+    # print g
+
     var image = font.getGlyphOutlineImage(name)
 
     #print font.glyphs[name].ttfOffset
@@ -35,7 +42,9 @@ block:
       for i in 0 ..< command.numbers.len div 2:
         var x = int command.numbers[i*2+0]
         var y = int command.numbers[i*2+1]
-        #print x, y
+        print x, y
+
+    print glyph
 
     image.save("testchar.png")
 

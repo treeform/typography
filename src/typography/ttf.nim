@@ -1,4 +1,4 @@
-import endians, font, os, streams, tables, unicode, vmath
+import endians, font, os, streams, tables, unicode, vmath, print, strutils
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
@@ -514,7 +514,7 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
           newCommand.numbers.add pos.x
           newCommand.numbers.add pos.y
         glyph.commands.add(newCommand)
-      moreComponents = not flags.checkBit(32)
+      moreComponents = flags.checkBit(32)
 
   else:
     var endPtsOfContours = newSeq[int]()
