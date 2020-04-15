@@ -1,7 +1,7 @@
 import sequtils, typography, unicode, vmath
 
 #[
-It's hard to implement a text. A textbox has many complex features one does not think about
+It's hard to implement a text. A text box has many complex features one does not think about
 because it is so natural. Here is a small list of the most important ones:
 
 * Typing at location of cursor
@@ -19,7 +19,7 @@ because it is so natural. Here is a small list of the most important ones:
 * Click at the end of the end of the line should select character before the new line
 * Click at the end of the start of the line should select character first character and not the newline
 * Double click should select current word
-* Double click again should select current peragraph
+* Double click again should select current paragraph
 * Double click again should select everything
 * Text area needs to be able to have margins that can be clicked
 * There should be a scroll bar and a scroll window
@@ -199,7 +199,7 @@ proc adjustScroll*(textBox: TextBox) =
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.
   textBox.removeSelection()
-  # dont add new lines in a single line box
+  # don't add new lines in a single line box
   if not textBox.multiline and rune == Rune(10):
     return
   if textBox.cursor == textBox.runes.len:
@@ -469,8 +469,8 @@ proc selectWord*(textBox: TextBox, mousePos: Vec2, extraSpace = true) =
       textBox.runes[textBox.selector] == Rune(32):
       inc textBox.selector
 
-proc selectPeragraph*(textBox: TextBox, mousePos: Vec2) =
-  ## Select peragraph under the cursor (triple click)
+proc selectParagraph*(textBox: TextBox, mousePos: Vec2) =
+  ## Select paragraph under the cursor (triple click)
   textBox.mouseAction(mousePos, click = true)
   while textBox.cursor > 0 and
     textBox.runes[textBox.cursor - 1] != Rune(10):

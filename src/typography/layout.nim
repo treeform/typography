@@ -290,8 +290,8 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
       result.add g.selectRect
 
 proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
-  ## Given X,Y cordiante, return the GlyphPosition picked
-  # direct click not happend find closest to the right
+  ## Given X,Y coordinate, return the GlyphPosition picked
+  # direct click not happened find closest to the right
   var minG: GlyphPosition
   var minDist = -1.0
   for i, g in layout:

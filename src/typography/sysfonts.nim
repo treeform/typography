@@ -2,7 +2,7 @@
 
 import os, strutils
 
-var fontDirecotires*: seq[string]
+var fontDirectories*: seq[string]
 
 when defined(MacOSX):
   fontDirecotires = @[
@@ -11,7 +11,7 @@ when defined(MacOSX):
     getHomeDir() & "/Library/Fonts/"
   ]
 elif defined(windows):
-  fontDirecotires = @[
+  fontDirectories = @[
     r"C:\Windows\Fonts",
   ]
 else:
@@ -20,13 +20,13 @@ else:
 
 proc getSystemFonts*(): seq[string] =
   ## Get a list of all of the installed fonts.
-  for fontDir in fontDirecotires:
+  for fontDir in fontDirectories:
     for kind, path in walkDir(fontDir):
       result.add path
 
 proc findFont*(fontName: string): string =
   ## Find a font given a font name.
-  for fontDir in fontDirecotires:
+  for fontDir in fontDirectories:
     for kind, path in walkDir(fontDir):
       let (dir, name, ext) = path.splitFile()
       if name.toLowerAscii() == fontName.toLowerAscii():

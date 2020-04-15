@@ -103,7 +103,7 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
   return false
 
 proc glyphPathToCommands*(glyph: var Glyph) =
-  ## Converts a glphy into lines-shape
+  ## Converts a glyph into lines-shape
   glyph.commands = newSeq[PathCommand]()
 
   var command = Start
@@ -208,10 +208,10 @@ proc commandsToShapes*(glyph: var Glyph) =
     if points.len == 1:
       return points[0]
     else:
-      var newpoints = newSeq[Vec2](points.len - 1)
-      for i in 0..<newpoints.len:
-        newpoints[i] = points[i] * (1-t) + points[i + 1] * t
-      return getCurvePoint(newpoints, t)
+      var newPoints = newSeq[Vec2](points.len - 1)
+      for i in 0 ..< newPoints.len:
+        newPoints[i] = points[i] * (1-t) + points[i + 1] * t
+      return getCurvePoint(newPoints, t)
 
   proc drawCurve(points: seq[Vec2]) =
     let n = 10

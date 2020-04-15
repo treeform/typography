@@ -1,7 +1,7 @@
 import strutils, tables, unicode
 
 type
-  BreakRegon = object
+  BreakRegion = object
     start: int
     stop: int
     code: BreakCode
@@ -100,7 +100,7 @@ table["RI"] = BreakCode.RegionalIndicator
 table["SA"] = BreakCode.ComplexContextDependent
 table["XX"] = BreakCode.Unknown
 
-var breakRegons = newSeq[BreakRegon]()
+var breakRegions = newSeq[BreakRegion]()
 
 const lineBreakText = staticRead("linebreak.txt")
 for line in lineBreakText.splitLines:
@@ -121,10 +121,10 @@ for line in lineBreakText.splitLines:
   else:
     start = parseHexInt(range[0])
     stop = parseHexInt(range[1])
-  breakRegons.add BreakRegon(start: start, stop: stop, code: table[code])
+  breakRegions.add BreakRegion(start: start, stop: stop, code: table[code])
 
 proc getBreakCode*(rune: Rune): BreakCode =
-  for b in breakRegons:
+  for b in breakRegions:
     if b.start >= int(rune) and b.stop <= int(rune):
       return b.code
   return BreakCode.Unknown

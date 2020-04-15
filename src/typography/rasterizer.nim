@@ -179,7 +179,7 @@ proc getGlyphImage*(
   return image
 
 proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
-  ## Get an outine of the glyph with contorls points. Useful for debugging.
+  ## Get an outline of the glyph with controls points. Useful for debugging.
   var glyph = font.glyphs[unicode]
 
   glyph.makeReady(font)
