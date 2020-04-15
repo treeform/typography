@@ -51,6 +51,17 @@ block:
   image.save("basicTtf.png")
 
 block:
+  var font = readFontTtf("fonts/IBMPlexSans-Regular.ttf")
+  font.size = 16
+  var image = newImage(500, 40, 4)
+
+  font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
+
+  image.alphaWhite()
+  image.save("basicTtf2.png")
+
+
+block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   var image = newImage(500, 240, 4)
 
@@ -91,6 +102,7 @@ block:
 
   image.alphaWhite()
   image.save("ttf.png")
+
 
 # block:
 #   var image = newImage(800, 200, 4)

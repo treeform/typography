@@ -14,43 +14,44 @@ proc alphaWhite(image: var Image) =
       image.putrgba(x, y, c)
 
 block:
-  var font = readFontTtf(r"C:\Windows\Fonts\Ubuntu.ttf")
+  var font = readFontTtf("fonts/IBMPlexSans-Regular.ttf")
   font.size = 300
   font.lineHeight = 300
 
-  for name in font.glyphs.keys:
-    font.glyphs[name].name = name
+  # for name in font.glyphs.keys:
+  #   font.glyphs[name].name = name
 
   for i, glyph in font.glyphArr:
-    let name = glyph.name
+    if i != 4: continue
+    print i, glyph.code
+    #if name != "a": continue
 
-    if i != 5: continue
-    #if name != "\219\184": continue
-    print i, repr(name)
+    print glyph.code in font.glyphs
+    if glyph.code in font.glyphs:
 
+      print glyph
+      var g = glyph
+      g.ttfGlyphToCommands(font)
+      print g
 
-    # var g = glyph
-    # g.ttfGlyphToCommands(font)
-    # print g
+      var image = font.getGlyphOutlineImage(glyph.code)
 
-    var image = font.getGlyphOutlineImage(name)
+      #print font.glyphs[name].ttfOffset
+      #print font.glyphs[name].commands.len
+      for command in font.glyphs[glyph.code].commands:
+        #echo command
+        for i in 0 ..< command.numbers.len div 2:
+          var x = int command.numbers[i*2+0]
+          var y = int command.numbers[i*2+1]
+          print x, y
 
-    #print font.glyphs[name].ttfOffset
-    #print font.glyphs[name].commands.len
-    for command in font.glyphs[name].commands:
-      #echo command
-      for i in 0 ..< command.numbers.len div 2:
-        var x = int command.numbers[i*2+0]
-        var y = int command.numbers[i*2+1]
-        print x, y
+      #print glyph
 
-    print glyph
+      image.save("testchar.png")
 
-    image.save("testchar.png")
+      image = font.getGlyphImage(glyph.code)
+      image.alphaWhite()
+      image.save("testcharFill.png")
 
-    image = font.getGlyphImage(name)
-    image.alphaWhite()
-    image.save("testcharFill.png")
-
-    if image.width == 1396:
-      quit()
+      if image.width == 1396:
+        quit()

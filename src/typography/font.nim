@@ -19,7 +19,6 @@ type
   Glyph* = ref object
     ## Contains information about Glyphs or "letters"
     ## SVG Path, command buffer, and line-shape
-    name*: string
     code*: string
     advance*: float
     commands*: seq[PathCommand]

@@ -40,14 +40,14 @@ proc readFontSvg*(f: Stream): Font =
   for tag in xml.findAll "glyph":
     var glyph = Glyph()
     glyph.code = tag.attr "unicode"
-    glyph.name = tag.attr "glyph-name"
+    let name = tag.attr "glyph-name"
     var advance = tag.attr "horiz-adv-x"
     if advance.len > 0:
       glyph.advance = parseFloat(advance)
     else:
       glyph.advance = font.advance
     glyph.path = tag.attr "d"
-    if glyph.name == "space" and glyph.code == "":
+    if name == "space" and glyph.code == "":
       glyph.code = " "
     font.glyphs[glyph.code] = glyph
 

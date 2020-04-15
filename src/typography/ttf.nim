@@ -1,5 +1,5 @@
 import endians, font, os, streams, tables, unicode, vmath
-
+import print
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
     raise newException(
@@ -244,38 +244,37 @@ proc readFontTtf*(f: Stream): Font =
 
   # glyf
   f.setPosition(int chunks["glyf"].offset)
-  var glyphTabe = initTable[int, Glyph]()
+  var glyphTable = initTable[int, Glyph]()
   font.glyphArr = newSeq[Glyph](loca.len)
   let glyphOffset = int chunks["glyf"].offset
-  for glyphIndex in 0..<loca.len:
+  for glyphIndex in 0 ..< loca.len:
     let locaOffset = loca[glyphIndex]
     let offset = glyphOffset + locaOffset
     f.setPosition(int offset)
-    if not glyphTabe.hasKey(offset):
 
-      glyphTabe[offset] = Glyph()
-      glyphTabe[offset].ready = false
+    glyphTable[offset] = Glyph()
+    glyphTable[offset].ready = false
 
-      var isNull = glyphIndex + 1 < loca.len and
-          loca[glyphIndex] == loca[glyphIndex + 1]
-      if isNull:
-        glyphTabe[offset].isEmpty = true
-        glyphTabe[offset].ready = true
+    var isNull = glyphIndex + 1 < loca.len and
+        loca[glyphIndex] == loca[glyphIndex + 1]
+    if isNull:
+      glyphTable[offset].isEmpty = true
+      glyphTable[offset].ready = true
 
-      let numberOfContours = f.readInt16()
-      if numberOfContours == 0:
-        glyphTabe[offset].isEmpty = true
-        glyphTabe[offset].ready = true
+    let numberOfContours = f.readInt16()
+    if numberOfContours == 0:
+      glyphTable[offset].isEmpty = true
+      glyphTable[offset].ready = true
 
-      if not glyphTabe[offset].isEmpty:
-        glyphTabe[offset].ttfStream = f
-        glyphTabe[offset].ttfOffset = offset
-        glyphTabe[offset].numberOfContours = numberOfContours
+    if not glyphTable[offset].isEmpty:
+      glyphTable[offset].ttfStream = f
+      glyphTable[offset].ttfOffset = offset
+      glyphTable[offset].numberOfContours = numberOfContours
 
-      if numberOfContours == -1:
-        glyphTabe[offset].isComposite = true
+    if numberOfContours == -1:
+      glyphTable[offset].isComposite = true
 
-    font.glyphArr[glyphIndex] = glyphTabe[offset]
+    font.glyphArr[glyphIndex] = glyphTable[offset]
 
   # hhea
   f.setPosition(int chunks["hhea"].offset)
@@ -345,7 +344,7 @@ proc readFontTtf*(f: Stream): Font =
         let idRangeAddress = f.getPosition()
         let idRangeOffsetSeq = f.readUint16Seq(int segCount)
         var glyphIndexAddress = f.getPosition()
-        for j in 0..<int(segCount):
+        for j in 0 ..< int(segCount):
           var glyphIndex = 0
           let endCount = endCountSeq[j]
           let startCount = startCountSeq[j]
@@ -366,7 +365,7 @@ proc readFontTtf*(f: Stream): Font =
               glyphIndex = int((c + idDelta) and 0xFFFF)
 
             if glyphIndex < font.glyphArr.len:
-              let unicode = Rune(int c).toUTF8()
+              let unicode = Rune(c.int).toUTF8()
               font.glyphs[unicode] = font.glyphArr[glyphIndex]
               font.glyphs[unicode].code = unicode
               glyphsIndexToRune[glyphIndex] = unicode
@@ -419,7 +418,7 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
     f = glyph.ttfStream
     offset = glyph.ttfOffset
 
-  f.setPosition(int offset)
+  f.setPosition(offset.int)
   let numberOfContours = f.readInt16()
   assert numberOfContours == glyph.numberOfContours
 
