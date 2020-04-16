@@ -494,3 +494,32 @@ block:
   image.drawText(layout)
   image.alphaWhite()
   image.save("tabs.png")
+
+block:
+  var font = readFontTtf("fonts/silver.ttf")
+  font.size = 21*4
+  font.lineHeight = 21*4
+
+  let borderPx = 2
+  var glpyhImage: Image
+  for i in 0 .. 10000:
+    glpyhImage = font.getGlyphImage("快")
+  var image = glpyhImage.outlineBorder(borderPx)
+
+  image.blitWithMask(
+    glpyhImage,
+    rect(
+      0,
+      0,
+      glpyhImage.width.float32,
+      glpyhImage.height.float32
+    ),
+    rect(
+      borderPx.float32,
+      borderPx.float32,
+      glpyhImage.width.float32,
+      glpyhImage.height.float32
+    ),
+    rgba(0, 0, 0, 255)
+  )
+  image.save("withBorders.png")

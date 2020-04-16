@@ -244,7 +244,7 @@ block:
   var textBox = newTextBox(font, 300, 120, """
 Lorem ipsum dolor sit amet, consectetur elit. Maecenas facilisis massa ac ipsum eff!
 Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilisis et, cursus nec nibh. Nunc ut facilisis arcu. Cras odio lorem, facilisis eget tincidunt nec, maximus sit amet nulla. Nam mi dolor, dignissim ac eleifend ut, malesuada et libero. Vestibulum mattis bibendum mattis. Donec diam odio, pellentesque sed bibendum quis, facilisis ut mauris.""")
-  textBox.selectPeragraph(vec2(30, 30))
+  textBox.selectParagraph(vec2(30, 30))
   textBox.draw("textbox/select_peragraph.png")
 
 block:
