@@ -112,6 +112,19 @@ block:
   image.alphaWhite()
   image.save("sample_ttf.png")
 
+
+block:
+  var
+    sample = loadImage("sample_ttf.png")
+    master = loadImage("sample_master.png")
+  for x in 0 ..< sample.width:
+    for y in 0 ..< sample.height:
+      var a = master.getRgba(x, y).color
+      var b = sample.getRgba(x, y).color
+      var c = mix(a, b)
+      sample.putRgba(x, y, c.rgba)
+  sample.save("sample_blur.png")
+
 # block:
 #   var image = newImage(800, 200, 4)
 #   var font = readFontOtf("fonts/Ubuntu.ttf")
