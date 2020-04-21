@@ -49,6 +49,7 @@ type
     xHeight*: float
     capHeight*: float
     unitsPerEm*: float
+    lineGap*: float
 
     size*: float
     lineHeight*: float

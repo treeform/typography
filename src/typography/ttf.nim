@@ -213,6 +213,7 @@ proc readFontTtf*(f: Stream): Font =
   let os2_sTypoDescender = f.readInt16()
   font.descent = os2_sTypoDescender.float
   let os2_sTypoLineGap = f.readInt16()
+  font.lineGap = os2_sTypoLineGap.float
   let os2_usWinAscent = f.readUInt16()
   #font.ascent = os2_usWinAscent.float
   let os2_usWinDescent = f.readUInt16()
