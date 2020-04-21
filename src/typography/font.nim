@@ -53,7 +53,7 @@ type
     size*: float
     lineHeight*: float
     glyphs*: Table[string, Glyph]
-    kerning*: Table[string, float]
+    kerning*: Table[(string, string), float]
     glyphArr*: seq[Glyph]
 
 proc `sizePt`*(font: Font): float =

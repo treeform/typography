@@ -51,13 +51,13 @@ proc readFontSvg*(f: Stream): Font =
       glyph.code = " "
     font.glyphs[glyph.code] = glyph
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   for tag in xml.findAll "hkern":
     var k = parseFloat tag.attr "k"
     var u1 = tag.attr "u1"
     var u2 = tag.attr "u2"
     if u1.len > 0 and u2.len > 0:
-      font.kerning[u1 & ":" & u2] = k
+      font.kerning[(u1, u2)] = k
 
   return font
 

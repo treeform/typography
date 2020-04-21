@@ -602,13 +602,13 @@ proc readFontOtf*(f: Stream): Font =
     glyph.code = uni
     font.glyphs[uni] = glyph
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   for k, value in kern.kerning.pairs():
     if (int k[0]) in cmap.mappingRev and (int k[1]) in cmap.mappingRev:
       let u1 = Rune(cmap.mappingRev[int k[0]]).toUTF8()
       let u2 = Rune(cmap.mappingRev[int k[1]]).toUTF8()
       if u1.len > 0 and u2.len > 0:
-        font.kerning[u1 & ":" & u2] = float value
+        font.kerning[(u1, u2)] = float value
 
   return font
 

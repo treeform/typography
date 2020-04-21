@@ -1,4 +1,4 @@
-import chroma, flippy, print, tables, typography, vmath
+import chroma, flippy, print, tables, typography, vmath, os
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -22,6 +22,60 @@ proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
 
 proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
   image.drawRect(rect.xy, rect.wh, color)
+
+block:
+
+  var mainFont = readFontTtf("fonts/Ubuntu.ttf")
+
+  var image = newImage(1200, 400, 4)
+  var y = 10.0
+  for fontPath in [
+    "fonts/Jura-Regular.ttf",
+    "fonts/IBMPlexSans-Regular.ttf",
+    "fonts/silver.ttf",
+    "fonts/Ubuntu.ttf",
+    "fonts/Lato-Regular.ttf",
+    "fonts/SourceSansPro-Regular.ttf"
+  ]:
+    mainFont.size = 10
+    mainFont.lineHeight = 32
+    mainFont.drawText(image, vec2(10, y), fontPath.lastPathPart)
+
+    var x = 150.0
+    var font = readFontTtf(fontPath)
+    print font.name, font.ascent, font.descent, font.xHeight, font.capHeight
+    for s in [8, 12, 16, 18, 20, 32]:
+      font.size = s.float
+      font.lineHeight = 32
+
+      let
+        fontHeight = font.ascent - font.descent
+        scale = font.size / fontHeight
+      print fontHeight / font.size , font.unitsPerEm / font.size
+      # print font.ascent * scale, font.descent * scale
+      font.drawText(image, vec2(x, y), "Figte")
+      image.drawRect(rect(x, y, 100, 32), rgba(255, 255, 255, 255))
+
+      x += 150
+
+    y += 50
+
+  var master = loadImage("font_metrics_master.png")
+
+  image.alphaWhite()
+  image.save("font_metrics.png")
+
+  for x in 0 ..< image.width:
+    for y in 0 ..< image.height:
+      var a = master.getRgba(x, y).color
+      var b = image.getRgba(x, y).color
+      var c = mix(a, b)
+      image.putRgba(x, y, c.rgba)
+
+  image.save("font_metrics_blur.png")
+
+
+if true: quit()
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")

@@ -38,13 +38,11 @@ type
 
 proc kerningAdjustment*(font: Font, prev, c: string): float =
   ## Get Kerning Adjustment between two letters
-  var fontHeight = font.ascent - font.descent
-  var scale = font.size / fontHeight
   if prev != "":
-    var key = prev & ":" & c
+    var key = (prev, c)
     if font.kerning.hasKey(key):
       var kerning = font.kerning[key]
-      return - kerning * scale
+      return kerning
 
 proc canWrap(rune: Rune): bool =
   if rune == Rune(32): return true # early return for ascii space
@@ -68,8 +66,7 @@ proc typeset*(
     at = pos
     lineStart = pos.x
     prev = ""
-    fontHeight = font.ascent - font.descent
-    scale = font.size / fontHeight
+    scale = font.size / font.unitsPerEm
     boundsMin = vec2(0, 0)
     boundsMax = vec2(0, 0)
     glyphCount = 0
@@ -78,7 +75,10 @@ proc typeset*(
   if tabWidth == 0.0:
     tabWidth = font.size * 4
 
-  at.y += font.size
+  at.y += ceil(font.size / 2 + font.lineHeight / 2  + font.descent * scale)
+
+  #print (font.ascent - font.descent) * scale, font.size
+  #at.y += floor(font.size / 2) + floor(font.lineHeight / 2) + ceil(font.descent * scale)
 
   var
     strIndex = 0
@@ -128,7 +128,7 @@ proc typeset*(
       c = " " # if glyph is missing use space for now
 
     var glyph = font.glyphs[c]
-    at.x += font.kerningAdjustment(prev, c)
+    at.x += font.kerningAdjustment(prev, c) * scale
 
     var subPixelShift = at.x - floor(at.x)
     var glyphPos = vec2(floor(at.x), floor(at.y))
@@ -202,7 +202,8 @@ proc typeset*(
 
     inc glyphIndex
 
-    at.x += glyph.advance * scale
+
+    at.x += glyph.advance * scale #* 1.15
     prev = c
     inc glyphCount
     strIndex += c.len

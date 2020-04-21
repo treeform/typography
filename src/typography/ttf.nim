@@ -208,8 +208,10 @@ proc readFontTtf*(f: Stream): Font =
   let os2_fsSelection = f.readUInt16()
   let os2_usFirstCharIndex = f.readUInt16()
   let os2_usLastCharIndex = f.readUInt16()
-  font.ascent = float f.readInt16()
-  font.descent = float f.readInt16()
+  let os2_sTypoAscender = f.readInt16()
+  #font.ascent = os2_sTypoAscender.float
+  let os2_sTypoDescender = f.readInt16()
+  #font.descent = os2_sTypoDescender.float
   let os2_sTypoLineGap = f.readInt16()
   let os2_usWinAscent = f.readUInt16()
   let os2_usWinDescent = f.readUInt16()
@@ -283,7 +285,10 @@ proc readFontTtf*(f: Stream): Font =
   let hhea_minorVersion = f.readUInt16()
   assert hhea_minorVersion == 0
   let hhea_ascent = f.readInt16()
+  # for some reason os2_sTypoAscender is preferred
+  font.ascent = hhea_ascent.float
   let hhea_descent = f.readInt16()
+  font.descent = hhea_descent.float
   let hhea_lineGap = f.readInt16()
   let hhea_advanceWidthMax = f.readUInt16()
   let hhea_minLeftSideBearing = f.readInt16()
@@ -308,7 +313,7 @@ proc readFontTtf*(f: Stream): Font =
     if i < int hhea_numberOfHMetrics:
       advanceWidth = f.readUInt16()
       leftSideBearing = f.readInt16()
-    font.glyphArr[i].advance = float advanceWidth
+    font.glyphArr[i].advance = advanceWidth.float
 
   # cmap
   var glyphsIndexToRune = newSeq[string](font.glyphArr.len)
@@ -372,7 +377,7 @@ proc readFontTtf*(f: Stream): Font =
             else:
               discard
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   # kern
   if "kern" in chunks:
     f.setPosition(int chunks["kern"].offset)
@@ -395,7 +400,7 @@ proc readFontTtf*(f: Stream): Font =
         let u1 = glyphsIndexToRune[int leftIndex]
         let u2 = glyphsIndexToRune[int rightIndex]
         if u1.len > 0 and u2.len > 0:
-          font.kerning[u1 & ":" & u2] = float value
+          font.kerning[(u1, u2)] = value.float
 
     elif tableVersion == 1:
       # Mac format
