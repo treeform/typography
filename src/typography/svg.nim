@@ -19,6 +19,9 @@ proc readFontSvg*(f: Stream): Font =
       font.advance = parseFloat(advance)
 
   for tag in xml.findAll "font-face":
+    var unitsPerEm = tag.attr "units-per-em"
+    if unitsPerEm.len > 0:
+      font.unitsPerEm = parseFloat(unitsPerEm)
     var bbox = tag.attr "bbox"
     if bbox.len > 0:
       var v = bbox.split()

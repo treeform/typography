@@ -1,4 +1,4 @@
-import flippy, font, rasterizer, tables, unicode, vmath, print
+import flippy, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 # default line height of font.size * 1.2
@@ -61,6 +61,9 @@ proc typeset*(
   ): seq[GlyphPosition] =
   ## Typeset runes and return glyph positions that is ready to draw
 
+  assert font.size != 0
+  assert font.unitsPerEm != 0
+
   result = @[]
   var
     at = pos
@@ -75,18 +78,16 @@ proc typeset*(
   if tabWidth == 0.0:
     tabWidth = font.size * 4
 
-  at.y += ceil(font.size / 2 + font.lineHeight / 2  + font.descent * scale)
-
-  #print (font.ascent - font.descent) * scale, font.size
-  #at.y += floor(font.size / 2) + floor(font.lineHeight / 2) + ceil(font.descent * scale)
-
   var
     strIndex = 0
     glyphIndex = 0
     lastCanWrap = 0
     lineHeight = font.lineHeight
+
   if lineHeight == normalLineHeight:
     lineHeight = floor(font.size * 1.2)
+
+  at.y += ceil(font.size / 2 + lineHeight / 2 + font.descent * scale)
 
   for rune in runes:
     var c = $rune
@@ -201,9 +202,7 @@ proc typeset*(
       boundsMin.y = min(boundsMin.y, at.y)
 
     inc glyphIndex
-
-
-    at.x += glyph.advance * scale #* 1.15
+    at.x += glyph.advance * scale
     prev = c
     inc glyphCount
     strIndex += c.len

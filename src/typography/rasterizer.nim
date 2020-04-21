@@ -123,8 +123,8 @@ proc getGlyphImage*(
     for y in 1..image.height:
       var alphas = newSeq[float](image.width)
       for m in 0..<quality:
-        var yline = (float(y) + ep) + float(m)/float(quality) - 1
-        var scan = Segment(at: vec2(-10000, yline), to: vec2(100000, yline))
+        var yLine = (float(y) + ep) + float(m)/float(quality) - 1
+        var scan = Segment(at: vec2(-10000, yLine), to: vec2(100000, yLine))
 
         scan.at = trans(scan.at)
         scan.to = trans(scan.to)
@@ -147,7 +147,7 @@ proc getGlyphImage*(
           var at = hits[i]
           var to = hits[i+1]
 
-          for j in int(at)+1..int(to)-1:
+          for j in int(at) + 1 .. int(to) - 1:
             alphas[j] += 1.0
           i += 2
 
@@ -194,14 +194,14 @@ proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
   var image = newImage(w, h, 4)
   let origin = vec2(float tx, float ty)
 
-  proc atrans(v: Vec2): Vec2 = (v) * scale - origin
+  proc adjust(v: Vec2): Vec2 = (v) * scale - origin
   # draw outline
   proc flip(v: Vec2): Vec2 =
     result.x = v.x
     result.y = float(h) - v.y
   for s in glyph.lines:
     var red = ColorRgba(r: 255, g: 0, b: 0, a: 255)
-    image.line(flip(atrans(s.at)), flip(atrans(s.to)), red)
+    image.line(flip(adjust(s.at)), flip(adjust(s.to)), red)
   # draw points
   for ruleNum, c in glyph.commands:
     var blue = ColorRgba(r: 0, g: 0, b: 255, a: 255)
@@ -210,13 +210,13 @@ proc getGlyphOutlineImage*(font: Font, unicode: string): Image =
       at.x = c.numbers[i*2+0]
       at.y = c.numbers[i*2+1]
       image.line(
-        flip(atrans(at)) + vec2(1, 1),
-        flip(atrans(at)) + vec2(-1, -1),
+        flip(adjust(at)) + vec2(1, 1),
+        flip(adjust(at)) + vec2(-1, -1),
         blue
       )
       image.line(
-        flip(atrans(at)) + vec2(-1, 1),
-        flip(atrans(at)) + vec2(1, -1),
+        flip(adjust(at)) + vec2(-1, 1),
+        flip(adjust(at)) + vec2(1, -1),
         blue
       )
 
