@@ -85,7 +85,7 @@ proc typeset*(
     lineHeight = font.lineHeight
 
   if lineHeight == normalLineHeight:
-    lineHeight = floor(font.size * 1.2)
+    lineHeight = font.size
 
   at.y += ceil(font.size / 2 + lineHeight / 2 + font.descent * scale)
 

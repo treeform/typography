@@ -94,14 +94,23 @@ block:
 
 block:
   var image = newImage(800, 200, 4)
-  var font = readFontTtf("fonts/Lato-Regular.ttf")
-
+  var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
+  font.lineHeight = 20
+  print "svg:", font.ascent, font.descent, font.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
-
   image.alphaWhite()
-  image.save("ttf.png")
+  image.save("sample_svg.png")
 
+block:
+  var image = newImage(800, 200, 4)
+  var font = readFontTtf("fonts/Ubuntu.ttf")
+  font.size = 16
+  font.lineHeight = 20
+  print "ttf:", font.ascent, font.descent, font.unitsPerEm
+  font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+  image.alphaWhite()
+  image.save("sample_ttf.png")
 
 # block:
 #   var image = newImage(800, 200, 4)
