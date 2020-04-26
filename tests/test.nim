@@ -1,18 +1,5 @@
 import chroma, flippy, print, tables, typography, vmath, os
 
-proc alphaWhite(image: var Image) =
-  ## Typography deals mostly with transperant images with white text
-  ## This is hard to see in tests so we convert it to white background
-  ## with black text.
-  for x in 0..<image.width:
-    for y in 0..<image.height:
-      var c = image.getrgba(x, y)
-      c.r = uint8(255) - c.a
-      c.g = uint8(255) - c.a
-      c.b = uint8(255) - c.a
-      c.a = 255
-      image.putrgba(x, y, c)
-
 proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   var wh = wh - vec2(1, 1) # line width
   image.line(at, at + vec2(wh.x, 0), color)
@@ -27,7 +14,7 @@ block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
   var image = font.getGlyphImage("h")
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("hFill.png")
 
 block:
@@ -37,7 +24,7 @@ block:
   font.lineHeight = 16
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("basicSvg.png")
 
 block:
@@ -47,7 +34,7 @@ block:
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("basicTtf.png")
 
 block:
@@ -57,7 +44,7 @@ block:
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("basicTtf2.png")
 
 
@@ -78,7 +65,7 @@ block:
   font.size = 72
   font.drawText(image, vec2(10, 180), "The quick brown fox jumps over the lazy dog.")
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("sizes.png")
 
 block:
@@ -89,7 +76,7 @@ block:
   font.lineHeight = 20
   font.drawText(image, vec2(10, 10), readFile("sample.ru.txt"))
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("ru.png")
 
 block:
@@ -99,7 +86,7 @@ block:
   font.lineHeight = 20
   print "svg:", font.ascent, font.descent, font.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("sample_svg.png")
 
 block:
@@ -109,7 +96,7 @@ block:
   font.lineHeight = 20
   print "ttf:", font.ascent, font.descent, font.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("sample_ttf.png")
 
 
@@ -133,7 +120,7 @@ block:
 #   font.lineHeight = 20
 #   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
 
-#   image.alphaWhite()
+#   image.alphaToBlankAndWhite()
 #   image.save("otf.png")
 
 block:
@@ -144,7 +131,7 @@ block:
 
   font.drawText(image, vec2(10, 10), readFile("sample.ch.txt"))
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("ch.png")
 
 block:
@@ -155,7 +142,7 @@ block:
   font.drawText(image, vec2(10, 4), "The quick brown fox jumps over the lazy dog.")
 
   image = image.magnify(4)
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("scaledup.png")
 
 block:
@@ -166,7 +153,7 @@ block:
   font.drawText(image, vec2(8, 4), "momomomomomomo")
 
   image = image.magnify(6)
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("subpixelpos.png")
 
 block:
@@ -202,7 +189,7 @@ block:
     let at = vec2(12.0 + float(i)*12, 15) * 6
     font.drawText(image, at + vec2(0, 6), "+0." & $i)
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   let red = rgba(255, 0, 0, 255)
   for i in 0..<10:
@@ -226,7 +213,7 @@ block:
   image.save("qOutLine.png")
 
   image = font.getGlyphImage("Q")
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("qFill.png")
 
 block:
@@ -251,7 +238,7 @@ To where it bent in the undergrowth;""")
 
   let mag = 3.0
   image = image.magnify(int mag)
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   # draw layout boxes
   for pos in layout:
@@ -381,7 +368,7 @@ block:
     )
   )
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   image.drawRect(
     vec2(20, 20),
@@ -404,7 +391,7 @@ block:
     size = vec2(300, 160)
   ))
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   image.drawRect(
     vec2(100, 20),
@@ -427,7 +414,7 @@ block:
     size = vec2(300, 160)
   ))
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   image.drawRect(
     vec2(100, 20),
@@ -456,7 +443,7 @@ To where it bent in the undergrowth;""",
   # draw text at a layout
   image.drawText(layout)
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   let selectionRects = layout.getSelection(23, 120)
   # draw selection boxes
@@ -485,7 +472,7 @@ To where it bent in the undergrowth;""",
   # draw text at a layout
   image.drawText(layout)
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
 
   let at = vec2(120, 52)
   let g = layout.pickGlyphAt(at)
@@ -513,7 +500,7 @@ block:
 
   # draw text at a layout
   image.drawText(layout)
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("tabs.png")
 
 block:
@@ -584,7 +571,7 @@ block:
 
   var master = loadImage("font_metrics_master.png")
 
-  image.alphaWhite()
+  image.alphaToBlankAndWhite()
   image.save("font_metrics.png")
 
   for x in 0 ..< image.width:

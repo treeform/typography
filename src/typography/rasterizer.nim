@@ -276,3 +276,16 @@ proc getGlyphImageOffset*(
 
   result.x = origin.x
   result.y = -float(h) - origin.y
+
+proc alphaToBlankAndWhite*(image: var Image) =
+  ## Typography deals mostly with transparent images with white text
+  ## This is hard to see in tests so we convert it to white background
+  ## with black text.
+  for x in 0..<image.width:
+    for y in 0..<image.height:
+      var c = image.getrgba(x, y)
+      c.r = uint8(255) - c.a
+      c.g = uint8(255) - c.a
+      c.b = uint8(255) - c.a
+      c.a = 255
+      image.putRgba(x, y, c)

@@ -8,3 +8,6 @@
 *.dll
 nimcache
 tests/samples/*
+
+# Do to license issues ignore some fonts:
+tests/fonts/helvetica.ttf
