@@ -82,7 +82,7 @@ block:
   image.save("sizes.png")
 
 block:
-  var image = newImage(800, 200, 4)
+  var image = newImage(800, 220, 4)
   var font = readFontSvg("fonts/DejaVuSans.svg")
 
   font.size = 16
