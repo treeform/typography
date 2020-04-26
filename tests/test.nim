@@ -282,7 +282,7 @@ block:
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 11 # 11px or 8pt
-  font.lineHeight = 20
+  font.lineHeight = 11
 
   image.drawText(
     font.typeset(
