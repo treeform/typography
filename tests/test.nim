@@ -35,7 +35,7 @@ block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
   font.lineHeight = 16
-  font.drawText(image, vec2(10, 10), "The quick brown fox jumps over the lazy dog.")
+  font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaWhite()
   image.save("basicSvg.png")
