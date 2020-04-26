@@ -1,14 +1,10 @@
 import chroma, flippy, print, tables, typography, vmath, os
 
-proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
-  var wh = wh - vec2(1, 1) # line width
-  image.line(at, at + vec2(wh.x, 0), color)
-  image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), color)
-  image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), color)
-  image.line(at + vec2(0, wh.y), at, color)
+# proc strokeRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
+#   image.strokeRect(rect(at.x, at.y, wh.x, wh.y), color)
 
-proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
-  image.drawRect(rect.xy, rect.wh, color)
+# proc strokeRect(image: var Image, rect: Rect, color: ColorRGBA) =
+#   image.strokeRect(rect, color)
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
@@ -251,9 +247,11 @@ To where it bent in the undergrowth;""")
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.drawRect(
-        (pos.rect.xy + glyphOffset) * mag,
-        vec2(float img.width, float img.height) * mag,
+      image.strokeRect(
+        rect(
+          (pos.rect.xy + glyphOffset) * mag,
+          vec2(float img.width, float img.height) * mag
+        ),
         rgba(255, 0, 0, 255)
       )
   image.save("layout.png")
@@ -270,9 +268,11 @@ To where it bent in the undergrowth;""")
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.drawRect(
-        (pos.rect.xy + glyphOffset) * mag,
-        vec2(float img.width, float img.height) * mag,
+      image.strokeRect(
+        rect(
+          (pos.rect.xy + glyphOffset) * mag,
+          vec2(float img.width, float img.height) * mag
+        ),
         rgba(255, 0, 0, 255)
       )
   image.save("layoutNoText.png")
@@ -370,9 +370,8 @@ block:
 
   image.alphaToBlankAndWhite()
 
-  image.drawRect(
-    vec2(20, 20),
-    vec2(460, 160),
+  image.strokeRect(
+    rect(20, 20, 460, 160),
     rgba(255, 0, 0, 255)
   )
 
@@ -393,9 +392,8 @@ block:
 
   image.alphaToBlankAndWhite()
 
-  image.drawRect(
-    vec2(100, 20),
-    vec2(300, 160),
+  image.strokeRect(
+    rect(100, 20, 300, 160),
     rgba(255, 0, 0, 255)
   )
 
@@ -416,9 +414,8 @@ block:
 
   image.alphaToBlankAndWhite()
 
-  image.drawRect(
-    vec2(100, 20),
-    vec2(300, 160),
+  image.strokeRect(
+    rect(100, 20, 300, 160),
     rgba(255, 0, 0, 255)
   )
 
@@ -448,7 +445,7 @@ To where it bent in the undergrowth;""",
   let selectionRects = layout.getSelection(23, 120)
   # draw selection boxes
   for rect in selectionRects:
-    image.drawRect(rect, rgba(255, 0, 0, 255))
+    image.strokeRect(rect, rgba(255, 0, 0, 255))
 
   image.save("selection.png")
 
@@ -477,8 +474,8 @@ To where it bent in the undergrowth;""",
   let at = vec2(120, 52)
   let g = layout.pickGlyphAt(at)
   # draw g
-  image.drawRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
-  image.drawRect(g.selectRect, rgba(255, 0, 0, 255))
+  image.strokeRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
+  image.strokeRect(g.selectRect, rgba(255, 0, 0, 255))
 
   image.save("picking.png")
 
@@ -563,7 +560,7 @@ block:
       print fontHeight / font.size , font.unitsPerEm / font.size
       # print font.ascent * scale, font.descent * scale
       font.drawText(image, vec2(x, y), "Figte")
-      image.drawRect(rect(x, y, 100, 32), rgba(255, 255, 255, 255))
+      image.strokeRect(rect(x, y, 100, 32), rgba(255, 255, 255, 255))
 
       x += 150
 
