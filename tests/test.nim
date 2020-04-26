@@ -76,7 +76,7 @@ block:
   font.size = 36
   font.drawText(image, vec2(10, 110), "The quick brown fox jumps over the lazy dog.")
   font.size = 72
-  font.drawText(image, vec2(10, 150), "The quick brown fox jumps over the lazy dog.")
+  font.drawText(image, vec2(10, 180), "The quick brown fox jumps over the lazy dog.")
 
   image.alphaWhite()
   image.save("sizes.png")
