@@ -1,11 +1,5 @@
 import chroma, flippy, print, tables, typography, vmath, os
 
-# proc strokeRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
-#   image.strokeRect(rect(at.x, at.y, wh.x, wh.y), color)
-
-# proc strokeRect(image: var Image, rect: Rect, color: ColorRGBA) =
-#   image.strokeRect(rect, color)
-
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
