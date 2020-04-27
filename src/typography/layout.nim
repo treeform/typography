@@ -70,6 +70,7 @@ proc typeset*(
     lineStart = pos.x
     prev = ""
     scale = font.size / font.unitsPerEm
+    #scale = font.size / (font.ascent - font.descent)
     boundsMin = vec2(0, 0)
     boundsMax = vec2(0, 0)
     glyphCount = 0

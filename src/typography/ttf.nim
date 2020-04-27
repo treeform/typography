@@ -74,7 +74,7 @@ proc readLongDateTime(stream: Stream): float64 =
   return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
 
 # todo remove
-proc ttfGlyphToCommands*(glyph: var Glyph, font: Font)
+proc ttfGlyphToCommands*(glyph: Glyph, font: Font)
 
 proc readFontTtf*(f: Stream): Font =
   ## Reads TTF font from a stream
@@ -421,7 +421,7 @@ proc readFontTtf*(filename: string): Font =
   result = readFontTtf(f)
   result.filename = filename
 
-proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
+proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset
