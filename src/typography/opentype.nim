@@ -1,7 +1,4 @@
-import tables, streams, strutils, endians, unicode, os, encodings
-import font
-import vmath, print
-import opentypedata
+import endians, font, opentypedata, os, streams, tables, unicode, vmath
 
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
@@ -98,7 +95,7 @@ type Head = object
   xMax: int16
   yMax: int16
   macStyle: uint16
-  lowestRecPPEM:uint16
+  lowestRecPPEM: uint16
   fontDirectionHint: int16
   indexToLocFormat: int16
   glyphDataFormat: int16
@@ -134,18 +131,16 @@ type Name = object
   stringOffset: int
   entries: Table[string, seq[LangString]]
 
-
 proc getLanguageCode(platformID, languageID: uint16): string =
   case platformID:
-    of 0:  # Unicode
+    of 0: # Unicode
       return "en"
-    of 1:  # Macintosh
-        return macLanguages[int languageID];
-    of 3:  # Windows
-        return windowsLanguages[int languageID];
-    else:
+    of 1: # Macintosh
+      return macLanguages[int languageID]
+    of 3: # Windows
+      return windowsLanguages[int languageID]
+    else: # Unexpected
       return "??"
-
 
 proc readName(f: Stream, chunks: Table[string, Chunk]): Name =
   f.setPosition(int chunks["name"].offset)
@@ -172,7 +167,6 @@ proc readName(f: Stream, chunks: Table[string, Chunk]): Name =
       result.entries[$nameIDEnum] = @[]
     result.entries[$nameIDEnum].add LangString(lang: languageCode, value: value)
     f.setPosition(save)
-
 
 type Maxp = object
   version: float
@@ -208,7 +202,6 @@ proc readMaxp(f: Stream, chunks: Table[string, Chunk]): Maxp =
   result.sizeOfInstructions = f.readUint16()
   result.maxComponentElements = f.readUint16()
   result.maxComponentDepth = f.readUint16()
-
 
 type Os2 = object
   version: uint16
@@ -285,21 +278,25 @@ proc readOs2(f: Stream, chunks: Table[string, Chunk]): Os2 =
   result.usWinAscent = f.readUInt16()
   result.usWinDescent = f.readUInt16()
   if result.version >= 1.uint16:
-      result.ulCodePageRange1 = f.readUInt32()
-      result.ulCodePageRange2 = f.readUInt32()
+    result.ulCodePageRange1 = f.readUInt32()
+    result.ulCodePageRange2 = f.readUInt32()
   if result.version >= 2.uint16:
-      result.sxHeight = f.readInt16()
-      result.sCapHeight = f.readInt16()
-      result.usDefaultChar = f.readUInt16()
-      result.usBreakChar = f.readUInt16()
-      result.usMaxContent = f.readUInt16()
-
+    result.sxHeight = f.readInt16()
+    result.sCapHeight = f.readInt16()
+    result.usDefaultChar = f.readUInt16()
+    result.usBreakChar = f.readUInt16()
+    result.usMaxContent = f.readUInt16()
 
 type Loca = object
   loca: seq[int]
   offsetSize: seq[int]
 
-proc readLoca(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): Loca =
+proc readLoca(
+  f: Stream,
+  chunks: Table[string, Chunk],
+  head: Head,
+  maxp: Maxp
+): Loca =
   f.setPosition(int chunks["loca"].offset)
   result.loca = newSeq[int]()
   var locaOffset = int chunks["loca"].offset
@@ -362,7 +359,12 @@ type Hmtx = object
   advanceWidths: seq[uint16]
   leftSideBearings: seq[int16]
 
-proc readHmtx(f: Stream, chunks: Table[string, Chunk], maxp: Maxp, hhea: Hhea): Hmtx =
+proc readHmtx(
+  f: Stream,
+  chunks: Table[string, Chunk],
+  maxp: Maxp,
+  hhea: Hhea
+): Hmtx =
   # hmtx
   f.setPosition(int chunks["hmtx"].offset)
   for i in 0..<int(maxp.numGlyphs):
@@ -379,7 +381,12 @@ type Cmap = object
   mapping: Table[int, int]
   mappingRev: Table[int, int]
 
-proc readCmap(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): Cmap =
+proc readCmap(
+  f: Stream,
+  chunks: Table[string, Chunk],
+  head: Head,
+  maxp: Maxp
+): Cmap =
   # cmap
   var glyphsIndexToRune = newSeq[string](maxp.numGlyphs)
   f.setPosition(int chunks["cmap"].offset)
@@ -412,7 +419,7 @@ proc readCmap(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): 
         discard f.readUint16()
         let startCountSeq = f.readUint16Seq(int segCount)
         let idDeltaSeq = f.readUint16Seq(int segCount)
-        let idRangeAddress =  f.getPosition()
+        let idRangeAddress = f.getPosition()
         let idRangeOffsetSeq = f.readUint16Seq(int segCount)
         var glyphIndexAddress = f.getPosition()
         for j in 0..<int(segCount):
@@ -424,13 +431,13 @@ proc readCmap(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): 
 
           for c in startCount..endCount:
             if idRangeOffset != 0:
-                var glyphIndexOffset = idRangeAddress + j * 2
-                glyphIndexOffset += int(idRangeOffset)
-                glyphIndexOffset += int(c - startCount) * 2
-                f.setPosition(glyphIndexOffset)
-                glyphIndex = int f.readUint16()
-                if glyphIndex != 0:
-                    glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
+              var glyphIndexOffset = idRangeAddress + j * 2
+              glyphIndexOffset += int(idRangeOffset)
+              glyphIndexOffset += int(c - startCount) * 2
+              f.setPosition(glyphIndexOffset)
+              glyphIndex = int f.readUint16()
+              if glyphIndex != 0:
+                glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
 
             else:
               glyphIndex = int((c + idDelta) and 0xFFFF)
@@ -453,7 +460,12 @@ type Kern = object
   rangeShift: uint16
   kerning: Table[(int, int), int]
 
-proc readKern(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): Kern =
+proc readKern(
+  f: Stream,
+  chunks: Table[string, Chunk],
+  head: Head,
+  maxp: Maxp
+): Kern =
   result.kerning = initTable[(int, int), int]()
   # kern
   if "kern" in chunks:
@@ -481,12 +493,17 @@ proc readKern(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp): 
     else:
       assert false
 
-
 type Glyf = object
   table: Table[int, Glyph]
   list: seq[Glyph]
 
-proc readGlyf(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp, loca: Loca): Glyf =
+proc readGlyf(
+  f: Stream,
+  chunks: Table[string, Chunk],
+  head: Head,
+  maxp: Maxp,
+  loca: Loca
+): Glyf =
   # glyf
   f.setPosition(int chunks["glyf"].offset)
   result.table = initTable[int, Glyph]()
@@ -501,7 +518,8 @@ proc readGlyf(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp, l
       result.table[offset] = Glyph()
       result.table[offset].ready = false
 
-      var isNull = glyphIndex + 1 < loca.loca.len and loca.loca[glyphIndex] == loca.loca[glyphIndex + 1]
+      var isNull = glyphIndex + 1 < loca.loca.len and
+          loca.loca[glyphIndex] == loca.loca[glyphIndex + 1]
       if isNull:
         result.table[offset].isEmpty = true
         result.table[offset].ready = true
@@ -517,7 +535,6 @@ proc readGlyf(f: Stream, chunks: Table[string, Chunk], head: Head, maxp: Maxp, l
         result.table[offset].numberOfContours = numberOfContours
 
     result.list[glyphIndex] = result.table[offset]
-
 
 proc readFontOtf*(f: Stream): Font =
   ## Reads OTF font from a stream.
@@ -569,7 +586,6 @@ proc readFontOtf*(f: Stream): Font =
   let glyf = f.readGlyf(chunks, head, maxp, loca)
   echo glyf
 
-
   # convert tables to font vars
   font.unitsPerEm = float head.unitsPerEm
   font.bboxMin = vec2(float head.xMin, float head.yMin)
@@ -586,17 +602,17 @@ proc readFontOtf*(f: Stream): Font =
     glyph.code = uni
     font.glyphs[uni] = glyph
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   for k, value in kern.kerning.pairs():
     if (int k[0]) in cmap.mappingRev and (int k[1]) in cmap.mappingRev:
       let u1 = Rune(cmap.mappingRev[int k[0]]).toUTF8()
       let u2 = Rune(cmap.mappingRev[int k[1]]).toUTF8()
       if u1.len > 0 and u2.len > 0:
-            font.kerning[u1 & ":" & u2] = float value
+        font.kerning[(u1, u2)] = float value
 
   return font
 
-proc ttfGlyphToPath*(glyph: var Glyph) =
+proc ttfGlyphToPath*(glyph: Glyph) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset
@@ -732,7 +748,6 @@ proc ttfGlyphToPath*(glyph: var Glyph) =
 
     glyph.path = path
 
-
 proc readFontOtf*(filename: string): Font =
   ## Reads OTF font from a file.
   if not existsFile(filename):
@@ -741,8 +756,7 @@ proc readFontOtf*(filename: string): Font =
   result = readFontOtf(f)
   result.filename = filename
 
-
-proc ttfGlyphToCommands*(glyph: var Glyph) =
+proc ttfGlyphToCommands*(glyph: Glyph) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset
@@ -879,7 +893,7 @@ proc ttfGlyphToCommands*(glyph: var Glyph) =
 
       if not currentPoint.isOnCurve:
         if coordinates[startPts].isOnCurve:
-         cmd(coordinates[startPts].x, coordinates[startPts].y)
+          cmd(coordinates[startPts].x, coordinates[startPts].y)
         else:
           var midx = (prevPoint.x + currentPoint.x) div 2
           var midy = (prevPoint.y + currentPoint.y) div 2

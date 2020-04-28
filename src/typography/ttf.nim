@@ -1,11 +1,11 @@
-import tables, streams, strutils, endians, unicode, os
-import font
-import vmath, print
-
-
+import endians, font, os, streams, tables, unicode, vmath
+import print
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
-    raise newException(ValueError, "cannot read from stream at " & $s.getPosition())
+    raise newException(
+      ValueError,
+      "cannot read from stream at " & $s.getPosition()
+    )
 
 proc readUInt8(stream: Stream): uint8 =
   var val: uint8 = 0
@@ -74,8 +74,7 @@ proc readLongDateTime(stream: Stream): float64 =
   return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
 
 # todo remove
-proc ttfGlyphToCommands*(glyph: var Glyph, font: Font)
-
+proc ttfGlyphToCommands*(glyph: Glyph, font: Font)
 
 proc readFontTtf*(f: Stream): Font =
   ## Reads TTF font from a stream
@@ -175,44 +174,55 @@ proc readFontTtf*(f: Stream): Font =
   let maxpMaxComponentDepth = f.readUint16()
 
   # OS/2
-  f.setPosition(int chunks["OS/2"].offset)
-  let os2_version = f.readUInt16()
-  let os2_xAvgCharWidth = f.readInt16()
-  let os2_usWeightClass = f.readUInt16()
-  let os2_usWidthClass = f.readUInt16()
-  let os2_fsType = f.readUInt16()
-  let os2_ySubscriptXSize = f.readInt16()
-  let os2_ySubscriptYSize = f.readInt16()
-  let os2_ySubscriptXOffset = f.readInt16()
-  let os2_ySubscriptYOffset = f.readInt16()
-  let os2_ySuperscriptXSize = f.readInt16()
-  let os2_ySuperscriptYSize = f.readInt16()
-  let os2_ySuperscriptXOffset = f.readInt16()
-  let os2_ySuperscriptYOffset = f.readInt16()
-  let os2_yStrikeoutSize = f.readInt16()
-  let os2_yStrikeoutPosition = f.readInt16()
-  let os2_sFamilyClass = f.readInt16()
+  if "OS/2" in chunks:
+    f.setPosition(int chunks["OS/2"].offset)
+    let os2_version = f.readUInt16()
+    let os2_xAvgCharWidth = f.readInt16()
+    let os2_usWeightClass = f.readUInt16()
+    let os2_usWidthClass = f.readUInt16()
+    let os2_fsType = f.readUInt16()
+    let os2_ySubscriptXSize = f.readInt16()
+    let os2_ySubscriptYSize = f.readInt16()
+    let os2_ySubscriptXOffset = f.readInt16()
+    let os2_ySubscriptYOffset = f.readInt16()
+    let os2_ySuperscriptXSize = f.readInt16()
+    let os2_ySuperscriptYSize = f.readInt16()
+    let os2_ySuperscriptXOffset = f.readInt16()
+    let os2_ySuperscriptYOffset = f.readInt16()
+    let os2_yStrikeoutSize = f.readInt16()
+    let os2_yStrikeoutPosition = f.readInt16()
+    let os2_sFamilyClass = f.readInt16()
 
-  for i in 0..<10:
+    for i in 0..<10:
       let os2_panose = f.readUInt8()
 
-  let os2_ulUnicodeRange1 = f.readUInt32()
-  let os2_ulUnicodeRange2 = f.readUInt32()
-  let os2_ulUnicodeRange3 = f.readUInt32()
-  let os2_ulUnicodeRange4 = f.readUInt32()
-  let os2_achVendID = @[f.readUInt8(), f.readUInt8(), f.readUInt8(), f.readUInt8()]
-  let os2_fsSelection = f.readUInt16()
-  let os2_usFirstCharIndex = f.readUInt16()
-  let os2_usLastCharIndex = f.readUInt16()
-  font.ascent = float f.readInt16()
-  font.descent = float f.readInt16()
-  let os2_sTypoLineGap = f.readInt16()
-  let os2_usWinAscent = f.readUInt16()
-  let os2_usWinDescent = f.readUInt16()
-  if os2_version >= 1.uint16:
+    let os2_ulUnicodeRange1 = f.readUInt32()
+    let os2_ulUnicodeRange2 = f.readUInt32()
+    let os2_ulUnicodeRange3 = f.readUInt32()
+    let os2_ulUnicodeRange4 = f.readUInt32()
+    let os2_achVendID = @[
+      f.readUInt8(),
+      f.readUInt8(),
+      f.readUInt8(),
+      f.readUInt8()
+    ]
+    let os2_fsSelection = f.readUInt16()
+    let os2_usFirstCharIndex = f.readUInt16()
+    let os2_usLastCharIndex = f.readUInt16()
+    let os2_sTypoAscender = f.readInt16()
+    font.ascent = os2_sTypoAscender.float
+    let os2_sTypoDescender = f.readInt16()
+    font.descent = os2_sTypoDescender.float
+    let os2_sTypoLineGap = f.readInt16()
+    font.lineGap = os2_sTypoLineGap.float
+    let os2_usWinAscent = f.readUInt16()
+    #font.ascent = os2_usWinAscent.float
+    let os2_usWinDescent = f.readUInt16()
+    #font.descent = os2_usWinDescent.float
+    if os2_version >= 1.uint16:
       let os2_ulCodePageRange1 = f.readUInt32()
       let os2_ulCodePageRange2 = f.readUInt32()
-  if os2_version >= 2.uint16:
+    if os2_version >= 2.uint16:
       let os2_sxHeight = f.readInt16()
       let os2_sCapHeight = f.readInt16()
       let os2_usDefaultChar = f.readUInt16()
@@ -240,38 +250,37 @@ proc readFontTtf*(f: Stream): Font =
 
   # glyf
   f.setPosition(int chunks["glyf"].offset)
-  var glyphTabe = initTable[int, Glyph]()
+  var glyphTable = initTable[int, Glyph]()
   font.glyphArr = newSeq[Glyph](loca.len)
   let glyphOffset = int chunks["glyf"].offset
-  for glyphIndex in 0..<loca.len:
+  for glyphIndex in 0 ..< loca.len:
     let locaOffset = loca[glyphIndex]
     let offset = glyphOffset + locaOffset
     f.setPosition(int offset)
-    if not glyphTabe.hasKey(offset):
 
-      glyphTabe[offset] = Glyph()
-      glyphTabe[offset].ready = false
+    glyphTable[offset] = Glyph()
+    glyphTable[offset].ready = false
 
-      var isNull = glyphIndex + 1 < loca.len and loca[glyphIndex] == loca[glyphIndex + 1]
-      if isNull:
-        glyphTabe[offset].isEmpty = true
-        glyphTabe[offset].ready = true
+    var isNull = glyphIndex + 1 < loca.len and
+        loca[glyphIndex] == loca[glyphIndex + 1]
+    if isNull:
+      glyphTable[offset].isEmpty = true
+      glyphTable[offset].ready = true
 
-      let numberOfContours = f.readInt16()
-      if numberOfContours == 0:
-        glyphTabe[offset].isEmpty = true
-        glyphTabe[offset].ready = true
+    let numberOfContours = f.readInt16()
+    if numberOfContours == 0:
+      glyphTable[offset].isEmpty = true
+      glyphTable[offset].ready = true
 
+    if not glyphTable[offset].isEmpty:
+      glyphTable[offset].ttfStream = f
+      glyphTable[offset].ttfOffset = offset
+      glyphTable[offset].numberOfContours = numberOfContours
 
-      if not glyphTabe[offset].isEmpty:
-        glyphTabe[offset].ttfStream = f
-        glyphTabe[offset].ttfOffset = offset
-        glyphTabe[offset].numberOfContours = numberOfContours
+    if numberOfContours == -1:
+      glyphTable[offset].isComposite = true
 
-      if numberOfContours == -1:
-        glyphTabe[offset].isComposite = true
-
-    font.glyphArr[glyphIndex] = glyphTabe[offset]
+    font.glyphArr[glyphIndex] = glyphTable[offset]
 
   # hhea
   f.setPosition(int chunks["hhea"].offset)
@@ -297,6 +306,11 @@ proc readFontTtf*(f: Stream): Font =
   assert hhea_metricDataFormat == 0
   let hhea_numberOfHMetrics = f.readUInt16()
 
+  if "OS/2" notin chunks:
+    # for some reason os2_sTypoAscender is preferred
+    font.ascent = hhea_ascent.float
+    font.descent = hhea_descent.float
+
   # hmtx
   f.setPosition(int chunks["hmtx"].offset)
   var advanceWidth = uint16 0
@@ -305,7 +319,7 @@ proc readFontTtf*(f: Stream): Font =
     if i < int hhea_numberOfHMetrics:
       advanceWidth = f.readUInt16()
       leftSideBearing = f.readInt16()
-    font.glyphArr[i].advance = float advanceWidth
+    font.glyphArr[i].advance = advanceWidth.float
 
   # cmap
   var glyphsIndexToRune = newSeq[string](font.glyphArr.len)
@@ -338,10 +352,10 @@ proc readFontTtf*(f: Stream): Font =
         discard f.readUint16()
         let startCountSeq = f.readUint16Seq(int segCount)
         let idDeltaSeq = f.readUint16Seq(int segCount)
-        let idRangeAddress =  f.getPosition()
+        let idRangeAddress = f.getPosition()
         let idRangeOffsetSeq = f.readUint16Seq(int segCount)
         var glyphIndexAddress = f.getPosition()
-        for j in 0..<int(segCount):
+        for j in 0 ..< int(segCount):
           var glyphIndex = 0
           let endCount = endCountSeq[j]
           let startCount = startCountSeq[j]
@@ -350,26 +364,26 @@ proc readFontTtf*(f: Stream): Font =
 
           for c in startCount..endCount:
             if idRangeOffset != 0:
-                var glyphIndexOffset = idRangeAddress + j * 2
-                glyphIndexOffset += int(idRangeOffset)
-                glyphIndexOffset += int(c - startCount) * 2
-                f.setPosition(glyphIndexOffset)
-                glyphIndex = int f.readUint16()
-                if glyphIndex != 0:
-                    glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
+              var glyphIndexOffset = idRangeAddress + j * 2
+              glyphIndexOffset += int(idRangeOffset)
+              glyphIndexOffset += int(c - startCount) * 2
+              f.setPosition(glyphIndexOffset)
+              glyphIndex = int f.readUint16()
+              if glyphIndex != 0:
+                glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
 
             else:
               glyphIndex = int((c + idDelta) and 0xFFFF)
 
             if glyphIndex < font.glyphArr.len:
-              let unicode = Rune(int c).toUTF8()
+              let unicode = Rune(c.int).toUTF8()
               font.glyphs[unicode] = font.glyphArr[glyphIndex]
               font.glyphs[unicode].code = unicode
               glyphsIndexToRune[glyphIndex] = unicode
             else:
               discard
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   # kern
   if "kern" in chunks:
     f.setPosition(int chunks["kern"].offset)
@@ -392,16 +406,16 @@ proc readFontTtf*(f: Stream): Font =
         let u1 = glyphsIndexToRune[int leftIndex]
         let u2 = glyphsIndexToRune[int rightIndex]
         if u1.len > 0 and u2.len > 0:
-          font.kerning[u1 & ":" & u2] = float value
+          font.kerning[(u1, u2)] = value.float
 
     elif tableVersion == 1:
       # Mac format
-      assert false
+      # assert false
+      discard
     else:
       assert false
 
   return font
-
 
 proc readFontTtf*(filename: string): Font =
   ## Reads TTF font from a file.
@@ -411,13 +425,12 @@ proc readFontTtf*(filename: string): Font =
   result = readFontTtf(f)
   result.filename = filename
 
-
-proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
+proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset
 
-  f.setPosition(int offset)
+  f.setPosition(offset.int)
   let numberOfContours = f.readInt16()
   assert numberOfContours == glyph.numberOfContours
 
@@ -490,7 +503,6 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
         component.scale10 = f.readFixed16()
         component.yScale = f.readFixed16()
 
-
       var subGlyph = font.glyphArr[component.glyphIndex]
       if not subGlyph.isEmpty and subGlyph.commands.len == 0:
         let savedPosition = f.getPosition()
@@ -499,9 +511,9 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
 
       # transform commands path
       let mat = mat3(
-        component.xScale,  component.scale01, 0.0,
-        component.scale10, component.yScale,  0.0,
-        component.dx,      component.dy,      1.0
+        component.xScale, component.scale01, 0.0,
+        component.scale10, component.yScale, 0.0,
+        component.dx, component.dy, 1.0
       )
       # copy commands
       for command in subGlyph.commands:
@@ -513,7 +525,7 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
           newCommand.numbers.add pos.x
           newCommand.numbers.add pos.y
         glyph.commands.add(newCommand)
-      moreComponents = not flags.checkBit(32)
+      moreComponents = flags.checkBit(32)
 
   else:
     var endPtsOfContours = newSeq[int]()
@@ -624,9 +636,15 @@ proc ttfGlyphToCommands*(glyph: var Glyph, font: Font) =
             var next2 = next
 
             if not prev.isOnCurve:
-              prev2 = TtfCoridante(x: (curr.x + prev.x) div 2, y: (curr.y + prev.y) div 2)
+              prev2 = TtfCoridante(
+                x: (curr.x + prev.x) div 2,
+                y: (curr.y + prev.y) div 2
+              )
             if not next.isOnCurve:
-              next2 = TtfCoridante(x: (curr.x + next.x) div 2, y: (curr.y + next.y) div 2)
+              next2 = TtfCoridante(
+                x: (curr.x + next.x) div 2,
+                y: (curr.y + next.y) div 2
+              )
 
             cmd(Quad, curr.x, curr.y)
             cmd(next2.x, next2.y)

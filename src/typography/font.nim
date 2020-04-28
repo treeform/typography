@@ -1,5 +1,4 @@
-import tables, strutils, streams
-import chroma, vmath, flippy, print
+import streams, strutils, tables, vmath
 
 type
   Segment* = object
@@ -19,12 +18,11 @@ type
 
   Glyph* = ref object
     ## Contains information about Glyphs or "letters"
-    ## SVG Path, command buffer, and line-shape
-    name*: string
+    ## SVG Path, command buffer, and shapes of lines.
     code*: string
     advance*: float
     commands*: seq[PathCommand]
-    lines*: seq[Segment]
+    shapes*: seq[seq[Segment]] ## Shapes are made of lines.
     bboxMin*: Vec2
     bboxMax*: Vec2
     ready*: bool
@@ -51,13 +49,13 @@ type
     xHeight*: float
     capHeight*: float
     unitsPerEm*: float
+    lineGap*: float
 
     size*: float
     lineHeight*: float
     glyphs*: Table[string, Glyph]
-    kerning*: Table[string, float]
+    kerning*: Table[(string, string), float]
     glyphArr*: seq[Glyph]
-
 
 proc `sizePt`*(font: Font): float =
   ## Gets font size in Pt or Point units.
@@ -67,7 +65,6 @@ proc `sizePt=`*(font: Font, sizePoints: float) =
   ## Sets font size in Pt or Point units.
   font.size = sizePoints / 0.75
 
-
 proc `sizeEm`*(font: Font): float =
   ## Gets font size in em units.
   font.size / 12
@@ -76,7 +73,6 @@ proc `sizeEm=`*(font: Font, sizeEm: float) =
   ## Gets font size in em units.
   font.size = sizeEm * 12
 
-
 proc `sizePr`*(font: Font): float =
   ## Gets font size in % or Percent units.
   font.size / 1200
@@ -84,7 +80,6 @@ proc `sizePr`*(font: Font): float =
 proc `sizePr=`*(font: Font, sizePercent: float) =
   ## Gets font size in % or Percent units.
   font.size = sizePercent * 1200
-
 
 proc intersects*(a, b: Segment, at: var Vec2): bool =
   ## Checks if the a segment intersects b segment.
@@ -96,19 +91,19 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
   s2_y = b.to.y - b.at.y
 
   var s, t: float
-  s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) / (-s2_x * s1_y + s1_x * s2_y)
-  t = ( s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) / (-s2_x * s1_y + s1_x * s2_y)
+  s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) /
+      (-s2_x * s1_y + s1_x * s2_y)
+  t = (s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) /
+      (-s2_x * s1_y + s1_x * s2_y)
 
   if s >= 0 and s < 1 and t >= 0 and t < 1:
-      at.x = a.at.x + (t * s1_x)
-      at.y = a.at.y + (t * s1_y)
-      return true
+    at.x = a.at.x + (t * s1_x)
+    at.y = a.at.y + (t * s1_y)
+    return true
   return false
 
-
-
-proc glyphPathToCommands*(glyph: var Glyph) =
-  ## Converts a glphy into lines-shape
+proc glyphPathToCommands*(glyph: Glyph) =
+  ## Converts a glyph into lines-shape
   glyph.commands = newSeq[PathCommand]()
 
   var command = Start
@@ -200,24 +195,26 @@ proc glyphPathToCommands*(glyph: var Glyph) =
 
   glyph.commands = commands
 
-
-proc commandsToShapes*(glyph: var Glyph) =
+proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines
   var lines = newSeq[Segment]()
+  glyph.shapes = newSeq[seq[Segment]]()
   var start, at, to, ctr, ctr2: Vec2
   var prevCommand: PathCommandKind
 
   proc drawLine(at, to: Vec2) =
-    lines.add(Segment(at:at, to:to))
+    if at - to != vec2(0, 0):
+      # Don't add any 0 length lines.
+      lines.add(Segment(at: at, to: to))
 
   proc getCurvePoint(points: seq[Vec2], t: float): Vec2 =
     if points.len == 1:
       return points[0]
     else:
-      var newpoints = newSeq[Vec2](points.len - 1)
-      for i in 0..<newpoints.len:
-        newpoints[i] = points[i] * (1-t) + points[i + 1] * t
-      return getCurvePoint(newpoints, t)
+      var newPoints = newSeq[Vec2](points.len - 1)
+      for i in 0 ..< newPoints.len:
+        newPoints[i] = points[i] * (1-t) + points[i + 1] * t
+      return getCurvePoint(newPoints, t)
 
   proc drawCurve(points: seq[Vec2]) =
     let n = 10
@@ -232,18 +229,18 @@ proc commandsToShapes*(glyph: var Glyph) =
     let devy = p0.y - 2.0 * p1.y + p2.y
     let devsq = devx * devx + devy * devy
     if devsq < 0.333:
-        drawLine(p0, p2)
-        return
+      drawLine(p0, p2)
+      return
     let tol = 3.0
-    let n = 1 + (tol * (devx * devx + devy * devy)).sqrt().sqrt().floor()
+    let n = 1 + (tol * (devsq)).sqrt().sqrt().floor()
     var p = p0
     let nrecip = 1 / n
     var t = 0.0
-    for i in 0..<int(n):
-        t += nrecip
-        let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
-        drawLine(p, pn);
-        p = pn
+    for i in 0 ..< int(n):
+      t += nrecip
+      let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
+      drawLine(p, pn)
+      p = pn
 
     drawLine(p, p2)
 
@@ -313,10 +310,13 @@ proc commandsToShapes*(glyph: var Glyph) =
       of End:
         assert command.numbers.len == 0
         if prevCommand == Quad or prevCommand == TQuad:
-          drawQuad(at, ctr, start)
+          if at != start:
+            drawQuad(at, ctr, start)
         else:
           drawLine(at, start)
         at = start
+        glyph.shapes.add(lines)
+        lines = newSeq[Segment]()
 
       of RMove:
         assert command.numbers.len == 2
@@ -389,5 +389,3 @@ proc commandsToShapes*(glyph: var Glyph) =
         raise newException(ValueError, "not supported path command " & $command)
 
     prevCommand = command.kind
-
-    glyph.lines = lines

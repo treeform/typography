@@ -1,11 +1,16 @@
+
 # ignore files with no extention:
 *
 !*/
 !*.*
 
 # normal ignores:
+.*
 *.exe
 *.dll
 nimcache
 tests/samples/*
 *.idx
+
+# Do to license issues ignore some fonts:
+tests/fonts/helvetica.ttf

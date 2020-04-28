@@ -1,7 +1,4 @@
-import xmlparser, xmltree, tables, streams, os, strutils
-import vmath
-import font
-
+import font, os, streams, strutils, tables, vmath, xmlparser, xmltree
 
 proc readFontSvg*(f: Stream): Font =
   ## Read an SVG font from a stream.
@@ -22,6 +19,9 @@ proc readFontSvg*(f: Stream): Font =
       font.advance = parseFloat(advance)
 
   for tag in xml.findAll "font-face":
+    var unitsPerEm = tag.attr "units-per-em"
+    if unitsPerEm.len > 0:
+      font.unitsPerEm = parseFloat(unitsPerEm)
     var bbox = tag.attr "bbox"
     if bbox.len > 0:
       var v = bbox.split()
@@ -43,27 +43,26 @@ proc readFontSvg*(f: Stream): Font =
   for tag in xml.findAll "glyph":
     var glyph = Glyph()
     glyph.code = tag.attr "unicode"
-    glyph.name = tag.attr "glyph-name"
+    let name = tag.attr "glyph-name"
     var advance = tag.attr "horiz-adv-x"
     if advance.len > 0:
       glyph.advance = parseFloat(advance)
     else:
       glyph.advance = font.advance
     glyph.path = tag.attr "d"
-    if glyph.name == "space" and glyph.code == "":
+    if name == "space" and glyph.code == "":
       glyph.code = " "
     font.glyphs[glyph.code] = glyph
 
-  font.kerning = initTable[string, float]()
+  font.kerning = initTable[(string, string), float]()
   for tag in xml.findAll "hkern":
     var k = parseFloat tag.attr "k"
     var u1 = tag.attr "u1"
     var u2 = tag.attr "u2"
     if u1.len > 0 and u2.len > 0:
-      font.kerning[u1 & ":" & u2] = k
+      font.kerning[(u1, u2)] = k
 
   return font
-
 
 proc readFontSvg*(filename: string): Font =
   ## Read an SVG font from a file.

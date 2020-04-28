@@ -1,7 +1,4 @@
-import tables, unicode
-import flippy, vmath, print
-import font, rasterizer
-
+import flippy, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 # default line height of font.size * 1.2
@@ -20,7 +17,7 @@ type
     font*: Font
     fontSize*: float
     subPixelShift*: float
-    rect*: Rect # Where to draw the image character
+    rect*: Rect       # Where to draw the image character
     selectRect*: Rect # Were to draw or hit selection
     character*: string
     rune*: Rune
@@ -41,20 +38,16 @@ type
 
 proc kerningAdjustment*(font: Font, prev, c: string): float =
   ## Get Kerning Adjustment between two letters
-  var fontHeight = font.ascent - font.descent
-  var scale = font.size / fontHeight
   if prev != "":
-    var key = prev & ":" & c
+    var key = (prev, c)
     if font.kerning.hasKey(key):
       var kerning = font.kerning[key]
-      return - kerning * scale
-
+      return kerning
 
 proc canWrap(rune: Rune): bool =
   if rune == Rune(32): return true # early return for ascii space
   if rune.isWhiteSpace(): return true
   if not rune.isAlpha(): return true
-
 
 proc typeset*(
     font: Font,
@@ -68,13 +61,16 @@ proc typeset*(
   ): seq[GlyphPosition] =
   ## Typeset runes and return glyph positions that is ready to draw
 
+  assert font.size != 0
+  assert font.unitsPerEm != 0
+
   result = @[]
   var
     at = pos
     lineStart = pos.x
     prev = ""
-    fontHeight = font.ascent - font.descent
-    scale = font.size / fontHeight
+    scale = font.size / font.unitsPerEm
+    #scale = font.size / (font.ascent - font.descent)
     boundsMin = vec2(0, 0)
     boundsMax = vec2(0, 0)
     glyphCount = 0
@@ -83,15 +79,16 @@ proc typeset*(
   if tabWidth == 0.0:
     tabWidth = font.size * 4
 
-  at.y += font.size
-
   var
     strIndex = 0
     glyphIndex = 0
     lastCanWrap = 0
     lineHeight = font.lineHeight
+
   if lineHeight == normalLineHeight:
-    lineHeight = floor(font.size * 1.2)
+    lineHeight = font.size
+
+  at.y += ceil(font.size / 2 + lineHeight / 2 + font.descent * scale)
 
   for rune in runes:
     var c = $rune
@@ -107,7 +104,7 @@ proc typeset*(
         font: font,
         fontSize: font.size,
         subPixelShift: 0,
-        rect: rect(0,0,0,0),
+        rect: rect(0, 0, 0, 0),
         selectRect: selectRect,
         rune: rune,
         character: c,
@@ -131,9 +128,12 @@ proc typeset*(
     if c notin font.glyphs:
       # TODO: make missing glyphs work better
       c = " " # if glyph is missing use space for now
+      if c notin font.glyphs:
+        ## Space is missing!?
+        continue
 
     var glyph = font.glyphs[c]
-    at.x += font.kerningAdjustment(prev, c)
+    at.x += font.kerningAdjustment(prev, c) * scale
 
     var subPixelShift = at.x - floor(at.x)
     var glyphPos = vec2(floor(at.x), floor(at.y))
@@ -168,7 +168,6 @@ proc typeset*(
         else:
           at.y += lineHeight
           at.x = lineStart
-
 
         glyphPos = vec2(floor(at.x), floor(at.y))
 
@@ -207,7 +206,6 @@ proc typeset*(
       boundsMin.y = min(boundsMin.y, at.y)
 
     inc glyphIndex
-
     at.x += glyph.advance * scale
     prev = c
     inc glyphCount
@@ -238,7 +236,6 @@ proc typeset*(
     for pos in result.mitems:
       pos.rect.y += offset
 
-
 proc typeset*(
     font: Font,
     text: string,
@@ -252,7 +249,6 @@ proc typeset*(
   ## Typeset string and return glyph positions that is ready to draw
   typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth)
 
-
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout
   for pos in layout:
@@ -260,8 +256,12 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
     if pos.character in font.glyphs:
       var glyph = font.glyphs[pos.character]
       var glyphOffset: Vec2
-      let img = font.getGlyphImage(glyph, glyphOffset, subPixelShift=pos.subPixelShift)
-      image.blit(
+      let img = font.getGlyphImage(
+        glyph,
+        glyphOffset,
+        subPixelShift = pos.subPixelShift
+      )
+      image.blitWithAlpha(
         img,
         rect(
           0, 0,
@@ -273,12 +273,10 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         )
       )
 
-
 proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
   ## Draw text string
   var layout = font.typeset(text, pos)
   image.drawText(layout)
-
 
 proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
   ## Given a layout gives selection from start to stop in glyph positions
@@ -295,10 +293,9 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
           continue
       result.add g.selectRect
 
-
 proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
-  ## Given X,Y cordiante, return the GlyphPosition picked
-  # direct click not happend find closest to the right
+  ## Given X,Y coordinate, return the GlyphPosition picked
+  # direct click not happened find closest to the right
   var minG: GlyphPosition
   var minDist = -1.0
   for i, g in layout:
@@ -312,14 +309,12 @@ proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
         minG = g
   return minG
 
-
 proc textBounds*(layout: seq[GlyphPosition]): Vec2 =
   ## Given a layout, return the bounding rectangle.
   ## You can use this to get text width or height.
   for i, g in layout:
     result.x = max(result.x, g.selectRect.x + g.selectRect.w)
     result.y = max(result.y, g.selectRect.y + g.selectRect.h)
-
 
 proc textBounds*(font: Font, text: string): Vec2 =
   ## Given a font and text, return the bounding rectangle.
