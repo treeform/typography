@@ -1,5 +1,5 @@
 import endians, font, os, streams, tables, unicode, vmath
-import print
+
 proc read[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
     raise newException(
@@ -73,26 +73,17 @@ proc readLongDateTime(stream: Stream): float64 =
   discard stream.readUInt32()
   return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
 
-# todo remove
+# TODO: Remove.
 proc ttfGlyphToCommands*(glyph: Glyph, font: Font)
 
 proc readFontTtf*(f: Stream): Font =
-  ## Reads TTF font from a stream
+  ## Reads TTF font from a stream.
   var font = Font()
   var version = f.readFixed32()
-  #assert version == 1.0
-
   var numTables = f.readUInt16()
-  #assert numTables == 21
-
   var searchRenge = f.readUInt16()
-  #assert searchRenge == 256
-
   var entrySelector = f.readUInt16()
-  #assert entrySelector == 4
-
   var rengeShift = f.readUInt16()
-  #assert rengeShift == 80
 
   type Chunk = object
     tag: string
@@ -389,7 +380,7 @@ proc readFontTtf*(f: Stream): Font =
     f.setPosition(int chunks["kern"].offset)
     let tableVersion = f.readUint16()
     if tableVersion == 0:
-      # Windows format
+      # Windows format.
       let maybe_numTables = f.readUint16()
       let subtableVersion = f.readUint16()
       assert subtableVersion == 0
@@ -409,8 +400,8 @@ proc readFontTtf*(f: Stream): Font =
           font.kerning[(u1, u2)] = value.float
 
     elif tableVersion == 1:
-      # Mac format
-      # assert false
+      # Mac format.
+      # TODO: add mac kern format
       discard
     else:
       assert false
@@ -469,35 +460,35 @@ proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
         (flags.int and bit.int) > 0.int
 
       if flags.checkBit(1):
-        # The arguments are words
+        # The arguments are words.
         if flags.checkBit(2):
-          # values are offset
+          # Values are offset.
           component.dx = float32 f.readInt16()
           component.dy = float32 f.readInt16()
         else:
-          # values are matched points
+          # Values are matched points.
           component.matchedPoints = [int f.readUInt16(), int f.readUInt16()]
 
       else:
-        # The arguments are bytes
+        # The arguments are bytes.
         if flags.checkBit(2):
           # values are offset
           component.dx = float32 f.readInt8()
           component.dy = float32 f.readInt8()
         else:
-          # values are matched points
+          # Values are matched points.
           component.matchedPoints = [int f.readInt8(), int f.readInt8()]
 
       if flags.checkBit(8):
-        # We have a scale
+        # We have a scale.
         component.xScale = f.readFixed16()
         component.yScale = component.xScale
       elif flags.checkBit(64):
-        # We have an X / Y scale
+        # We have an X / Y scale.
         component.xScale = f.readFixed16()
         component.yScale = f.readFixed16()
       elif flags.checkBit(128):
-        # We have a 2x2 transformation
+        # We have a 2x2 transformation.
         component.xScale = f.readFixed16()
         component.scale01 = f.readFixed16()
         component.scale10 = f.readFixed16()
@@ -509,17 +500,16 @@ proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
         subGlyph.ttfGlyphToCommands(font)
         f.setPosition(savedPosition)
 
-      # transform commands path
+      # Transform commands path.
       let mat = mat3(
         component.xScale, component.scale01, 0.0,
         component.scale10, component.yScale, 0.0,
         component.dx, component.dy, 1.0
       )
-      # copy commands
+      # Copy commands.
       for command in subGlyph.commands:
         var newCommand = PathCommand(kind: command.kind)
         for n in 0 ..< command.numbers.len div 2:
-          #newCommand.numbers.add number
           var pos = vec2(command.numbers[n*2+0], command.numbers[n*2+1])
           pos = mat * pos
           newCommand.numbers.add pos.x
@@ -559,7 +549,7 @@ proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
             flags.add(flag)
             inc i
 
-      # xCoordinates
+      # Figure out xCoordinates.
       var prevX = 0
       for i, flag in flags:
         var x = 0
@@ -575,7 +565,7 @@ proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
         coordinates[i].x = prevX
         coordinates[i].isOnCurve = (flag and 1) != 0
 
-      # yCoordinates
+      # Figure out yCoordinates.
       var prevY = 0
       for i, flag in flags:
         var y = 0
@@ -590,7 +580,7 @@ proc ttfGlyphToCommands*(glyph: Glyph, font: Font) =
         prevY += y
         coordinates[i].y = prevY
 
-      # make an svg path out of this crazy stuff
+      # Make an svg path out of this crazy stuff.
       var path = newSeq[PathCommand]()
 
       proc cmd(kind: PathCommandKind, x, y: int) =
