@@ -1,28 +1,17 @@
 import chroma, flippy, print, strformat, tables, typography, vmath
 
-proc alphaWhite(image: var Image) =
-  ## Typography deals mostly with transperant images with white text
-  ## This is hard to see in tests so we convert it to white background
-  ## with black text.
-  for x in 0..<image.width:
-    for y in 0..<image.height:
-      var c = image.getrgba(x, y)
-      c.r = uint8(255) - c.a
-      c.g = uint8(255) - c.a
-      c.b = uint8(255) - c.a
-      c.a = 255
-      image.putrgba(x, y, c)
-
 block:
-  var font = readFontTtf("fonts/IBMPlexSans-Regular.ttf")
-  font.size = 300
-  font.lineHeight = 300
+  #var font = readFontTtf("fonts/Changa-Bold.ttf")
+  #var font = readFontTtf("fonts/Ubuntu.ttf")
+  var font = readFontTtf("fonts/Moon Bold.otf")
+  font.size = 100
+  font.lineHeight = 100
 
   # for name in font.glyphs.keys:
   #   font.glyphs[name].name = name
 
   for i, glyph in font.glyphArr:
-    if i != 4: continue
+    if glyph.code != "Q": continue
     print i, glyph.code
     #if name != "a": continue
 
@@ -34,23 +23,39 @@ block:
       g.ttfGlyphToCommands(font)
       print g
 
-      var image = font.getGlyphOutlineImage(glyph.code)
+      # g.commands = g.commands[0 .. 20]
+      # g.commands.add PathCommand(kind: End)
 
       #print font.glyphs[name].ttfOffset
       #print font.glyphs[name].commands.len
-      for command in font.glyphs[glyph.code].commands:
-        #echo command
+      for j, command in font.glyphs[glyph.code].commands:
+        echo j, ": ", command
         for i in 0 ..< command.numbers.len div 2:
           var x = int command.numbers[i*2+0]
           var y = int command.numbers[i*2+1]
-          print x, y
+          #print x, y
+
+      glyph.commandsToShapes()
+
+      print glyph.shapes.len
+      for i, shape in glyph.shapes:
+        for j, segment in shape:
+          print i, j, segment
 
       #print glyph
 
+      var image = font.getGlyphOutlineImage(
+        glyph.code,
+        lines=true,
+        points=true,
+        winding=true
+      )
+
       image.save("testchar.png")
 
-      image = font.getGlyphImage(glyph.code)
-      image.alphaWhite()
+      var glyphOffset: Vec2
+      image = font.getGlyphImage(glyph, glyphOffset, quality=4)
+      image.alphaToBlankAndWhite()
       image.save("testcharFill.png")
 
       if image.width == 1396:

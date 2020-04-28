@@ -5,7 +5,7 @@ import os, strutils
 var fontDirectories*: seq[string]
 
 when defined(MacOSX):
-  fontDirecotires = @[
+  fontDirectories = @[
     "/System/Library/Fonts/",
     "/Library/Fonts/",
     getHomeDir() & "/Library/Fonts/"

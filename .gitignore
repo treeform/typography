@@ -4,6 +4,7 @@
 !*.*
 
 # normal ignores:
+.*
 *.exe
 *.dll
 nimcache

@@ -18,11 +18,11 @@ type
 
   Glyph* = ref object
     ## Contains information about Glyphs or "letters"
-    ## SVG Path, command buffer, and line-shape
+    ## SVG Path, command buffer, and shapes of lines.
     code*: string
     advance*: float
     commands*: seq[PathCommand]
-    lines*: seq[Segment]
+    shapes*: seq[seq[Segment]] ## Shapes are made of lines.
     bboxMin*: Vec2
     bboxMax*: Vec2
     ready*: bool
@@ -102,7 +102,7 @@ proc intersects*(a, b: Segment, at: var Vec2): bool =
     return true
   return false
 
-proc glyphPathToCommands*(glyph: var Glyph) =
+proc glyphPathToCommands*(glyph: Glyph) =
   ## Converts a glyph into lines-shape
   glyph.commands = newSeq[PathCommand]()
 
@@ -195,14 +195,17 @@ proc glyphPathToCommands*(glyph: var Glyph) =
 
   glyph.commands = commands
 
-proc commandsToShapes*(glyph: var Glyph) =
+proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines
   var lines = newSeq[Segment]()
+  glyph.shapes = newSeq[seq[Segment]]()
   var start, at, to, ctr, ctr2: Vec2
   var prevCommand: PathCommandKind
 
   proc drawLine(at, to: Vec2) =
-    lines.add(Segment(at: at, to: to))
+    if at - to != vec2(0, 0):
+      # Don't add any 0 length lines.
+      lines.add(Segment(at: at, to: to))
 
   proc getCurvePoint(points: seq[Vec2], t: float): Vec2 =
     if points.len == 1:
@@ -229,11 +232,11 @@ proc commandsToShapes*(glyph: var Glyph) =
       drawLine(p0, p2)
       return
     let tol = 3.0
-    let n = 1 + (tol * (devx * devx + devy * devy)).sqrt().sqrt().floor()
+    let n = 1 + (tol * (devsq)).sqrt().sqrt().floor()
     var p = p0
     let nrecip = 1 / n
     var t = 0.0
-    for i in 0..<int(n):
+    for i in 0 ..< int(n):
       t += nrecip
       let pn = lerp(lerp(p0, p1, t), lerp(p1, p2, t), t)
       drawLine(p, pn)
@@ -307,10 +310,13 @@ proc commandsToShapes*(glyph: var Glyph) =
       of End:
         assert command.numbers.len == 0
         if prevCommand == Quad or prevCommand == TQuad:
-          drawQuad(at, ctr, start)
+          if at != start:
+            drawQuad(at, ctr, start)
         else:
           drawLine(at, start)
         at = start
+        glyph.shapes.add(lines)
+        lines = newSeq[Segment]()
 
       of RMove:
         assert command.numbers.len == 2
@@ -383,5 +389,3 @@ proc commandsToShapes*(glyph: var Glyph) =
         raise newException(ValueError, "not supported path command " & $command)
 
     prevCommand = command.kind
-
-    glyph.lines = lines

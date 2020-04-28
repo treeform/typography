@@ -612,7 +612,7 @@ proc readFontOtf*(f: Stream): Font =
 
   return font
 
-proc ttfGlyphToPath*(glyph: var Glyph) =
+proc ttfGlyphToPath*(glyph: Glyph) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset
@@ -756,7 +756,7 @@ proc readFontOtf*(filename: string): Font =
   result = readFontOtf(f)
   result.filename = filename
 
-proc ttfGlyphToCommands*(glyph: var Glyph) =
+proc ttfGlyphToCommands*(glyph: Glyph) =
   var
     f = glyph.ttfStream
     offset = glyph.ttfOffset

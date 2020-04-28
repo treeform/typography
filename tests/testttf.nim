@@ -1,8 +1,9 @@
 import chroma, flippy, print, tables, typography, vmath
 
 block:
-  var font = readFontTtf("fonts/helvetica.ttf")
-  font.size = 16
+  var font = readFontTtf("fonts/Changa-Bold.ttf")
+  font.size = 30
+  font.lineHeight = 40
 
   var image = newImage(500, 40, 4)
 
