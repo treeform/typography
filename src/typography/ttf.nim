@@ -174,59 +174,60 @@ proc readFontTtf*(f: Stream): Font =
   let maxpMaxComponentDepth = f.readUint16()
 
   # OS/2
-  f.setPosition(int chunks["OS/2"].offset)
-  let os2_version = f.readUInt16()
-  let os2_xAvgCharWidth = f.readInt16()
-  let os2_usWeightClass = f.readUInt16()
-  let os2_usWidthClass = f.readUInt16()
-  let os2_fsType = f.readUInt16()
-  let os2_ySubscriptXSize = f.readInt16()
-  let os2_ySubscriptYSize = f.readInt16()
-  let os2_ySubscriptXOffset = f.readInt16()
-  let os2_ySubscriptYOffset = f.readInt16()
-  let os2_ySuperscriptXSize = f.readInt16()
-  let os2_ySuperscriptYSize = f.readInt16()
-  let os2_ySuperscriptXOffset = f.readInt16()
-  let os2_ySuperscriptYOffset = f.readInt16()
-  let os2_yStrikeoutSize = f.readInt16()
-  let os2_yStrikeoutPosition = f.readInt16()
-  let os2_sFamilyClass = f.readInt16()
+  if "OS/2" in chunks:
+    f.setPosition(int chunks["OS/2"].offset)
+    let os2_version = f.readUInt16()
+    let os2_xAvgCharWidth = f.readInt16()
+    let os2_usWeightClass = f.readUInt16()
+    let os2_usWidthClass = f.readUInt16()
+    let os2_fsType = f.readUInt16()
+    let os2_ySubscriptXSize = f.readInt16()
+    let os2_ySubscriptYSize = f.readInt16()
+    let os2_ySubscriptXOffset = f.readInt16()
+    let os2_ySubscriptYOffset = f.readInt16()
+    let os2_ySuperscriptXSize = f.readInt16()
+    let os2_ySuperscriptYSize = f.readInt16()
+    let os2_ySuperscriptXOffset = f.readInt16()
+    let os2_ySuperscriptYOffset = f.readInt16()
+    let os2_yStrikeoutSize = f.readInt16()
+    let os2_yStrikeoutPosition = f.readInt16()
+    let os2_sFamilyClass = f.readInt16()
 
-  for i in 0..<10:
-    let os2_panose = f.readUInt8()
+    for i in 0..<10:
+      let os2_panose = f.readUInt8()
 
-  let os2_ulUnicodeRange1 = f.readUInt32()
-  let os2_ulUnicodeRange2 = f.readUInt32()
-  let os2_ulUnicodeRange3 = f.readUInt32()
-  let os2_ulUnicodeRange4 = f.readUInt32()
-  let os2_achVendID = @[
-    f.readUInt8(),
-    f.readUInt8(),
-    f.readUInt8(),
-    f.readUInt8()
-  ]
-  let os2_fsSelection = f.readUInt16()
-  let os2_usFirstCharIndex = f.readUInt16()
-  let os2_usLastCharIndex = f.readUInt16()
-  let os2_sTypoAscender = f.readInt16()
-  font.ascent = os2_sTypoAscender.float
-  let os2_sTypoDescender = f.readInt16()
-  font.descent = os2_sTypoDescender.float
-  let os2_sTypoLineGap = f.readInt16()
-  font.lineGap = os2_sTypoLineGap.float
-  let os2_usWinAscent = f.readUInt16()
-  #font.ascent = os2_usWinAscent.float
-  let os2_usWinDescent = f.readUInt16()
-  #font.descent = os2_usWinDescent.float
-  if os2_version >= 1.uint16:
-    let os2_ulCodePageRange1 = f.readUInt32()
-    let os2_ulCodePageRange2 = f.readUInt32()
-  if os2_version >= 2.uint16:
-    let os2_sxHeight = f.readInt16()
-    let os2_sCapHeight = f.readInt16()
-    let os2_usDefaultChar = f.readUInt16()
-    let os2_usBreakChar = f.readUInt16()
-    let os2_usMaxContent = f.readUInt16()
+    let os2_ulUnicodeRange1 = f.readUInt32()
+    let os2_ulUnicodeRange2 = f.readUInt32()
+    let os2_ulUnicodeRange3 = f.readUInt32()
+    let os2_ulUnicodeRange4 = f.readUInt32()
+    let os2_achVendID = @[
+      f.readUInt8(),
+      f.readUInt8(),
+      f.readUInt8(),
+      f.readUInt8()
+    ]
+    let os2_fsSelection = f.readUInt16()
+    let os2_usFirstCharIndex = f.readUInt16()
+    let os2_usLastCharIndex = f.readUInt16()
+    let os2_sTypoAscender = f.readInt16()
+    font.ascent = os2_sTypoAscender.float
+    let os2_sTypoDescender = f.readInt16()
+    font.descent = os2_sTypoDescender.float
+    let os2_sTypoLineGap = f.readInt16()
+    font.lineGap = os2_sTypoLineGap.float
+    let os2_usWinAscent = f.readUInt16()
+    #font.ascent = os2_usWinAscent.float
+    let os2_usWinDescent = f.readUInt16()
+    #font.descent = os2_usWinDescent.float
+    if os2_version >= 1.uint16:
+      let os2_ulCodePageRange1 = f.readUInt32()
+      let os2_ulCodePageRange2 = f.readUInt32()
+    if os2_version >= 2.uint16:
+      let os2_sxHeight = f.readInt16()
+      let os2_sCapHeight = f.readInt16()
+      let os2_usDefaultChar = f.readUInt16()
+      let os2_usBreakChar = f.readUInt16()
+      let os2_usMaxContent = f.readUInt16()
 
   # loca
   f.setPosition(int chunks["loca"].offset)
@@ -288,10 +289,7 @@ proc readFontTtf*(f: Stream): Font =
   let hhea_minorVersion = f.readUInt16()
   assert hhea_minorVersion == 0
   let hhea_ascent = f.readInt16()
-  # for some reason os2_sTypoAscender is preferred
-  #font.ascent = hhea_ascent.float
   let hhea_descent = f.readInt16()
-  #font.descent = hhea_descent.float
   let hhea_lineGap = f.readInt16()
   let hhea_advanceWidthMax = f.readUInt16()
   let hhea_minLeftSideBearing = f.readInt16()
@@ -307,6 +305,11 @@ proc readFontTtf*(f: Stream): Font =
   let hhea_metricDataFormat = f.readInt16()
   assert hhea_metricDataFormat == 0
   let hhea_numberOfHMetrics = f.readUInt16()
+
+  if "OS/2" notin chunks:
+    # for some reason os2_sTypoAscender is preferred
+    font.ascent = hhea_ascent.float
+    font.descent = hhea_descent.float
 
   # hmtx
   f.setPosition(int chunks["hmtx"].offset)
@@ -407,7 +410,8 @@ proc readFontTtf*(f: Stream): Font =
 
     elif tableVersion == 1:
       # Mac format
-      assert false
+      # assert false
+      discard
     else:
       assert false
 

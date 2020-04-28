@@ -128,6 +128,9 @@ proc typeset*(
     if c notin font.glyphs:
       # TODO: make missing glyphs work better
       c = " " # if glyph is missing use space for now
+      if c notin font.glyphs:
+        ## Space is missing!?
+        continue
 
     var glyph = font.glyphs[c]
     at.x += font.kerningAdjustment(prev, c) * scale
@@ -258,7 +261,7 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.blit(
+      image.blitWithAlpha(
         img,
         rect(
           0, 0,
