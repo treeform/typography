@@ -1,4 +1,4 @@
-import algorithm, chroma, flippy, font, tables, ttf, vmath
+import algorithm, chroma, flippy, font, tables, ttf, vmath, opentype/parser
 
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
@@ -10,6 +10,8 @@ proc makeReady*(glyph: Glyph, font: Font) =
     #perfBegin "ttfGlyphToCommands"
     glyph.ttfGlyphToCommands(font)
     #perfEnd()
+  if glyph.otf != nil:
+    glyph.parseGlyph(font)
   if glyph.path.len > 0: # and glyph.commands.len == 0:
     #perfBegin "glyphPathToCommands"
     glyph.glyphPathToCommands()

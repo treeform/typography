@@ -1,4 +1,4 @@
-import streams, strutils, tables, vmath
+import streams, strutils, tables, vmath, opentype/types
 
 type
   Segment* = object
@@ -36,6 +36,10 @@ type
     # TTF
     ttfStream*: Stream
     ttfOffset*: int
+
+    # OTF
+    otf*: OTFFont
+    index*: int
 
   Font* = ref object
     ## Main font object contains font information and Glyphs
