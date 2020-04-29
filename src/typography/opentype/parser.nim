@@ -569,8 +569,8 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
 
 proc parseGlyph*(glyph: Glyph, font: Font) =
   var
-    otf = glyph.otf
-    f = otf.stream
+    otf = font.otf
+    f = font.stream
     index = glyph.index
 
   f.setPosition(otf.glyf.offsets[index].int)
@@ -648,6 +648,8 @@ proc readFontOtf*(filepath: string): Font =
   otf.glyf = f.readGlyfTable(otf.loca)
 
   var font = Font()
+  font.otf = otf
+  font.stream = f
   font.unitsPerEm = otf.head.unitsPerEm.float
   font.bboxMin = vec2(otf.head.xMin.float, otf.head.yMin.float)
   font.bboxMax = vec2(otf.head.xMax.float, otf.head.yMax.float)
@@ -669,7 +671,6 @@ proc readFontOtf*(filepath: string): Font =
   font.glyphArr = newSeq[Glyph](otf.glyf.offsets.len)
   for i in 0 ..< font.glyphArr.len:
     var glyph = Glyph()
-    glyph.otf = otf
     glyph.index = i
     font.glyphArr[i] = glyph
 

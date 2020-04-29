@@ -6,7 +6,7 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
-  if glyph.otf != nil:
+  if font.otf != nil and glyph.commands.len == 0:
     glyph.parseGlyph(font)
   if glyph.path.len > 0:
     glyph.glyphPathToCommands()
