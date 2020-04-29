@@ -496,8 +496,8 @@ block:
 
 block:
   var font = readFontTtf("fonts/silver.ttf")
-  font.size = 21*4
-  font.lineHeight = 21*4
+  font.size = 19*4
+  font.lineHeight = 19*4
 
   let borderPx = 2
   var glpyhImage: Image

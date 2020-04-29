@@ -3,6 +3,19 @@
 import algorithm, flippy, math, os, ospaths, strutils,
     tables, typography, vmath, strformat
 
+proc textStr(font: Font): string =
+  var text = """The quick brown fox jumps over the lazy dog."""
+  if "q" notin font.glyphs:
+    # can't display english, use random glpyhs:
+    text = ""
+    var i = 0
+    for g in font.glyphs.values:
+      text.add(g.code)
+      inc i
+      if i > 80:
+        break
+  return text
+
 var fontPaths: seq[string]
 
 for fontPath in walkDirRec("/p/googlefonts/"):
@@ -15,7 +28,7 @@ fontPaths = fontPaths
 var mainFont = readFontTtf("fonts/Ubuntu.ttf")
 
 for pageNum in 0 ..< fontPaths.len div 100 + 1:
-  echo "page pageNum"
+  echo "page ", pageNum
   var image = newImage(1000, 100*40, 4)
   for fontNum in 0 .. 100:
     if fontNum + pageNum * 100 >= fontPaths.len:
@@ -23,6 +36,7 @@ for pageNum in 0 ..< fontPaths.len div 100 + 1:
     let fontPath = fontPaths[fontNum + pageNum * 100]
     var font = readFontTtf(fontPath)
     echo font.name
+    echo fontPath
     font.size = 20
     font.lineHeight = 40
     echo font.glyphs.len
@@ -37,11 +51,13 @@ for pageNum in 0 ..< fontPaths.len div 100 + 1:
       font.drawText(
         image,
         vec2(300, y),
-        "The quick brown fox jumps over the lazy dog! :)"
+        font.textStr()
       )
     except:
       echo "error!"
       discard
 
   image.alphaToBlankAndWhite()
-  image.save(&"samples/googlefonts_{pageNum}.png")
+  let imagePath = &"samples/googlefonts_{pageNum}.png"
+  echo "saving ", imagePath
+  image.save(imagePath)

@@ -284,7 +284,6 @@ proc readKernTable*(f: Stream): KernTable =
   elif result.version == 1:
     # Mac format.
     # TODO: add mac kern format
-    assert false
     discard
   else:
     assert false
@@ -337,7 +336,8 @@ proc readCmapTable*(f: Stream): CmapTable =
                 glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
             else:
               glyphIndex = int((c + idDelta) and 0xFFFF)
-            result.glyphIndexMap[c.int] = glyphIndex
+            if c != 65535:
+              result.glyphIndexMap[c.int] = glyphIndex
         #record.subRecord = subRecord
       else:
         # TODO implement other record formats
@@ -597,6 +597,9 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
 
 proc readFontOtf*(filepath: string): Font =
 
+  if not fileExists(filepath):
+    raise newException(IOError, "File does not exist.")
+
   var f = newFileStream(filepath)
 
   var otf = OTFFont()
@@ -682,7 +685,16 @@ proc readFontOtf*(filepath: string): Font =
 
   font.glyphs = initTable[string, Glyph]()
   for ucode, glyphIndex in otf.cmap.glyphIndexMap:
-    font.glyphs[Rune(ucode).toUTF8()] = font.glyphArr[glyphIndex]
+    let code = Rune(ucode).toUTF8()
+    font.glyphs[code] = font.glyphArr[glyphIndex]
+    font.glyphs[code].code = code
+
+  # Strange space fix, some fonts appear to have really large space advance
+  if " " in font.glyphs and "M" in font.glyphs:
+    font.glyphs[" "].advance = min(
+      font.glyphs[" "].advance,
+      font.glyphs["M"].advance
+    )
 
   return font
 
