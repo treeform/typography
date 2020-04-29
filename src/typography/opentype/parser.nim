@@ -513,8 +513,8 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
       # The arguments are words.
       if flags.checkBit(2):
         # Values are offset.
-        component.dx = float32 f.readInt16()
-        component.dy = float32 f.readInt16()
+        component.dx = f.readInt16().float32
+        component.dy = f.readInt16().float32
       else:
         # Values are matched points.
         component.matchedPoints = [int f.readUInt16(), int f.readUInt16()]
@@ -523,8 +523,8 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
       # The arguments are bytes.
       if flags.checkBit(2):
         # Values are offset.
-        component.dx = float32 f.readInt8()
-        component.dy = float32 f.readInt8()
+        component.dx = f.readInt8().float32
+        component.dy = f.readInt8().float32
       else:
         # Values are matched points.
         component.matchedPoints = [int f.readInt8(), int f.readInt8()]
@@ -540,8 +540,8 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
     elif flags.checkBit(128):
       # We have a 2x2 transformation.
       component.xScale = f.readFixed16()
-      component.scale01 = f.readFixed16()
       component.scale10 = f.readFixed16()
+      component.scale01 = f.readFixed16()
       component.yScale = f.readFixed16()
 
     var subGlyph = font.glyphArr[component.glyphIndex]
@@ -600,7 +600,7 @@ proc readFontOtf*(filepath: string): Font =
   if not fileExists(filepath):
     raise newException(IOError, "File does not exist.")
 
-  var f = newFileStream(filepath)
+  var f = newStringStream(readFile(filepath))
 
   var otf = OTFFont()
   otf.stream = f

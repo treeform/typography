@@ -1,19 +1,19 @@
 import chroma, flippy, print, strformat, tables, typography, vmath
 
 block:
-  #var font = readFontTtf("fonts/Changa-Bold.ttf")
+  var font = readFontTtf("fonts/Changa-Bold.ttf")
   #var font = readFontTtf("fonts/Ubuntu.ttf")
   #var font = readFontTtf("fonts/Moon Bold.otf")
-  var font = readFontOtf("/p/googlefonts/apache/jsmathcmbx10/jsMath-cmbx10.ttf")
-  font.size = 100
-  font.lineHeight = 100
+  #var font = readFontOtf("/p/googlefonts/apache/jsmathcmbx10/jsMath-cmbx10.ttf")
+  font.size = 1000
+  font.lineHeight = 1000
 
   # for name in font.glyphs.keys:
   #   font.glyphs[name].name = name
 
   for i, glyph in font.glyphArr:
-    print glyph.code
-    if glyph.code != "T": continue
+    #print glyph.code
+    if glyph.code != "+": continue
     print i, glyph.code
     #if name != "a": continue
 

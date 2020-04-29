@@ -2,14 +2,15 @@ import chroma, flippy, print, tables, typography, typography, vmath, json
 
 block:
   var font = readFontOtf("fonts/Changa-Bold.ttf")
+  #var font = readFontOtf("/p/googlefonts/ofl/changa/static/Changa-Regular.ttf")
   #var font = readFontOtf("fonts/Ubuntu.ttf")
   #var font = readFontOtf("fonts/hanazono/HanaMinA.ttf")
   #var font = readFontOtf("/p/googlefonts/apache/jsmathcmbx10/jsMath-cmbx10.ttf")
   #var font = readFontOtf("/p/googlefonts/apache/nokora/Nokora-Bold.ttf")
   #var font = readFontOtf("/p/googlefonts/ofl/arvo/Arvo-Regular.ttf") # zero sides path
   #var font = readFontOtf("/p/googlefonts/ofl/chelseamarket/ChelseaMarket-Regular.ttf") # negative sided image
-  font.size = 20
-  font.lineHeight = 40
+  font.size = 40
+  font.lineHeight = 60
   print font.unitsPerEm
   #font.unitsPerEm = 2000
   print font.ascent
@@ -22,7 +23,7 @@ block:
 
   var image = newImage(500, 40, 4)
 
-  var text = """!!! The "quick" brown fox jumps over the lazy dog. !!!"""
+  var text = """+Welcome, Earthling."""
   if "q" notin font.glyphs:
     # can't display english, use random glpyhs:
     text = ""
