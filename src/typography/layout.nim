@@ -1,11 +1,11 @@
 import flippy, font, rasterizer, tables, unicode, vmath
 
 const
-  normalLineHeight* = 0 # default line height of font.size * 1.2
+  normalLineHeight* = 0 ## Default line height of font.size * 1.2
 
 type
   Span* = object
-    ## Represents a run of litter of same size and font
+    ## Represents a run of litter of same size and font.
     font: Font
     fontSize: float
     # lineHeight: float
@@ -13,31 +13,31 @@ type
     text: string
 
   GlyphPosition* = object
-    ## Represents a glyph position after typesetting
+    ## Represents a glyph position after typesetting.
     font*: Font
     fontSize*: float
     subPixelShift*: float
-    rect*: Rect       # Where to draw the image character
-    selectRect*: Rect # Were to draw or hit selection
+    rect*: Rect       # Where to draw the image character.
+    selectRect*: Rect # Were to draw or hit selection.
     character*: string
     rune*: Rune
     count*: int
     index*: int
 
   HAlignMode* = enum
-    ## Horizontal alignment mode
+    ## Horizontal alignment mode.
     Left
     Center
     Right
 
   VAlignMode* = enum
-    ## Vertical alignment mode
+    ## Vertical alignment mode.
     Top
     Middle
     Bottom
 
 proc kerningAdjustment*(font: Font, prev, c: string): float =
-  ## Get Kerning Adjustment between two letters
+  ## Get Kerning Adjustment between two letters.
   if prev != "":
     var key = (prev, c)
     if font.kerning.hasKey(key):
@@ -45,7 +45,7 @@ proc kerningAdjustment*(font: Font, prev, c: string): float =
       return kerning
 
 proc canWrap(rune: Rune): bool =
-  if rune == Rune(32): return true # early return for ascii space
+  if rune == Rune(32): return true # Early return for ascii space.
   if rune.isWhiteSpace(): return true
   if not rune.isAlpha(): return true
 
@@ -59,7 +59,7 @@ proc typeset*(
     clip = true,
     tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
-  ## Typeset runes and return glyph positions that is ready to draw
+  ## Typeset runes and return glyph positions that is ready to draw.
 
   assert font.size != 0
   assert font.unitsPerEm != 0
@@ -70,6 +70,7 @@ proc typeset*(
     lineStart = pos.x
     prev = ""
     scale = font.size / font.unitsPerEm
+    ## Figure out why some times the scale is ignored this way:
     #scale = font.size / (font.ascent - font.descent)
     boundsMin = vec2(0, 0)
     boundsMax = vec2(0, 0)
@@ -92,8 +93,8 @@ proc typeset*(
 
   for rune in runes:
     var c = $rune
-    if rune == Rune(10): # new line \n
-      # add special small width glyph on this line
+    if rune == Rune(10): # New line "\n".
+      # Add special small width glyph on this line.
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.size,
@@ -126,8 +127,8 @@ proc typeset*(
       lastCanWrap = glyphIndex + 1
 
     if c notin font.glyphs:
-      # TODO: make missing glyphs work better
-      c = " " # if glyph is missing use space for now
+      # TODO: Make missing glyphs work better.
+      c = " " # If glyph is missing use space for now.
       if c notin font.glyphs:
         ## Space is missing!?
         continue
@@ -138,25 +139,25 @@ proc typeset*(
     var subPixelShift = at.x - floor(at.x)
     var glyphPos = vec2(floor(at.x), floor(at.y))
     var glyphSize = font.getGlyphSize(glyph)
-    # if glyphSize.x == 0 or glyphSize.y == 0:
-    #   echo "too small", c
+
     if rune == Rune(32):
       glyphSize.x = glyph.advance * scale
 
     if glyphSize.x != 0 and glyphSize.y != 0:
-      # does it need to wrap?
+      # Does it need to wrap?
       if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
-        # wrap to next line
+        # Wrap to next line.
         let goBack = lastCanWrap - glyphIndex
         if lastCanWrap != -1 and goBack < 0:
           lastCanWrap = -1
           at.y += lineHeight
           if clip and size.y != 0 and at.y - pos.y > size.y:
-            # delete glyphs that would wrap into next line that is clipped
+            # Delete glyphs that would wrap into next line
+            # that is clipped.
             result.setLen(result.len + goBack)
             return
 
-          # wrap glyphs on prev line down to next line
+          # Wrap glyphs on prev line down to next line.
           let shift = result[result.len + goBack].rect.x - pos.x
           for i in result.len + goBack ..< result.len:
             result[i].rect.x -= shift
@@ -172,7 +173,7 @@ proc typeset*(
         glyphPos = vec2(floor(at.x), floor(at.y))
 
       if clip and size.y != 0 and at.y - pos.y > size.y:
-        # reached the bottom of the area, clip
+        # Reached the bottom of the area, clip.
         return
 
     var selectRect = rect(
@@ -194,7 +195,7 @@ proc typeset*(
       index: strIndex
     )
     if glyphCount == 0:
-      # first glyph
+      # First glyph.
       boundsMax.x = at.x + glyphSize.x
       boundsMin.x = at.x
       boundsMax.y = at.y + font.size
@@ -211,7 +212,7 @@ proc typeset*(
     inc glyphCount
     strIndex += c.len
 
-  ## Shifts layout by alignMode
+  ## Shifts layout by alignMode.
   if result.len == 0: return
 
   let boundsSize = boundsMax - boundsMin
@@ -246,11 +247,11 @@ proc typeset*(
     clip = true,
     tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
-  ## Typeset string and return glyph positions that is ready to draw
+  ## Typeset string and return glyph positions that is ready to draw.
   typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth)
 
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
-  ## Draws layout
+  ## Draws layout.
   for pos in layout:
     var font = pos.font
     if pos.character in font.glyphs:
@@ -279,8 +280,8 @@ proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
   image.drawText(layout)
 
 proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
-  ## Given a layout gives selection from start to stop in glyph positions
-  ## If start == stop returns []
+  ## Given a layout gives selection from start to stop in glyph positions.
+  ## If start == stop returns [].
   if start == stop:
     return
   for g in layout:
@@ -294,8 +295,8 @@ proc getSelection*(layout: seq[GlyphPosition], start, stop: int): seq[Rect] =
       result.add g.selectRect
 
 proc pickGlyphAt*(layout: seq[GlyphPosition], pos: Vec2): GlyphPosition =
-  ## Given X,Y coordinate, return the GlyphPosition picked
-  # direct click not happened find closest to the right
+  ## Given X,Y coordinate, return the GlyphPosition picked.
+  ## If direct click not happened finds closest to the right.
   var minG: GlyphPosition
   var minDist = -1.0
   for i, g in layout:

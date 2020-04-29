@@ -3,7 +3,8 @@ import chroma, flippy, print, strformat, tables, typography, vmath
 block:
   #var font = readFontTtf("fonts/Changa-Bold.ttf")
   #var font = readFontTtf("fonts/Ubuntu.ttf")
-  var font = readFontTtf("fonts/Moon Bold.otf")
+  #var font = readFontTtf("fonts/Moon Bold.otf")
+  var font = readFontOtf("/p/googlefonts/apache/jsmathcmbx10/jsMath-cmbx10.ttf")
   font.size = 100
   font.lineHeight = 100
 
@@ -11,7 +12,8 @@ block:
   #   font.glyphs[name].name = name
 
   for i, glyph in font.glyphArr:
-    if glyph.code != "Q": continue
+    print glyph.code
+    if glyph.code != "T": continue
     print i, glyph.code
     #if name != "a": continue
 
@@ -20,7 +22,7 @@ block:
 
       print glyph
       var g = glyph
-      g.ttfGlyphToCommands(font)
+      g.parseGlyph(font)
       print g
 
       # g.commands = g.commands[0 .. 20]

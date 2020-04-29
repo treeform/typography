@@ -9,7 +9,6 @@
 *.exe
 *.dll
 nimcache
-tests/samples/*
 *.idx
 
 # Do to license issues ignore some fonts:

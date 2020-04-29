@@ -1,4 +1,4 @@
-import algorithm, chroma, flippy, font, tables, ttf, vmath
+import algorithm, chroma, flippy, font, tables, ttf, vmath, opentype/parser
 
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
@@ -6,41 +6,39 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
-  if glyph.ttfStream != nil: # and glyph.commands.len == 0:
-    #perfBegin "ttfGlyphToCommands"
-    glyph.ttfGlyphToCommands(font)
-    #perfEnd()
-  if glyph.path.len > 0: # and glyph.commands.len == 0:
-    #perfBegin "glyphPathToCommands"
+  if font.otf != nil and glyph.commands.len == 0:
+    glyph.parseGlyph(font)
+  if glyph.path.len > 0:
     glyph.glyphPathToCommands()
-    #perfEnd()
-  if glyph.commands.len > 0: # and glyph.shapes.len == 0:
-    #perfBegin "commandsToShapes"
+  if glyph.commands.len > 0:
     glyph.commandsToShapes()
-    #perfEnd()
 
-    glyph.bboxMin = glyph.shapes[0][0].at
-    glyph.bboxMax = glyph.shapes[0][0].at
+    if glyph.shapes[0].len > 0:
+      glyph.bboxMin = glyph.shapes[0][0].at
+      glyph.bboxMax = glyph.shapes[0][0].at
+      for shape in glyph.shapes:
+        for s in shape:
+          var at = s.at
+          var to = s.to
 
-    for shape in glyph.shapes:
-      for s in shape:
-        var at = s.at
-        var to = s.to
+          if at.x < glyph.bboxMin.x: glyph.bboxMin.x = at.x
+          if at.y < glyph.bboxMin.y: glyph.bboxMin.y = at.y
+          if at.x > glyph.bboxMax.x: glyph.bboxMax.x = at.x
+          if at.y > glyph.bboxMax.y: glyph.bboxMax.y = at.y
 
-        if at.x < glyph.bboxMin.x: glyph.bboxMin.x = at.x
-        if at.y < glyph.bboxMin.y: glyph.bboxMin.y = at.y
-        if at.x > glyph.bboxMax.x: glyph.bboxMax.x = at.x
-        if at.y > glyph.bboxMax.y: glyph.bboxMax.y = at.y
-
-        if to.x < glyph.bboxMin.x: glyph.bboxMin.x = to.x
-        if to.y < glyph.bboxMin.y: glyph.bboxMin.y = to.y
-        if to.x > glyph.bboxMax.x: glyph.bboxMax.x = to.x
-        if to.y > glyph.bboxMax.y: glyph.bboxMax.y = to.y
-
+          if to.x < glyph.bboxMin.x: glyph.bboxMin.x = to.x
+          if to.y < glyph.bboxMin.y: glyph.bboxMin.y = to.y
+          if to.x > glyph.bboxMax.x: glyph.bboxMax.x = to.x
+          if to.y > glyph.bboxMax.y: glyph.bboxMax.y = to.y
+    else:
+      glyph.isEmpty = true
   else:
     glyph.isEmpty = true
 
   glyph.ready = true
+
+proc scale*(font: Font): float =
+  font.size / font.unitsPerEm
 
 proc getGlyphSize*(
     font: Font,
@@ -49,15 +47,13 @@ proc getGlyphSize*(
 
   glyph.makeReady(font)
   var
-    fontHeight = font.ascent - font.descent
-    scale = font.size / fontHeight
-    tx = floor(glyph.bboxMin.x * scale)
-    ty = floor(glyph.bboxMin.y * scale)
-    w = ceil(glyph.bboxMax.x * scale) - tx + 1
-    h = ceil(glyph.bboxMax.y * scale) - ty + 1
+    tx = floor(glyph.bboxMin.x * font.scale)
+    ty = floor(glyph.bboxMin.y * font.scale)
+    w = ceil(glyph.bboxMax.x * font.scale) - tx + 1
+    h = ceil(glyph.bboxMax.y * font.scale) - ty + 1
 
   return vec2(float w, float h)
-import print
+
 proc getGlyphImage*(
     font: Font,
     glyph: Glyph,
@@ -66,26 +62,25 @@ proc getGlyphImage*(
     subPixelShift: float = 0.0,
   ): Image =
   ## Get image for this glyph
-  let white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
-  let clear = ColorRgba(r: 0, g: 0, b: 0, a: 0)
+  let
+    white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
+    whiteTrans = ColorRgba(r: 255, g: 255, b: 255, a: 0)
 
   var
     size = getGlyphSize(font, glyph)
     w = int(size.x)
     h = int(size.y)
-    fontHeight = font.ascent - font.descent
-    scale = font.size / fontHeight
-    tx = floor(glyph.bboxMin.x * scale)
-    ty = floor(glyph.bboxMin.y * scale)
+    tx = floor(glyph.bboxMin.x * font.scale)
+    ty = floor(glyph.bboxMin.y * font.scale)
 
   var image = newImage(w, h, 4)
-  image.fill(ColorRgba(r: 255, g: 255, b: 255, a: 0))
-  let origin = vec2(float tx, float ty)
+  image.fill(whiteTrans)
+  let origin = vec2(tx, ty)
 
   glyphOffset.x = origin.x
   glyphOffset.y = -float(h) - origin.y
 
-  proc trans(v: Vec2): Vec2 = (v + origin) / scale
+  proc trans(v: Vec2): Vec2 = (v + origin) / font.scale
 
   const ep = 0.0001 * PI
 
@@ -101,7 +96,7 @@ proc getGlyphImage*(
 
       if line.intersects(scan, at):
         let winding = line.at.y > line.to.y
-        result.add((at.x * scale - origin.x + subPixelShift, winding))
+        result.add((at.x * font.scale - origin.x + subPixelShift, winding))
 
     result.sort(proc(a, b: (float, bool)): int = cmp(a[0], b[0]))
 
@@ -109,7 +104,6 @@ proc getGlyphImage*(
       # echo "issue!", result.len
       return
 
-  #print "here"
   for y in 0 ..< image.height:
 
     if quality == 0:
@@ -117,9 +111,6 @@ proc getGlyphImage*(
       for shapeNum, shape in glyph.shapes:
         # fill
         var winding: bool
-
-        #print shapeNum, winding, shape.len
-
         let hits = shape.scanLineHits(y, 0)
 
         if hits.len > 0:
@@ -129,15 +120,12 @@ proc getGlyphImage*(
           var at = hits[i][0]
           var to = hits[i+1][0]
           for j in int(at)+1..int(to)-1:
-            #print j, h-y-1, image.width, image.height
             if winding == false:
-              scanLine[j] += 1 #image.putRgba(j, h-y-1, white)
+              scanLine[j] += 1
             else:
-              scanLine[j] -= 1 # image.putRgba(j, h-y-1, clear)
+              scanLine[j] -= 1
           i += 2
-        #print shapeNum, y, winding, scanLine
 
-      #print y, scanLine
       for x in 0 ..< image.width:
         if scanLine[x] > 0:
           image.putRgba(x, h-y-1, white)
@@ -182,33 +170,17 @@ proc getGlyphImage*(
                 assert a <= 1.0
                 alphas[int to] += a * winding
 
-            #print shapeNum, y, winding, m, alphas
-          #print shapeNum, y, winding, alphas
-
       # we could have an inverted fill
       var invert = -1.0
       for a in alphas:
         if a > 0:
           invert = 1.0
-      #print invert
 
       for j in 0..<image.width:
         if alphas[j] != 0:
           var a = clamp(alphas[j] * invert / float(quality), 0.0, 1.0)
           var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a*255.0))
           image.putRgba(j, h-y, color)
-          # if winding == false:
-          #   var alpha = uint8(a*255.0)
-          #   var currentColor = image.getRgba(j, h-y)
-          #   alpha = min(255, currentColor.a.int + alpha.int).uint8
-          #   var color = ColorRgba(r: 255, g: 255, b: 255, a: alpha)
-          #   image.putRgba(j, h-y, color)
-          # if winding == true:
-          #   var alphaN = -int(a*255.0)
-          #   var currentColor = image.getRgba(j, h-y)
-          #   var alpha = min(255, currentColor.a.int + alphaN).uint8
-          #   var color = ColorRgba(r: 255, g: 255, b: 255, a: alpha)
-          #   image.putRgba(j, h-y, color)
 
   return image
 

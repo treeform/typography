@@ -1,4 +1,4 @@
-import streams, strutils, tables, vmath
+import streams, strutils, tables, vmath, opentype/types
 
 type
   Segment* = object
@@ -29,13 +29,8 @@ type
     isEmpty*: bool
     numberOfContours*: int
     isComposite*: bool
-
-    # SVG
-    path*: string
-
-    # TTF
-    ttfStream*: Stream
-    ttfOffset*: int
+    index*: int
+    path*: string  # SVG
 
   Font* = ref object
     ## Main font object contains font information and Glyphs
@@ -56,6 +51,9 @@ type
     glyphs*: Table[string, Glyph]
     kerning*: Table[(string, string), float]
     glyphArr*: seq[Glyph]
+
+    otf*: OTFFont
+    stream*: Stream
 
 proc `sizePt`*(font: Font): float =
   ## Gets font size in Pt or Point units.
