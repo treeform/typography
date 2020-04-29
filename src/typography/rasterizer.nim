@@ -6,20 +6,12 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
-  if glyph.ttfStream != nil: # and glyph.commands.len == 0:
-    #perfBegin "ttfGlyphToCommands"
-    glyph.ttfGlyphToCommands(font)
-    #perfEnd()
   if glyph.otf != nil:
     glyph.parseGlyph(font)
-  if glyph.path.len > 0: # and glyph.commands.len == 0:
-    #perfBegin "glyphPathToCommands"
+  if glyph.path.len > 0:
     glyph.glyphPathToCommands()
-    #perfEnd()
-  if glyph.commands.len > 0: # and glyph.shapes.len == 0:
-    #perfBegin "commandsToShapes"
+  if glyph.commands.len > 0:
     glyph.commandsToShapes()
-    #perfEnd()
 
     glyph.bboxMin = glyph.shapes[0][0].at
     glyph.bboxMax = glyph.shapes[0][0].at

@@ -607,8 +607,6 @@ proc readFontOtf*(filepath: string): Font =
   otf.entrySelector = f.readUInt16()
   otf.rengeShift = f.readUInt16()
 
-  var chunks = initTable[string, Chunk]()
-
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
     chunk.tag = f.readString(4)
@@ -626,7 +624,7 @@ proc readFontOtf*(filepath: string): Font =
   f.setPosition(otf.chunks["maxp"].offset.int)
   otf.maxp = f.readMaxpTable()
 
-  if "OS/2" in chunks:
+  if "OS/2" in otf.chunks:
     f.setPosition(otf.chunks["OS/2"].offset.int)
     otf.os2 = f.readOS2Table()
 
@@ -639,7 +637,7 @@ proc readFontOtf*(filepath: string): Font =
   f.setPosition(otf.chunks["hmtx"].offset.int)
   otf.hmtx = f.readHmtxTable(otf.maxp, otf.hhea)
 
-  if "kern" in chunks:
+  if "kern" in otf.chunks:
     f.setPosition(otf.chunks["kern"].offset.int)
     otf.kern = f.readKernTable()
 
@@ -686,3 +684,7 @@ proc readFontOtf*(filepath: string): Font =
     font.glyphs[Rune(ucode).toUTF8()] = font.glyphArr[glyphIndex]
 
   return font
+
+proc readFontTtf*(filepath: string): Font =
+  ## OTF Supporst all TTF features.
+  readFontOtf(filepath)

@@ -6,6 +6,10 @@ block:
   var font = readFontTtf("fonts/hanazono/HanaMinA.ttf")
   font.size = 20
   font.lineHeight = 40
+  print font.unitsPerEm
+  print font.ascent
+  print font.descent
+  print font.lineGap
 
   var image = newImage(500, 40, 4)
 

@@ -1,4 +1,4 @@
-import streams, strutils, tables, vmath, opentype/types
+import strutils, tables, vmath, opentype/types
 
 type
   Segment* = object
@@ -32,10 +32,6 @@ type
 
     # SVG
     path*: string
-
-    # TTF
-    ttfStream*: Stream
-    ttfOffset*: int
 
     # OTF
     otf*: OTFFont
