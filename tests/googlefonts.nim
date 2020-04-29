@@ -29,7 +29,7 @@ var mainFont = readFontTtf("fonts/Ubuntu.ttf")
 
 for pageNum in 0 ..< fontPaths.len div 100 + 1:
   echo "page ", pageNum
-  var image = newImage(1000, 100*40, 4)
+  var image = newImage(800, 100*40, 4)
   for fontNum in 0 .. 100:
     if fontNum + pageNum * 100 >= fontPaths.len:
       break
