@@ -49,8 +49,8 @@ for pageNum in 0 ..< fontPaths.len div 100 + 1:
     mainFont.drawText(image, vec2(10, y), fontPath.lastPathPart)
 
     let topLine = y + 20 + (-font.ascent + font.descent) * font.scale
-    let capLine = y + 20 + (-font.capHeight + font.descent) * font.scale
-    let baseLine = y + 20 + font.descent * font.scale
+    let capLine = y + font.capline
+    let baseLine = y + font.baseline
     let bottomLine = y + 20
 
     image.line(vec2(300, topLine), vec2(800, topLine), rgba(0,0,0,255))
