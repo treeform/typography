@@ -84,19 +84,20 @@ proc getGlyphImage*(
 
   const ep = 0.0001 * PI
 
-  proc scanLineHits(shape: seq[Segment], y: int, shiftY: float): seq[(float, bool)] =
+  proc scanLineHits(shapes: seq[seq[Segment]], y: int, shiftY: float): seq[(float, bool)] =
     var yLine = (float(y) + ep) + shiftY
     var scan = Segment(at: vec2(-10000, yLine), to: vec2(100000, yLine))
 
     scan.at = trans(scan.at)
     scan.to = trans(scan.to)
 
-    for line in shape:
-      var at: Vec2
+    for shape in shapes:
+      for line in shape:
+        var at: Vec2
 
-      if line.intersects(scan, at):
-        let winding = line.at.y > line.to.y
-        result.add((at.x * font.scale - origin.x + subPixelShift, winding))
+        if line.intersects(scan, at):
+          let winding = line.at.y > line.to.y
+          result.add((at.x * font.scale - origin.x + subPixelShift, winding))
 
     result.sort(proc(a, b: (float, bool)): int = cmp(a[0], b[0]))
 
@@ -104,83 +105,59 @@ proc getGlyphImage*(
       # echo "issue!", result.len
       return
 
-  for y in 0 ..< image.height:
-
-    if quality == 0:
-      var scanLine = newSeq[int16](image.width)
-      for shapeNum, shape in glyph.shapes:
-        # fill
-        var winding: bool
-        let hits = shape.scanLineHits(y, 0)
-
-        if hits.len > 0:
-          winding = hits[0][1]
-        var i = 0
-        while i < hits.len:
-          var at = hits[i][0]
-          var to = hits[i+1][0]
-          for j in int(at)+1..int(to)-1:
-            if winding == false:
-              scanLine[j] += 1
-            else:
-              scanLine[j] -= 1
-          i += 2
-
+  if quality == 0:
+    for y in 0 ..< image.height:
+      let hits = glyph.shapes.scanLineHits(y, 0)
+      if hits.len == 0:
+        continue
+      var
+        pen: int16 = 0
+        curHit = 0
       for x in 0 ..< image.width:
-        if scanLine[x] > 0:
+        while true:
+          if curHit >= hits.len:
+            break
+          if x != hits[curHit][0].int:
+            break
+          let winding = hits[curHit][1]
+          if winding == false:
+            pen += 1
+          else:
+            pen -= 1
+          inc curHit
+        if pen != 0:
           image.putRgba(x, h-y-1, white)
-
-    else:
+  else:
+    for y in 0 ..< image.height:
       var alphas = newSeq[float](image.width)
-      for shapeNum, shape in glyph.shapes:
-        # fill AA
-        var winding: float
-
-        for m in 0 ..< quality:
-          let hits = shape.scanLineHits(y, float(m)/float(quality) - 1)
-
-          if hits.len > 0:
-            if hits[0][1]:
-              winding = -1
+      for m in 0 ..< quality:
+        let hits = glyph.shapes.scanLineHits(y, float(m)/float(quality))
+        if hits.len == 0:
+          continue
+        var
+          penFill = 0.0
+          curHit = 0
+        for x in 0 ..< image.width:
+          var penEdge = penFill
+          while true:
+            if curHit >= hits.len:
+              break
+            if x != hits[curHit][0].int:
+              break
+            let cover = hits[curHit][0] - x.float
+            let winding = hits[curHit][1]
+            if winding == false:
+              penFill += 1.0
+              penEdge += 1.0 - cover
             else:
-              winding = 1
-
-          var i = 0
-          while i < hits.len:
-            var at = hits[i][0]
-            var to = hits[i+1][0]
-
-            for j in int(at) + 1 .. int(to) - 1:
-              alphas[j] += 1.0 * winding
-            i += 2
-
-            if int(at) == int(to):
-              var a = (to - floor(to)) - (at - floor(at))
-              assert a >= 0 and a <= 1.0
-              alphas[int at] += a * winding
-
-            else:
-              block:
-                var a = 1.0 - (at - floor(at))
-                assert a <= 1.0
-                alphas[int at] += a * winding
-
-              block:
-                var a = (to - floor(to))
-                assert a <= 1.0
-                alphas[int to] += a * winding
-
-      # we could have an inverted fill
-      var invert = -1.0
-      for a in alphas:
-        if a > 0:
-          invert = 1.0
-
-      for j in 0..<image.width:
-        if alphas[j] != 0:
-          var a = clamp(alphas[j] * invert / float(quality), 0.0, 1.0)
-          var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a*255.0))
-          image.putRgba(j, h-y, color)
+              penFill -= 1.0
+              penEdge -= 1.0 - cover
+            inc curHit
+          alphas[x] += penEdge
+      for x in 0 ..< image.width:
+        var a = clamp(abs(alphas[x]) / float(quality), 0.0, 1.0)
+        var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
+        image.putRgba(x, h-y-1, color)
 
   return image
 
@@ -263,7 +240,6 @@ proc getGlyphOutlineImage*(
           image.line(head, left, color)
           image.line(left, right, color)
           image.line(right, head, color)
-
 
   return image
 
