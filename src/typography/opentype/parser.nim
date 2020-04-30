@@ -667,6 +667,7 @@ proc readFontOtf*(filepath: string): Font =
     font.ascent = otf.os2.sTypoAscender.float
     font.descent = otf.os2.sTypoDescender.float
     font.lineGap = otf.os2.sTypoLineGap.float
+    font.capHeight = otf.os2.sCapHeight.float
   else:
     font.ascent = otf.hhea.ascender.float
     font.descent = otf.hhea.descender.float
@@ -688,13 +689,6 @@ proc readFontOtf*(filepath: string): Font =
     let code = Rune(ucode).toUTF8()
     font.glyphs[code] = font.glyphArr[glyphIndex]
     font.glyphs[code].code = code
-
-  # Strange space fix, some fonts appear to have really large space advance
-  if " " in font.glyphs and "M" in font.glyphs:
-    font.glyphs[" "].advance = min(
-      font.glyphs[" "].advance,
-      font.glyphs["M"].advance
-    )
 
   return font
 

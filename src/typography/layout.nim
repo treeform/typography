@@ -69,7 +69,6 @@ proc typeset*(
     at = pos
     lineStart = pos.x
     prev = ""
-    scale = font.size / font.unitsPerEm
     ## Figure out why some times the scale is ignored this way:
     #scale = font.size / (font.ascent - font.descent)
     boundsMin = vec2(0, 0)
@@ -89,7 +88,7 @@ proc typeset*(
   if lineHeight == normalLineHeight:
     lineHeight = font.size
 
-  at.y += ceil(font.size / 2 + lineHeight / 2 + font.descent * scale)
+  at.y += ceil(font.size / 2 + lineHeight / 2 + font.descent * font.scale)
 
   for rune in runes:
     var c = $rune
@@ -98,7 +97,7 @@ proc typeset*(
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.size,
-        font.glyphs[" "].advance * scale,
+        font.glyphs[" "].advance * font.scale,
         lineHeight
       )
       result.add GlyphPosition(
@@ -134,14 +133,14 @@ proc typeset*(
         continue
 
     var glyph = font.glyphs[c]
-    at.x += font.kerningAdjustment(prev, c) * scale
+    at.x += font.kerningAdjustment(prev, c) * font.scale
 
     var subPixelShift = at.x - floor(at.x)
     var glyphPos = vec2(floor(at.x), floor(at.y))
     var glyphSize = font.getGlyphSize(glyph)
 
     if rune == Rune(32):
-      glyphSize.x = glyph.advance * scale
+      glyphSize.x = glyph.advance * font.scale
 
     if glyphSize.x != 0 and glyphSize.y != 0:
       # Does it need to wrap?
@@ -207,7 +206,7 @@ proc typeset*(
       boundsMin.y = min(boundsMin.y, at.y)
 
     inc glyphIndex
-    at.x += glyph.advance * scale
+    at.x += glyph.advance * font.scale
     prev = c
     inc glyphCount
     strIndex += c.len
@@ -228,7 +227,7 @@ proc typeset*(
       pos.rect.x += offset
 
   if vAlign == Bottom:
-    let offset = floor(size.y - boundsSize.y + font.descent * scale)
+    let offset = floor(size.y - boundsSize.y + font.descent * font.scale)
     for pos in result.mitems:
       pos.rect.y += offset
 

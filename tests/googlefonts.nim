@@ -1,7 +1,7 @@
 ## Loads google fonts and draws a text sample.
 
 import algorithm, flippy, math, os, ospaths, strutils,
-    tables, typography, vmath, strformat
+    tables, typography, vmath, strformat, chroma
 
 proc textStr(font: Font): string =
   var text = """The quick brown fox jumps over the lazy dog."""
@@ -35,17 +35,28 @@ for pageNum in 0 ..< fontPaths.len div 100 + 1:
       break
     let fontPath = fontPaths[fontNum + pageNum * 100]
     var font = readFontTtf(fontPath)
-    echo font.name
-    echo fontPath
+    #echo font.name
+    #echo fontPath
     font.size = 20
-    font.lineHeight = 40
-    echo font.glyphs.len
+    font.lineHeight = 20
+    if " " in font.glyphs:
+      echo font.glyphs[" "].advance, " ", fontPath
 
     let y = fontNum.float32 * 40 + 10
 
     mainFont.size = 10
-    mainFont.lineHeight = 40
+    mainFont.lineHeight = 20
     mainFont.drawText(image, vec2(10, y), fontPath.lastPathPart)
+
+    let topLine = y + 20 + (-font.ascent + font.descent) * font.scale
+    let capLine = y + 20 + (-font.capHeight + font.descent) * font.scale
+    let baseLine = y + 20 + font.descent * font.scale
+    let bottomLine = y + 20
+
+    image.line(vec2(300, topLine), vec2(800, topLine), rgba(0,0,0,255))
+    image.line(vec2(300, capLine), vec2(800, capLine), rgba(0,0,0,255))
+    image.line(vec2(300, baseLine), vec2(800, baseLine), rgba(0,0,0,255))
+    image.line(vec2(300, bottomLine), vec2(800, bottomLine), rgba(0,0,0,255))
 
     try:
       font.drawText(
