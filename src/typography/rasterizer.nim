@@ -68,8 +68,8 @@ proc getGlyphImage*(
 
   var
     size = getGlyphSize(font, glyph)
-    w = int(size.x)
-    h = int(size.y)
+    w = max(int(size.x), 0)
+    h = max(int(size.y), 0)
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
 
