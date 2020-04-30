@@ -79,6 +79,24 @@ proc `sizePr=`*(font: Font, sizePercent: float) =
   ## Gets font size in % or Percent units.
   font.size = sizePercent * 1200
 
+proc scale*(font: Font): float =
+  ## Gets the internal scaling of font units to pixles.
+  font.size / font.unitsPerEm
+
+proc letterHeight*(font: Font): float =
+  ## Gets the current letter height based on ascent and descent and the current
+  ## size and lineheight.
+  (font.ascent - font.descent) * font.scale
+
+proc baseline*(font: Font): float =
+  ## Gets the baseline of the font based on current size and lineheight.
+  font.lineHeight / 2 - font.size / 2 + (font.size - font.letterHeight) / 2 +
+    font.ascent * font.scale
+
+proc capline*(font: Font): float =
+  ## Gets the current capline of the font based on current size and lineheight.
+  font.baseline - font.capHeight * font.scale
+
 proc intersects*(a, b: Segment, at: var Vec2): bool =
   ## Checks if the a segment intersects b segment.
   ## If it returns true, at will have point of intersection

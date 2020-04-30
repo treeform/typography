@@ -37,9 +37,6 @@ proc makeReady*(glyph: Glyph, font: Font) =
 
   glyph.ready = true
 
-proc scale*(font: Font): float =
-  font.size / font.unitsPerEm
-
 proc getGlyphSize*(
     font: Font,
     glyph: Glyph
