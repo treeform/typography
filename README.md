@@ -9,7 +9,7 @@ See api reference: https://treeform.github.io/typography/typography.html
 * TTF fonts - Fair support. Most modern features are supported but font format came out in 1994 and has a bunch of formats for different OSes that are not supported.
 * OTF fonts - Basic TTF outline support only. No support for CFF or SVG outlines.
 
-# Requred Packadges
+# Requred Packages
 
 * [vmath](https://github.com/treeform/vmath) - vector stuff, vec2 and matrices.
 * [flippy](https://github.com/treeform/flippy) - image stuff, saving and loading PNG
@@ -171,7 +171,7 @@ layout.pickGlyphAt(vec2(120, 48)) # selects glyph at cordiantes
 
 # Comparison to different OSs.
 
-At the large font sizes (more then 24 pixels) the fonts on most operating system looks nearly identical. But when you scale the font bellow 24px different OSes take different approaches.
+At the large font sizes (more then 24 pixels) the fonts on most operating system looks nearly identical. But when you scale the font below 24px different OSs take different approaches.
 * OSX - tries to render fonts most true to how font designer intended even if they look a blurry.
 * Windows - tries to render fonts to a pixel grid making them look sharper.
 * Linux - configurable and somewhere between the two.
@@ -203,7 +203,7 @@ Window ClearType renderer (4x):
 
 ![example output](tests/notepadWindows.png?raw=true)
 
-How the font should looks on screen is very subjective, some people love the crisp windows fonts, others swear by the apples adherence to design. But my opinion is its all related a lot with familiarity. What you are used to is what you would like best, and when a person switches to a different screen with a different font rendering style brain immediately rejects it.
+How the font should look on screen is very subjective, some people love the crisp windows fonts, others swear by the apples adherence to design. But my opinion is it's all related a lot with familiarity. What you are used to is what you would like best, and when a person switches to a different screen with a different font rendering style brain immediately rejects it.
 
 # Subpixel Antialising is on its way out
 
