@@ -535,7 +535,8 @@ block:
     "fonts/silver.ttf",
     "fonts/Ubuntu.ttf",
     "fonts/Lato-Regular.ttf",
-    "fonts/SourceSansPro-Regular.ttf"
+    "fonts/SourceSansPro-Regular.ttf",
+    "fonts/Changa-Bold.ttf"
   ]:
     mainFont.size = 10
     mainFont.lineHeight = 32

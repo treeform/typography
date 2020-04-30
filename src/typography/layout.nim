@@ -88,8 +88,7 @@ proc typeset*(
   if lineHeight == normalLineHeight:
     lineHeight = font.size
 
-  #let letterHeight = (font.ascent - font.descent) * font.scale
-  at.y += font.baseline #lineHeight / 2 - font.size / 2 + (font.size - letterHeight) / 2 + font.ascent * font.scale
+  at.y += font.baseline
 
   for rune in runes:
     var c = $rune
