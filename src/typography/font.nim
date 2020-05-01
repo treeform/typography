@@ -14,13 +14,13 @@ type
   PathCommand* = object
     ## Binary version of an SVG command
     kind*: PathCommandKind
-    numbers*: seq[float]
+    numbers*: seq[float32]
 
   Glyph* = ref object
     ## Contains information about Glyphs or "letters"
     ## SVG Path, command buffer, and shapes of lines.
     code*: string
-    advance*: float
+    advance*: float32
     commands*: seq[PathCommand]
     shapes*: seq[seq[Segment]] ## Shapes are made of lines.
     bboxMin*: Vec2
@@ -38,75 +38,75 @@ type
     name*: string
     bboxMin*: Vec2
     bboxMax*: Vec2
-    advance*: float
-    ascent*: float
-    descent*: float
-    xHeight*: float
-    capHeight*: float
-    unitsPerEm*: float
-    lineGap*: float
+    advance*: float32
+    ascent*: float32
+    descent*: float32
+    xHeight*: float32
+    capHeight*: float32
+    unitsPerEm*: float32
+    lineGap*: float32
 
-    size*: float
-    lineHeight*: float
+    size*: float32
+    lineHeight*: float32
     glyphs*: Table[string, Glyph]
-    kerning*: Table[(string, string), float]
+    kerning*: Table[(string, string), float32]
     glyphArr*: seq[Glyph]
 
     otf*: OTFFont
     stream*: Stream
 
-proc `sizePt`*(font: Font): float =
+proc `sizePt`*(font: Font): float32 =
   ## Gets font size in Pt or Point units.
   font.size * 0.75
 
-proc `sizePt=`*(font: Font, sizePoints: float) =
+proc `sizePt=`*(font: Font, sizePoints: float32) =
   ## Sets font size in Pt or Point units.
   font.size = sizePoints / 0.75
 
-proc `sizeEm`*(font: Font): float =
+proc `sizeEm`*(font: Font): float32 =
   ## Gets font size in em units.
   font.size / 12
 
-proc `sizeEm=`*(font: Font, sizeEm: float) =
+proc `sizeEm=`*(font: Font, sizeEm: float32) =
   ## Gets font size in em units.
   font.size = sizeEm * 12
 
-proc `sizePr`*(font: Font): float =
+proc `sizePr`*(font: Font): float32 =
   ## Gets font size in % or Percent units.
   font.size / 1200
 
-proc `sizePr=`*(font: Font, sizePercent: float) =
+proc `sizePr=`*(font: Font, sizePercent: float32) =
   ## Gets font size in % or Percent units.
   font.size = sizePercent * 1200
 
-proc scale*(font: Font): float =
+proc scale*(font: Font): float32 =
   ## Gets the internal scaling of font units to pixles.
   font.size / font.unitsPerEm
 
-proc letterHeight*(font: Font): float =
+proc letterHeight*(font: Font): float32 =
   ## Gets the current letter height based on ascent and descent and the current
   ## size and lineheight.
   (font.ascent - font.descent) * font.scale
 
-proc baseline*(font: Font): float =
+proc baseline*(font: Font): float32 =
   ## Gets the baseline of the font based on current size and lineheight.
   font.lineHeight / 2 - font.size / 2 + (font.size - font.letterHeight) / 2 +
     font.ascent * font.scale
 
-proc capline*(font: Font): float =
+proc capline*(font: Font): float32 =
   ## Gets the current capline of the font based on current size and lineheight.
   font.baseline - font.capHeight * font.scale
 
 proc intersects*(a, b: Segment, at: var Vec2): bool =
   ## Checks if the a segment intersects b segment.
   ## If it returns true, at will have point of intersection
-  var s1_x, s1_y, s2_x, s2_y: float
+  var s1_x, s1_y, s2_x, s2_y: float32
   s1_x = a.to.x - a.at.x
   s1_y = a.to.y - a.at.y
   s2_x = b.to.x - b.at.x
   s2_y = b.to.y - b.at.y
 
-  var s, t: float
+  var s, t: float32
   s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) /
       (-s2_x * s1_y + s1_x * s2_y)
   t = (s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) /
@@ -124,7 +124,7 @@ proc glyphPathToCommands*(glyph: Glyph) =
 
   var command = Start
   var number = ""
-  var numbers = newSeq[float]()
+  var numbers = newSeq[float32]()
   var commands = newSeq[PathCommand]()
 
   proc finishDigit() =
@@ -136,7 +136,7 @@ proc glyphPathToCommands*(glyph: Glyph) =
     finishDigit()
     if command != Start:
       commands.add PathCommand(kind: command, numbers: numbers)
-      numbers = newSeq[float]()
+      numbers = newSeq[float32]()
 
   for c in glyph.path:
     case c:
@@ -223,7 +223,7 @@ proc commandsToShapes*(glyph: Glyph) =
       # Don't add any 0 length lines.
       lines.add(Segment(at: at, to: to))
 
-  proc getCurvePoint(points: seq[Vec2], t: float): Vec2 =
+  proc getCurvePoint(points: seq[Vec2], t: float32): Vec2 =
     if points.len == 1:
       return points[0]
     else:
@@ -236,7 +236,7 @@ proc commandsToShapes*(glyph: Glyph) =
     let n = 10
     var a = at
     for t in 1..n:
-      var b = getCurvePoint(points, float(t) / float(n))
+      var b = getCurvePoint(points, float32(t) / float32(n))
       drawLine(a, b)
       a = b
 

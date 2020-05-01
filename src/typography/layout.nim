@@ -7,16 +7,16 @@ type
   Span* = object
     ## Represents a run of litter of same size and font.
     font: Font
-    fontSize: float
-    # lineHeight: float
-    # tracking: float
+    fontSize: float32
+    # lineHeight: float32
+    # tracking: float32
     text: string
 
   GlyphPosition* = object
     ## Represents a glyph position after typesetting.
     font*: Font
-    fontSize*: float
-    subPixelShift*: float
+    fontSize*: float32
+    subPixelShift*: float32
     rect*: Rect       # Where to draw the image character.
     selectRect*: Rect # Were to draw or hit selection.
     character*: string
@@ -36,7 +36,7 @@ type
     Middle
     Bottom
 
-proc kerningAdjustment*(font: Font, prev, c: string): float =
+proc kerningAdjustment*(font: Font, prev, c: string): float32 =
   ## Get Kerning Adjustment between two letters.
   if prev != "":
     var key = (prev, c)
@@ -265,11 +265,11 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         img,
         rect(
           0, 0,
-          float img.width, float img.height
+          float32 img.width, float32 img.height
         ),
         rect(
           pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y,
-          float img.width, float img.height
+          float32 img.width, float32 img.height
         )
       )
 

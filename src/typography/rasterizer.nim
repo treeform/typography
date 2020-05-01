@@ -49,14 +49,14 @@ proc getGlyphSize*(
     w = ceil(glyph.bboxMax.x * font.scale) - tx + 1
     h = ceil(glyph.bboxMax.y * font.scale) - ty + 1
 
-  return vec2(float w, float h)
+  return vec2(float32 w, float32 h)
 
 proc getGlyphImage*(
     font: Font,
     glyph: Glyph,
     glyphOffset: var Vec2,
     quality = 4,
-    subPixelShift: float = 0.0,
+    subPixelShift: float32 = 0.0,
   ): Image =
   ## Get image for this glyph
   let
@@ -75,14 +75,20 @@ proc getGlyphImage*(
   let origin = vec2(tx, ty)
 
   glyphOffset.x = origin.x
-  glyphOffset.y = -float(h) - origin.y
+  glyphOffset.y = -float32(h) - origin.y
 
   proc trans(v: Vec2): Vec2 = (v + origin) / font.scale
 
   const ep = 0.0001 * PI
 
-  proc scanLineHits(shapes: seq[seq[Segment]], y: int, shiftY: float): seq[(float, bool)] =
-    var yLine = (float(y) + ep) + shiftY
+  proc scanLineHits(
+    shapes: seq[seq[Segment]],
+    hits: var seq[(float32, bool)],
+    y: int,
+    shiftY: float32
+  ) =
+    hits.setLen(0)
+    var yLine = (float32(y) + ep) + shiftY
     var scan = Segment(at: vec2(-10000, yLine), to: vec2(100000, yLine))
 
     scan.at = trans(scan.at)
@@ -94,17 +100,15 @@ proc getGlyphImage*(
 
         if line.intersects(scan, at):
           let winding = line.at.y > line.to.y
-          result.add((at.x * font.scale - origin.x + subPixelShift, winding))
+          hits.add((at.x * font.scale - origin.x + subPixelShift, winding))
 
-    result.sort(proc(a, b: (float, bool)): int = cmp(a[0], b[0]))
+    hits.sort(proc(a, b: (float32, bool)): int = cmp(a[0], b[0]))
 
-    if result.len mod 2 != 0:
-      # echo "issue!", result.len
-      return
+  var hits: seq[(float32, bool)]
 
   if quality == 0:
     for y in 0 ..< image.height:
-      let hits = glyph.shapes.scanLineHits(y, 0)
+      glyph.shapes.scanLineHits(hits, y, 0)
       if hits.len == 0:
         continue
       var
@@ -125,10 +129,12 @@ proc getGlyphImage*(
         if pen != 0:
           image.putRgba(x, h-y-1, white)
   else:
+    var alphas = newSeq[float32](image.width)
     for y in 0 ..< image.height:
-      var alphas = newSeq[float](image.width)
+      for x in 0 ..< image.width:
+        alphas[x] = 0
       for m in 0 ..< quality:
-        let hits = glyph.shapes.scanLineHits(y, float(m)/float(quality))
+        glyph.shapes.scanLineHits(hits, y, float32(m)/float32(quality))
         if hits.len == 0:
           continue
         var
@@ -141,7 +147,7 @@ proc getGlyphImage*(
               break
             if x != hits[curHit][0].int:
               break
-            let cover = hits[curHit][0] - x.float
+            let cover = hits[curHit][0] - x.float32
             let winding = hits[curHit][1]
             if winding == false:
               penFill += 1.0
@@ -152,7 +158,7 @@ proc getGlyphImage*(
             inc curHit
           alphas[x] += penEdge
       for x in 0 ..< image.width:
-        var a = clamp(abs(alphas[x]) / float(quality), 0.0, 1.0)
+        var a = clamp(abs(alphas[x]) / float32(quality), 0.0, 1.0)
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
         image.putRgba(x, h-y-1, color)
 
@@ -183,13 +189,13 @@ proc getGlyphOutlineImage*(
   var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
 
   var image = newImage(w, h, 4)
-  let origin = vec2(float tx, float ty)
+  let origin = vec2(float32 tx, float32 ty)
 
   proc adjust(v: Vec2): Vec2 = (v) * scale - origin
   # Draw the outline.
   proc flip(v: Vec2): Vec2 =
     result.x = v.x
-    result.y = float(h) - v.y
+    result.y = float32(h) - v.y
   for shape in glyph.shapes:
 
     if lines:
@@ -266,12 +272,12 @@ proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
       var img = font.getGlyphImage(glyph, origin)
       img.blit(
         image,
-        rect(0, 0, float img.width, float img.height),
+        rect(0, 0, float32 img.width, float32 img.height),
         rect(
           at.x + origin.x,
           at.y + origin.y,
-          float img.width,
-          float img.height
+          float32 img.width,
+          float32 img.height
         )
       )
 
@@ -279,7 +285,7 @@ proc getGlyphImageOffset*(
   font: Font,
   glyph: Glyph,
   quality = 4,
-  subPixelShift: float = 0.0,
+  subPixelShift: float32 = 0.0,
 ): Vec2 =
   ## Get image for this glyph
   glyph.makeReady(font)
@@ -290,10 +296,10 @@ proc getGlyphImageOffset*(
   #var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
   var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
 
-  let origin = vec2(float tx, float ty)
+  let origin = vec2(float32 tx, float32 ty)
 
   result.x = origin.x
-  result.y = -float(h) - origin.y
+  result.y = -float32(h) - origin.y
 
 proc alphaToBlankAndWhite*(image: var Image) =
   ## Typography deals mostly with transparent images with white text

@@ -7,7 +7,7 @@ type
   HeadTable* = ref object
     majorVersion*: uint16 ## Major version number of the font header table — set to 1.
     minorVersion*: uint16 ## Minor version number of the font header table — set to 0.
-    fontRevision*: float ## Set by font manufacturer.
+    fontRevision*: float32 ## Set by font manufacturer.
     checkSumAdjustment*: uint32 #
     magicNumber*: uint32 ## Set to 0x5F0F3CF5.
     flags*: uint16

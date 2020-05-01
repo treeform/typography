@@ -73,14 +73,14 @@ proc readString*(stream: Stream, size: int): string =
     inc i
   return val
 
-proc readFixed32*(stream: Stream): float =
+proc readFixed32*(stream: Stream): float32 =
   var val: int32 = 0
   stream.read(val)
   swapEndian32(addr val, addr val)
-  return ceil(float(val) / 65536.0 * 100000.0) / 100000.0
+  return ceil(float32(val) / 65536.0 * 100000.0) / 100000.0
 
-proc readFixed16*(stream: Stream): float =
-  float(stream.readInt16()) / 16384.0
+proc readFixed16*(stream: Stream): float32 =
+  float32(stream.readInt16()) / 16384.0
 
 proc readLongDateTime*(stream: Stream): float64 =
   discard stream.readUInt32()
@@ -425,14 +425,14 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
     var path = newSeq[PathCommand]()
 
     proc cmd(kind: PathCommandKind, x, y: int) =
-      path.add PathCommand(kind: kind, numbers: @[float x, float y])
+      path.add PathCommand(kind: kind, numbers: @[float32 x, float32 y])
 
     proc cmd(kind: PathCommandKind) =
       path.add PathCommand(kind: kind, numbers: @[])
 
     proc cmd(x, y: int) =
-      path[^1].numbers.add float(x)
-      path[^1].numbers.add float(y)
+      path[^1].numbers.add float32(x)
+      path[^1].numbers.add float32(y)
 
     var contours: seq[seq[TtfCoridante]]
     var currIdx = 0
@@ -653,9 +653,9 @@ proc readFontOtf*(filepath: string): Font =
   var font = Font()
   font.otf = otf
   font.stream = f
-  font.unitsPerEm = otf.head.unitsPerEm.float
-  font.bboxMin = vec2(otf.head.xMin.float, otf.head.yMin.float)
-  font.bboxMax = vec2(otf.head.xMax.float, otf.head.yMax.float)
+  font.unitsPerEm = otf.head.unitsPerEm.float32
+  font.bboxMin = vec2(otf.head.xMin.float32, otf.head.yMin.float32)
+  font.bboxMax = vec2(otf.head.xMax.float32, otf.head.yMax.float32)
   var fontFamily, fontSubfamily: string
   for nameRecord in otf.name.nameRecords:
     if nameRecord.name == ntnFontFamily:
@@ -664,12 +664,12 @@ proc readFontOtf*(filepath: string): Font =
       fontSubfamily = nameRecord.text
   font.name = fontSubfamily & " " & fontSubfamily
 
-  font.ascent = otf.hhea.ascender.float
-  font.descent = otf.hhea.descender.float
+  font.ascent = otf.hhea.ascender.float32
+  font.descent = otf.hhea.descender.float32
 
   if otf.os2 != nil:
-    font.lineGap = otf.os2.sTypoLineGap.float
-    font.capHeight = otf.os2.sCapHeight.float
+    font.lineGap = otf.os2.sTypoLineGap.float32
+    font.capHeight = otf.os2.sCapHeight.float32
   else:
     font.capHeight = font.ascent - font.descent
     font.lineGap = font.ascent
@@ -682,9 +682,9 @@ proc readFontOtf*(filepath: string): Font =
 
   for i in 0 ..< font.glyphArr.len:
     if i < otf.hmtx.hMetrics.len:
-      font.glyphArr[i].advance = otf.hmtx.hMetrics[i].advanceWidth.float
+      font.glyphArr[i].advance = otf.hmtx.hMetrics[i].advanceWidth.float32
     else:
-      font.glyphArr[i].advance = otf.hmtx.hMetrics[^1].advanceWidth.float
+      font.glyphArr[i].advance = otf.hmtx.hMetrics[^1].advanceWidth.float32
 
   font.glyphs = initTable[string, Glyph]()
   for ucode, glyphIndex in otf.cmap.glyphIndexMap:
