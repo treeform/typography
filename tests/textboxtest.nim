@@ -1,5 +1,7 @@
 import chroma, flippy, print, strformat, typography, typography/textboxes,
-    unicode, vmath
+    unicode, vmath, os, osproc
+
+setCurrentDir(getCurrentDir() / "tests")
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -304,3 +306,8 @@ Mauris vel turpis a elit scelerisque luctus. Aliquam quam odio, tempor a facilis
     textBox.up()
     textBox.draw(&"textbox/scroll_{f}.png")
     inc f
+
+let (outp, _) = execCmdEx("git diff tests/*.png")
+if len(outp) != 0:
+  echo outp
+  quit("Output does not match")

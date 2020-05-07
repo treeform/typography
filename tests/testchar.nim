@@ -1,4 +1,6 @@
-import chroma, flippy, print, strformat, tables, typography, vmath
+import flippy, print, tables, typography, vmath, os, osproc
+
+setCurrentDir(getCurrentDir() / "tests")
 
 block:
   var font = readFontTtf("fonts/Changa-Bold.ttf")
@@ -62,3 +64,8 @@ block:
 
       if image.width == 1396:
         quit()
+
+let (outp, _) = execCmdEx("git diff tests/*.png")
+if len(outp) != 0:
+  echo outp
+  quit("Output does not match")

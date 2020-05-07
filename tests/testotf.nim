@@ -1,4 +1,6 @@
-import chroma, flippy, print, tables, typography, typography, vmath, json
+import chroma, flippy, print, tables, typography, typography, vmath, json, os, osproc
+
+setCurrentDir(getCurrentDir() / "tests")
 
 block:
   var font = readFontOtf("fonts/Changa-Bold.ttf")
@@ -48,3 +50,8 @@ block:
   image.save("testotf.png")
 
   echo "saved"
+
+let (outp, _) = execCmdEx("git diff tests/*.png")
+if len(outp) != 0:
+  echo outp
+  quit("Output does not match")
