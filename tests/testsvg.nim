@@ -1,4 +1,6 @@
-import chroma, flippy, print, tables, typography, typography, vmath, json
+import flippy, print, tables, typography, typography, vmath, os
+
+setCurrentDir(getCurrentDir() / "tests")
 
 block:
   var font = readFontSvg("fonts/Changa-Bold.svg")

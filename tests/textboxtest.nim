@@ -1,5 +1,7 @@
 import chroma, flippy, print, strformat, typography, typography/textboxes,
-    unicode, vmath
+    unicode, vmath, os
+
+setCurrentDir(getCurrentDir() / "tests")
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text

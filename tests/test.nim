@@ -1,5 +1,7 @@
 import chroma, flippy, print, tables, typography, vmath, os
 
+setCurrentDir(getCurrentDir() / "tests")
+
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
