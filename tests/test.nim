@@ -1,4 +1,4 @@
-import chroma, flippy, print, tables, typography, vmath, os
+import chroma, flippy, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -576,3 +576,8 @@ block:
       image.putRgba(x, y, c.rgba)
 
   image.save("font_metrics_blur.png")
+
+let (outp, _) = execCmdEx("git diff tests/*.png")
+if len(outp) != 0:
+  echo outp
+  quit("Output does not match")

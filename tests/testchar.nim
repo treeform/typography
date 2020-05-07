@@ -1,4 +1,4 @@
-import flippy, print, tables, typography, vmath, os
+import flippy, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -64,3 +64,8 @@ block:
 
       if image.width == 1396:
         quit()
+
+let (outp, _) = execCmdEx("git diff tests/*.png")
+if len(outp) != 0:
+  echo outp
+  quit("Output does not match")
