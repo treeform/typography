@@ -1,5 +1,11 @@
 import ../font, os, streams, tables, unicode, vmath, json,
-  encodings, sequtils, algorithm, data, types, endians
+  sequtils, algorithm, data, types, endians
+
+const
+  hasEncodingsSupport = not defined(noEncodings)
+
+when hasEncodingsSupport:
+  import encodings
 
 proc `%`*(t: Table[int, int]): JsonNode =
   result = newJObject()
@@ -135,10 +141,16 @@ proc readNameTable*(f: Stream): NameTable =
 
     if record.platformID == 3 and record.encodingID == 1:
       # Windows UTF-16BE
-      record.text = convert(record.text, "UTF-8", "UTF-16")
+      when hasEncodingsSupport:
+        record.text = convert(record.text, "UTF-8", "UTF-16")
+      else:
+        raise newException(ValueError, "No encodings support but font needs it.")
     if record.platformID == 3 and record.encodingID == 0:
       # Windows UTF-16BE
-      record.text = convert(record.text, "UTF-8", "UTF-16")
+      when hasEncodingsSupport:
+        record.text = convert(record.text, "UTF-8", "UTF-16")
+      else:
+        raise newException(ValueError, "No encodings support but font needs it.")
     if record.encodingID == 1 and record.encodingID == 0:
       # Mac unicode?
       discard
