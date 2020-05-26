@@ -595,12 +595,7 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
   else:
     glyph.commands = f.parseGlyphPath(glyph)
 
-proc readFontOtf*(filepath: string): Font =
-
-  if not fileExists(filepath):
-    raise newException(IOError, "File does not exist.")
-
-  var f = newStringStream(readFile(filepath))
+proc readFontOtf*(f: Stream): Font =
 
   var otf = OTFFont()
   otf.stream = f
@@ -693,6 +688,17 @@ proc readFontOtf*(filepath: string): Font =
     font.glyphs[code].code = code
 
   return font
+
+proc readFontOtf*(filepath: string): Font =
+  if not fileExists(filepath):
+    raise newException(IOError, "File does not exist.")
+
+  var f = newStringStream(readFile(filepath))
+  return readFontOtf(f)
+
+proc readFontTtf*(file: Stream): Font =
+  ## OTF Supporst all TTF features.
+  readFontOtf(file)
 
 proc readFontTtf*(filepath: string): Font =
   ## OTF Supporst all TTF features.
