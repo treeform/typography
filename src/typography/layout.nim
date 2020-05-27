@@ -135,7 +135,12 @@ proc typeset*(
     var glyph = font.glyphs[c]
     at.x += font.kerningAdjustment(prev, c) * font.scale
 
-    var subPixelShift = at.x - floor(at.x)
+    let q =
+      if font.size < 20: 0.1
+      elif font.size < 25: 0.2
+      elif font.size < 30: 0.5
+      else: 1.0
+    var subPixelShift = quantize(at.x - floor(at.x), q)
     var glyphPos = vec2(floor(at.x), floor(at.y))
     var glyphSize = font.getGlyphSize(glyph)
 
