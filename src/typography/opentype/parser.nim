@@ -103,7 +103,7 @@ proc fromUTF16BE*(input: string): string =
     s = newStringStream(input)
   while not s.atEnd():
     var u1 = s.readUInt16()
-    if u1 - 0xd800 >= 0x800:
+    if u1 - 0xd800 >= 0x800'u16:
       result.add Rune(u1.int)
     else:
       var u2 = s.readUInt16()
