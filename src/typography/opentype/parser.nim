@@ -1,5 +1,5 @@
 import ../font, os, streams, tables, unicode, vmath, json,
-  encodings, sequtils, algorithm, data, types, endians
+  sequtils, algorithm, types
 
 proc `%`*(t: Table[int, int]): JsonNode =
   result = newJObject()
@@ -7,6 +7,22 @@ proc `%`*(t: Table[int, int]): JsonNode =
   keys.sort()
   for k in keys:
     result[$k] = newJInt(t[k])
+
+func swap(u: uint16): uint16 =
+  ((u and 0x00FF) shl 8) or
+  ((u and 0xFF00) shr 8)
+
+func swap(u: int16): int16 =
+  cast[int16](cast[uint16](u).swap())
+
+func swap(u: uint32): uint32 =
+  ((u and 0x000000FF.uint32) shl 24) or
+  ((u and 0x0000FF00.uint32) shl 8) or
+  ((u and 0x00FF0000.uint32) shr 8) or
+  ((u and 0xFF000000.uint32) shr 24)
+
+func swap(u: int32): int32 =
+  cast[int32](cast[uint32](u).swap())
 
 proc read*[T](s: Stream, result: var T) =
   if readData(s, addr(result), sizeof(T)) != sizeof(T):
@@ -28,10 +44,9 @@ proc readInt8*(stream: Stream): int8 =
 proc readUInt16*(stream: Stream): uint16 =
   var val: uint16 = 0
   stream.read(val)
-  swapEndian16(addr val, addr val)
-  return val
+  return val.swap()
 
-proc readUint16Seq*(stream: Stream, len: int): seq[uint16] =
+proc readUInt16Seq*(stream: Stream, len: int): seq[uint16] =
   result = newSeq[uint16](len)
   for i in 0..<len:
     result[i] = stream.readUInt16()
@@ -44,20 +59,17 @@ proc readInt16Seq*(stream: Stream, len: int): seq[int16] =
 proc readInt16*(stream: Stream): int16 =
   var val: int16 = 0
   stream.read(val)
-  swapEndian16(addr val, addr val)
-  return val
+  return val.swap()
 
 proc readUInt32*(stream: Stream): uint32 =
   var val: uint32 = 0
   stream.read(val)
-  swapEndian32(addr val, addr val)
-  return val
+  return val.swap()
 
 proc readInt32*(stream: Stream): int32 =
   var val: int32 = 0
   stream.read(val)
-  swapEndian32(addr val, addr val)
-  return val
+  return val.swap()
 
 proc readString*(stream: Stream, size: int): string =
   var val = ""
@@ -76,8 +88,7 @@ proc readString*(stream: Stream, size: int): string =
 proc readFixed32*(stream: Stream): float32 =
   var val: int32 = 0
   stream.read(val)
-  swapEndian32(addr val, addr val)
-  return ceil(float32(val) / 65536.0 * 100000.0) / 100000.0
+  return ceil(float32(val.swap()) / 65536.0 * 100000.0) / 100000.0
 
 proc readFixed16*(stream: Stream): float32 =
   float32(stream.readInt16()) / 16384.0
@@ -85,6 +96,23 @@ proc readFixed16*(stream: Stream): float32 =
 proc readLongDateTime*(stream: Stream): float64 =
   discard stream.readUInt32()
   return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
+
+proc fromUTF16BE*(input: string): string =
+  ## Converts UTF16 to utf8 string.
+  var
+    s = newStringStream(input)
+  while not s.atEnd():
+    var u1 = s.readUInt16()
+    if u1 - 0xd800 >= 0x800:
+      result.add Rune(u1.int)
+    else:
+      var u2 = s.readUInt16()
+      if ((u1 and 0xfc00) == 0xd800) and ((u2 and 0xfc00) == 0xdc00):
+        result.add Rune((u1.uint32 shl 10) + u2.uint32 - 0x35fdc00)
+      else:
+        # Error, produce tofu character.
+        result.add "□"
+  echo result
 
 proc readHeadTable(f: Stream): HeadTable =
   result = HeadTable()
@@ -134,13 +162,13 @@ proc readNameTable*(f: Stream): NameTable =
     f.setPosition(save)
 
     if record.platformID == 3 and record.encodingID == 1:
-      # Windows UTF-16BE
-      record.text = convert(record.text, "UTF-8", "UTF-16")
+      # Windows UTF-16BE.
+      record.text = record.text.fromUTF16BE()
     if record.platformID == 3 and record.encodingID == 0:
-      # Windows UTF-16BE
-      record.text = convert(record.text, "UTF-8", "UTF-16")
+      # Windows UTF-16BE.
+      record.text = record.text.fromUTF16BE()
     if record.encodingID == 1 and record.encodingID == 0:
-      # Mac unicode?
+      # Mac unicode.
       discard
     result.nameRecords.add(record)
 
@@ -212,12 +240,12 @@ proc readLocaTable*(f: Stream, head: HeadTable, maxp: MaxpTable): LocaTable =
   result = LocaTable()
   var locaOffset = f.getPosition()
   if head.indexToLocFormat == 0:
-    # locaType Uint16
+    # Uses uint16.
     for i in 0 ..< maxp.numGlyphs.int:
       result.offsets.add(f.readUint16().uint32 * 2)
       locaOffset += 2
   else:
-    # locaType Uint32
+    # Users uint32.
     for i in 0 ..< maxp.numGlyphs.int:
       result.offsets.add(f.readUint32())
       locaOffset += 4
@@ -299,8 +327,8 @@ proc readCmapTable*(f: Stream): CmapTable =
     record.encodingID = f.readUint16()
     record.offset = f.readUint32()
 
-    if record.platformID == 3: #and record.encodingID == 1:
-      # Windows format uniocde format
+    if record.platformID == 3:
+      # Windows format unicode format.
       f.setPosition(cmapOffset + record.offset.int)
       let format = f.readUint16()
       if format == 4:
@@ -338,7 +366,6 @@ proc readCmapTable*(f: Stream): CmapTable =
               glyphIndex = int((c + idDelta) and 0xFFFF)
             if c != 65535:
               result.glyphIndexMap[c.int] = glyphIndex
-        #record.subRecord = subRecord
       else:
         # TODO implement other record formats
         discard
@@ -371,12 +398,11 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
   for i in 0..<int(instructionLength):
     discard f.readChar()
 
-  let flagsOffset = f.getPosition()
   var flags = newSeq[uint8]()
 
   if glyph.numberOfContours >= 0:
     let totalOfCoordinates = endPtsOfContours[endPtsOfContours.len - 1] + 1
-    var coordinates = newSeq[TtfCoridante](totalOfCoordinates)
+    var coordinates = newSeq[TtfCoordinate](totalOfCoordinates)
 
     var i = 0
     while i < totalOfCoordinates:
@@ -434,16 +460,16 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
       path[^1].numbers.add float32(x)
       path[^1].numbers.add float32(y)
 
-    var contours: seq[seq[TtfCoridante]]
+    var contours: seq[seq[TtfCoordinate]]
     var currIdx = 0
     for endIdx in endPtsOfContours:
       contours.add(coordinates[currIdx .. endIdx])
       currIdx = endIdx + 1
 
     for contour in contours:
-      var prev: TtfCoridante
-      var curr: TtfCoridante = contour[^1]
-      var next: TtfCoridante = contour[0]
+      var prev: TtfCoordinate
+      var curr: TtfCoordinate = contour[^1]
+      var next: TtfCoordinate = contour[0]
 
       if curr.isOnCurve:
         cmd(Move, curr.x, curr.y)
@@ -467,12 +493,12 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
           var next2 = next
 
           if not prev.isOnCurve:
-            prev2 = TtfCoridante(
+            prev2 = TtfCoordinate(
               x: (curr.x + prev.x) div 2,
               y: (curr.y + prev.y) div 2
             )
           if not next.isOnCurve:
-            next2 = TtfCoridante(
+            next2 = TtfCoordinate(
               x: (curr.x + next.x) div 2,
               y: (curr.y + next.y) div 2
             )
@@ -601,9 +627,9 @@ proc readFontOtf*(f: Stream): Font =
   otf.stream = f
   otf.version = f.readFixed32()
   otf.numTables = f.readUInt16()
-  otf.searchRenge = f.readUInt16()
+  otf.searchRange = f.readUInt16()
   otf.entrySelector = f.readUInt16()
-  otf.rengeShift = f.readUInt16()
+  otf.rangeShift = f.readUInt16()
 
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
@@ -682,24 +708,24 @@ proc readFontOtf*(f: Stream): Font =
       font.glyphArr[i].advance = otf.hmtx.hMetrics[^1].advanceWidth.float32
 
   font.glyphs = initTable[string, Glyph]()
-  for ucode, glyphIndex in otf.cmap.glyphIndexMap:
-    let code = Rune(ucode).toUTF8()
+  for unicode, glyphIndex in otf.cmap.glyphIndexMap:
+    let code = Rune(unicode).toUTF8()
     font.glyphs[code] = font.glyphArr[glyphIndex]
     font.glyphs[code].code = code
 
   return font
 
-proc readFontOtf*(filepath: string): Font =
-  if not fileExists(filepath):
+proc readFontOtf*(filePath: string): Font =
+  if not fileExists(filePath):
     raise newException(IOError, "File does not exist.")
 
-  var f = newStringStream(readFile(filepath))
+  var f = newStringStream(readFile(filePath))
   return readFontOtf(f)
 
 proc readFontTtf*(file: Stream): Font =
-  ## OTF Supporst all TTF features.
+  ## OTF Supports all TTF features.
   readFontOtf(file)
 
-proc readFontTtf*(filepath: string): Font =
-  ## OTF Supporst all TTF features.
-  readFontOtf(filepath)
+proc readFontTtf*(filePath: string): Font =
+  ## OTF Supports most of TTF features.
+  readFontOtf(filePath)

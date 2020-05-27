@@ -215,7 +215,7 @@ type
   #   isComposite: bool ## if numberOfContours is -1
   #   path: seq[PathCommand]
 
-  TtfCoridante* = object
+  TtfCoordinate* = object
     x*: int
     y*: int
     isOnCurve*: bool
@@ -230,9 +230,9 @@ type
     stream*: Stream
     version*: float
     numTables*: uint16
-    searchRenge*: uint16
+    searchRange*: uint16
     entrySelector*: uint16
-    rengeShift*: uint16
+    rangeShift*: uint16
 
     chunks*: Table[string, Chunk]
 
