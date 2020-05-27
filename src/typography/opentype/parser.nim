@@ -112,7 +112,6 @@ proc fromUTF16BE*(input: string): string =
       else:
         # Error, produce tofu character.
         result.add "□"
-  echo result
 
 proc readHeadTable(f: Stream): HeadTable =
   result = HeadTable()
