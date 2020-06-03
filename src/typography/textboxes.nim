@@ -34,6 +34,9 @@ type TextBox* = ref object
   runes*: seq[Rune] # The runes we are typing.
   width*: int       # Width of text box in px.
   height*: int      # Height of text box in px.
+  vAlign*: VAlignMode
+  hAling*: HAlignMode
+  scrollable*: bool
   scroll*: Vec2     # Scroll position.
   font*: Font
   fontSize*: float
@@ -49,36 +52,30 @@ type TextBox* = ref object
 proc clamp(v, a, b: int): int =
   max(a, min(b, v))
 
-proc newTextBox*(font: Font, width, height: int): TextBox =
-  ## Creates new empty text box.
-  result = TextBox()
-  result.font = font
-  result.fontSize = font.size
-  result.lineHeight = font.lineHeight
-  result.width = width
-  result.height = height
-  result.multiline = true
-  result.wordWrap = true
-
 proc newTextBox*(
   font: Font,
-  width,
+  width: int,
   height: int,
-  text: string,
-  multiline = true
+  text: string = "",
+  hAlign = Left,
+  vAlign = Top,
+  multiline = true,
+  worldWrap = true,
+  scrollable = true,
 ): TextBox =
-  ## Creates new text box with existing text.
+  ## Creates new empty text box.
   result = TextBox()
+  result.runes = toRunes(text)
   result.font = font
   result.fontSize = font.size
   result.lineHeight = font.lineHeight
   result.width = width
   result.height = height
+  result.hAling = hAlign
+  result.vAlign = vAlign
   result.multiline = multiline
-  result.wordWrap = multiline
-  result.runes = toRunes(text)
-  result.cursor = result.runes.len
-  result.selector = result.cursor
+  result.wordWrap = worldWrap
+  result.scrollable = scrollable
 
 proc cursorWidth*(font: Font): float =
   min(font.size / 12, 1)
@@ -106,14 +103,13 @@ proc layout*(textBox: TextBox): seq[GlyphPosition] =
     textBox.font.size = textBox.fontSize
     textBox.font.lineHeight = textBox.lineHeight
     textBox.multilineCheck()
-    var size = vec2(1E10, 1E10)
-    if textBox.wordWrap:
-      size = textBox.size
     textBox.glyphs = textBox.font.typeset(
       textBox.runes,
       vec2(0, 0),
-      size = size,
-      clip = false
+      size = textBox.size,
+      textBox.hAling,
+      textBox.vAlign,
+      clip = false,
     )
   return textBox.glyphs
 
@@ -143,7 +139,7 @@ proc locationRect*(textBox: TextBox, loc: int): Rect =
       let g = layout[loc]
       result = g.selectRect
   result.w = textBox.font.cursorWidth
-  result.h = textBox.font.lineHeight + 1.0
+  result.h = max(textBox.font.size, textBox.font.lineHeight)
 
 proc cursorRect*(textBox: TextBox): Rect =
   ## Rectangle where cursor should be drawn.
@@ -184,18 +180,19 @@ proc removeSelection(textBox: TextBox) =
 
 proc adjustScroll*(textBox: TextBox) =
   ## Adjust scroll to make sure cursor is in the window.
-  let
-    r = textBox.cursorRect
-  # is pos.y inside the window?
-  if r.y < textBox.scroll.y:
-    textBox.scroll.y = r.y
-  if r.y + r.h > textBox.scroll.y + float textBox.height:
-    textBox.scroll.y = r.y + r.h - float textBox.height
-  # is pos.x inside the window?
-  if r.x < textBox.scroll.x:
-    textBox.scroll.x = r.x
-  if r.x + r.w > textBox.scroll.x + float textBox.width:
-    textBox.scroll.x = r.x + r.w - float textBox.width
+  if textBox.scrollable:
+    let
+      r = textBox.cursorRect
+    # is pos.y inside the window?
+    if r.y < textBox.scroll.y:
+      textBox.scroll.y = r.y
+    if r.y + r.h > textBox.scroll.y + float textBox.height:
+      textBox.scroll.y = r.y + r.h - float textBox.height
+    # is pos.x inside the window?
+    if r.x < textBox.scroll.x:
+      textBox.scroll.x = r.x
+    if r.x + r.w > textBox.scroll.x + float textBox.width:
+      textBox.scroll.x = r.x + r.w - float textBox.width
 
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.

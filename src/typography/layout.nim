@@ -88,6 +88,8 @@ proc typeset*(
   if lineHeight == normalLineHeight:
     lineHeight = font.size
 
+  let selectionHeight = max(font.size, lineHeight)
+
   at.y += font.baseline
 
   for rune in runes:
@@ -98,7 +100,7 @@ proc typeset*(
         floor(at.x),
         floor(at.y) - font.size,
         font.glyphs[" "].advance * font.scale,
-        lineHeight
+        selectionHeight
       )
       result.add GlyphPosition(
         font: font,
@@ -183,9 +185,13 @@ proc typeset*(
     var selectRect = rect(
       floor(at.x),
       floor(at.y) - font.size,
-      glyphSize.x + 1,
-      lineHeight
+      glyphSize.x,
+      selectionHeight
     )
+
+    if result.len > 0:
+      if result[^1].selectRect.y == selectRect.y:
+        result[^1].selectRect.w = floor(at.x) - result[^1].selectRect.x
 
     result.add GlyphPosition(
       font: font,
@@ -225,21 +231,25 @@ proc typeset*(
     let offset = floor(size.x - boundsSize.x)
     for pos in result.mitems:
       pos.rect.x += offset
+      pos.selectRect.x += offset
 
   if hAlign == Center:
     let offset = floor((size.x - boundsSize.x) / 2.0)
     for pos in result.mitems:
       pos.rect.x += offset
+      pos.selectRect.x += offset
 
   if vAlign == Bottom:
     let offset = floor(size.y - boundsSize.y + font.descent * font.scale)
     for pos in result.mitems:
       pos.rect.y += offset
+      pos.selectRect.y += offset
 
   if vAlign == Middle:
     let offset = floor((size.y - boundsSize.y) / 2.0)
     for pos in result.mitems:
       pos.rect.y += offset
+      pos.selectRect.y += offset
 
 proc typeset*(
     font: Font,
