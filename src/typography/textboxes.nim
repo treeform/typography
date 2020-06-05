@@ -37,6 +37,7 @@ type TextBox* = ref object
   vAlign*: VAlignMode
   hAling*: HAlignMode
   scrollable*: bool
+  editable*: bool
   scroll*: Vec2     # Scroll position.
   font*: Font
   fontSize*: float
@@ -196,6 +197,8 @@ proc adjustScroll*(textBox: TextBox) =
 
 proc typeCharacter*(textBox: TextBox, rune: Rune) =
   ## Add a character to the text box.
+  if not textBox.editable:
+    return
   textBox.removeSelection()
   # don't add new lines in a single line box.
   if not textBox.multiline and rune == Rune(10):
@@ -215,6 +218,8 @@ proc typeCharacter*(textBox: TextBox, letter: char) =
 
 proc typeCharacters*(textBox: TextBox, s: string) =
   ## Add a character to the text box.
+  if not textBox.editable:
+    return
   textBox.removeSelection()
   for rune in runes(s):
     textBox.runes.insert(rune, textBox.cursor)
@@ -231,12 +236,16 @@ proc copy*(textBox: TextBox): string =
 
 proc paste*(textBox: TextBox, s: string) =
   ## Pastes a string.
+  if not textBox.editable:
+    return
   textBox.typeCharacters(s)
   textBox.savedX = textBox.cursorPos.x
 
 proc cut*(textBox: TextBox): string =
   ## Returns the text that was cut.
   result = textBox.copy()
+  if not textBox.editable:
+    return
   textBox.removeSelection()
   textBox.savedX = textBox.cursorPos.x
 
@@ -246,6 +255,8 @@ proc setCursor*(textBox: TextBox, loc: int) =
 
 proc backspace*(textBox: TextBox, shift = false) =
   ## Backspace command.
+  if not textBox.editable:
+    return
   if textBox.removedSelection(): return
   if textBox.cursor > 0:
     textBox.runes.delete(textBox.cursor - 1)
@@ -256,6 +267,8 @@ proc backspace*(textBox: TextBox, shift = false) =
 
 proc delete*(textBox: TextBox, shift = false) =
   ## Delete command.
+  if not textBox.editable:
+    return
   if textBox.removedSelection(): return
   if textBox.cursor < textBox.runes.len:
     textBox.runes.delete(textBox.cursor)
@@ -264,6 +277,8 @@ proc delete*(textBox: TextBox, shift = false) =
 
 proc backspaceWord*(textBox: TextBox, shift = false) =
   ## Backspace word command. (Usually ctr + backspace).
+  if not textBox.editable:
+    return
   if textBox.removedSelection(): return
   if textBox.cursor > 0:
     while textBox.cursor > 0 and
@@ -276,6 +291,8 @@ proc backspaceWord*(textBox: TextBox, shift = false) =
 
 proc deleteWord*(textBox: TextBox, shift = false) =
   ## Delete word command. (Usually ctr + delete).
+  if not textBox.editable:
+    return
   if textBox.removedSelection(): return
   if textBox.cursor < textBox.runes.len:
     while textBox.cursor < textBox.runes.len and
