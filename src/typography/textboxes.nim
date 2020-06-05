@@ -63,6 +63,7 @@ proc newTextBox*(
   multiline = true,
   worldWrap = true,
   scrollable = true,
+  editable = true,
 ): TextBox =
   ## Creates new empty text box.
   result = TextBox()
@@ -77,6 +78,7 @@ proc newTextBox*(
   result.multiline = multiline
   result.wordWrap = worldWrap
   result.scrollable = scrollable
+  result.editable = editable
 
 proc cursorWidth*(font: Font): float =
   min(font.size / 12, 1)
