@@ -98,7 +98,7 @@ proc typeset*(
       # Add special small width glyph on this line.
       var selectRect = rect(
         floor(at.x),
-        floor(at.y) - font.size,
+        floor(at.y) - font.baseline,
         font.glyphs[" "].advance * font.scale,
         selectionHeight
       )
@@ -184,12 +184,13 @@ proc typeset*(
 
     var selectRect = rect(
       floor(at.x),
-      floor(at.y) - font.size,
+      floor(at.y) - font.baseline,
       glyphSize.x,
       selectionHeight
     )
 
     if result.len > 0:
+      # Adjust selection rect width to next character
       if result[^1].selectRect.y == selectRect.y:
         result[^1].selectRect.w = floor(at.x) - result[^1].selectRect.x
 
@@ -206,15 +207,15 @@ proc typeset*(
     )
     if glyphCount == 0:
       # First glyph.
-      boundsMax.x = at.x + glyphSize.x
-      boundsMin.x = at.x
-      boundsMax.y = at.y + font.size
-      boundsMin.y = at.y
+      boundsMax.x = selectRect.x + selectRect.w
+      boundsMin.x = selectRect.x
+      boundsMax.y = selectRect.y + selectRect.h
+      boundsMin.y = selectRect.y
     else:
-      boundsMax.x = max(boundsMax.x, at.x + glyphSize.x)
-      boundsMin.x = min(boundsMin.x, at.x)
-      boundsMax.y = max(boundsMax.y, at.y + font.size)
-      boundsMin.y = min(boundsMin.y, at.y)
+      boundsMax.x = max(boundsMax.x, selectRect.x + selectRect.w)
+      boundsMin.x = min(boundsMin.x, selectRect.x)
+      boundsMax.y = max(boundsMax.y, selectRect.y + selectRect.h)
+      boundsMin.y = min(boundsMin.y, selectRect.y)
 
     inc glyphIndex
     at.x += glyph.advance * font.scale
@@ -240,7 +241,7 @@ proc typeset*(
       pos.selectRect.x += offset
 
   if vAlign == Bottom:
-    let offset = floor(size.y - boundsSize.y + font.descent * font.scale)
+    let offset = floor(size.y - boundsSize.y)
     for pos in result.mitems:
       pos.rect.y += offset
       pos.selectRect.y += offset
