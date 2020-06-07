@@ -50,6 +50,9 @@ type TextBox* = ref object
   glyphs: seq[GlyphPosition]
   savedX: float
 
+  boundsMin: Vec2
+  boundsMax: Vec2
+
 proc clamp(v, a, b: int): int =
   max(a, min(b, v))
 
@@ -113,6 +116,8 @@ proc layout*(textBox: TextBox): seq[GlyphPosition] =
       textBox.hAling,
       textBox.vAlign,
       clip = false,
+      boundsMin = textBox.boundsMin,
+      boundsMax = textBox.boundsMax
     )
   return textBox.glyphs
 

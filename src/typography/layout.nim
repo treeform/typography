@@ -57,7 +57,9 @@ proc typeset*(
     hAlign: HAlignMode = Left,
     vAlign: VAlignMode = Top,
     clip = true,
-    tabWidth: float32 = 0.0
+    tabWidth: float32 = 0.0,
+    boundsMin: var Vec2,
+    boundsMax: var Vec2
   ): seq[GlyphPosition] =
   ## Typeset runes and return glyph positions that is ready to draw.
 
@@ -71,8 +73,6 @@ proc typeset*(
     prev = ""
     ## Figure out why some times the scale is ignored this way:
     #scale = font.size / (font.ascent - font.descent)
-    boundsMin = vec2(0, 0)
-    boundsMax = vec2(0, 0)
     glyphCount = 0
     tabWidth = tabWidth
 
@@ -263,7 +263,11 @@ proc typeset*(
     tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
   ## Typeset string and return glyph positions that is ready to draw.
-  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth)
+  var
+    ignoreBoundsMin: Vec2
+    ignoreBoundsMax: Vec2
+  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth,
+    ignoreBoundsMin, ignoreBoundsMax)
 
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout.
