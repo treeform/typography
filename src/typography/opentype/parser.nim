@@ -716,7 +716,7 @@ proc readFontOtf*(f: Stream): Font =
 
 proc readFontOtf*(filePath: string): Font =
   if not fileExists(filePath):
-    raise newException(IOError, "File does not exist.")
+    raise newException(IOError, "File `" & filePath & "` does not exist.")
 
   var f = newStringStream(readFile(filePath))
   return readFontOtf(f)
