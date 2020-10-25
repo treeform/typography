@@ -13,14 +13,14 @@ block:
   # for name in font.glyphs.keys:
   #   font.glyphs[name].name = name
 
-  for i, glyph in font.glyphArr:
+  for i, glyph in font.typeface.glyphArr:
     #print glyph.code
     if glyph.code != "+": continue
     print i, glyph.code
     #if name != "a": continue
 
-    print glyph.code in font.glyphs
-    if glyph.code in font.glyphs:
+    print glyph.code in font.typeface.glyphs
+    if glyph.code in font.typeface.glyphs:
 
       print glyph
       var g = glyph
@@ -32,7 +32,7 @@ block:
 
       #print font.glyphs[name].ttfOffset
       #print font.glyphs[name].commands.len
-      for j, command in font.glyphs[glyph.code].commands:
+      for j, command in font.typeface.glyphs[glyph.code].commands:
         echo j, ": ", command
         for i in 0 ..< command.numbers.len div 2:
           var x = int command.numbers[i*2+0]

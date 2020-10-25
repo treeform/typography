@@ -40,8 +40,8 @@ proc kerningAdjustment*(font: Font, prev, c: string): float32 =
   ## Get Kerning Adjustment between two letters.
   if prev != "":
     var key = (prev, c)
-    if font.kerning.hasKey(key):
-      var kerning = font.kerning[key]
+    if font.typeface.kerning.hasKey(key):
+      var kerning = font.typeface.kerning[key]
       return kerning
 
 proc canWrap(rune: Rune): bool =
@@ -64,7 +64,8 @@ proc typeset*(
   ## Typeset runes and return glyph positions that is ready to draw.
 
   assert font.size != 0
-  assert font.unitsPerEm != 0
+  assert font.typeface != nil
+  assert font.typeface.unitsPerEm != 0
 
   result = @[]
   var
@@ -99,7 +100,7 @@ proc typeset*(
       var selectRect = rect(
         floor(at.x),
         floor(at.y) - font.baseline,
-        font.glyphs[" "].advance * font.scale,
+        font.typeface.glyphs[" "].advance * font.scale,
         selectionHeight
       )
       result.add GlyphPosition(
@@ -127,14 +128,14 @@ proc typeset*(
     if canWrap(rune):
       lastCanWrap = glyphIndex + 1
 
-    if c notin font.glyphs:
+    if c notin font.typeface.glyphs:
       # TODO: Make missing glyphs work better.
       c = " " # If glyph is missing use space for now.
-      if c notin font.glyphs:
+      if c notin font.typeface.glyphs:
         ## Space is missing!?
         continue
 
-    var glyph = font.glyphs[c]
+    var glyph = font.typeface.glyphs[c]
     at.x += font.kerningAdjustment(prev, c) * font.scale
 
     let q =
@@ -273,8 +274,8 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
   ## Draws layout.
   for pos in layout:
     var font = pos.font
-    if pos.character in font.glyphs:
-      var glyph = font.glyphs[pos.character]
+    if pos.character in font.typeface.glyphs:
+      var glyph = font.typeface.glyphs[pos.character]
       var glyphOffset: Vec2
       let img = font.getGlyphImage(
         glyph,

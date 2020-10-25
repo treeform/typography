@@ -76,7 +76,7 @@ block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
   font.lineHeight = 20
-  print "svg:", font.ascent, font.descent, font.unitsPerEm
+  print "svg:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
   image.save("sample_svg.png")
@@ -86,7 +86,7 @@ block:
   var font = readFontTtf("fonts/Ubuntu.ttf")
   font.size = 16
   font.lineHeight = 20
-  print "ttf:", font.ascent, font.descent, font.unitsPerEm
+  print "ttf:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
   image.save("sample_ttf.png")
@@ -153,8 +153,8 @@ block:
 
   var font = readFontSvg("fonts/DejaVuSans.svg")
   font.size = 11 # 11px or 8pt
-  var glyph = font.glyphs["g"]
-  var under = font.glyphs["_"]
+  var glyph = font.typeface.glyphs["g"]
+  var under = font.typeface.glyphs["_"]
 
   for i in 0..<10:
     var glyphOffset: Vec2
@@ -200,7 +200,7 @@ block:
 
   var image = font.getGlyphOutlineImage("Q")
 
-  echo font.glyphs["Q"].path
+  echo font.typeface.glyphs["Q"].path
 
   image.save("qOutLine.png")
 
@@ -235,8 +235,8 @@ To where it bent in the undergrowth;""")
   # draw layout boxes
   for pos in layout:
     var font = pos.font
-    if pos.character in font.glyphs:
-      var glyph = font.glyphs[pos.character]
+    if pos.character in font.typeface.glyphs:
+      var glyph = font.typeface.glyphs[pos.character]
       var glyphOffset: Vec2
       let img = font.getGlyphImage(
         glyph,
@@ -256,8 +256,8 @@ To where it bent in the undergrowth;""")
   # draw layout boxes only
   for pos in layout:
     var font = pos.font
-    if pos.character in font.glyphs:
-      var glyph = font.glyphs[pos.character]
+    if pos.character in font.typeface.glyphs:
+      var glyph = font.typeface.glyphs[pos.character]
       var glyphOffset: Vec2
       let img = font.getGlyphImage(
         glyph,
@@ -546,15 +546,15 @@ block:
 
     var x = 150.0
     var font = readFontTtf(fontPath)
-    print font.name, font.ascent, font.descent, font.xHeight, font.capHeight
+    print font.typeface.name, font.typeface.ascent, font.typeface.descent, font.typeface.xHeight, font.typeface.capHeight
     for s in [8, 12, 16, 18, 20, 32]:
       font.size = s.float
       font.lineHeight = 32
 
       let
-        fontHeight = font.ascent - font.descent
+        fontHeight = font.typeface.ascent - font.typeface.descent
         scale = font.size / fontHeight
-      print fontHeight / font.size , font.unitsPerEm / font.size
+      print fontHeight / font.size , font.typeface.unitsPerEm / font.size
       # print font.ascent * scale, font.descent * scale
       font.drawText(image, vec2(x, y), "Figte")
       image.strokeRect(rect(x, y, 100, 32), rgba(255, 255, 255, 255))

@@ -2,11 +2,11 @@ import algorithm, chroma, flippy, font, tables, vmath, opentype/parser
 
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
-
+  var typeface = font.typeface
   if glyph.ready:
     return
 
-  if font.otf != nil and glyph.commands.len == 0:
+  if typeface.otf != nil and glyph.commands.len == 0:
     glyph.parseGlyph(font)
   if glyph.path.len > 0:
     glyph.glyphPathToCommands()
@@ -172,7 +172,7 @@ proc getGlyphOutlineImage*(
   winding=true
 ): Image =
   ## Get an outline of the glyph with controls points. Useful for debugging.
-  var glyph = font.glyphs[unicode]
+  var glyph = font.typeface.glyphs[unicode]
 
   const
     green = ColorRgba(r: 0, g: 255, b: 0, a: 255)
@@ -181,7 +181,7 @@ proc getGlyphOutlineImage*(
 
   glyph.makeReady(font)
 
-  var fontHeight = font.ascent - font.descent
+  var fontHeight = font.typeface.ascent - font.typeface.descent
   var scale = font.size / (fontHeight)
   var tx = int floor(glyph.bboxMin.x * scale)
   var ty = int floor(glyph.bboxMin.y * scale)
@@ -253,7 +253,7 @@ proc getGlyphImage*(
   subPixelShift = 0.0
 ): Image =
   ## Get an image of the glyph and the glyph offset the image should be drawn
-  var glyph = font.glyphs[unicode]
+  var glyph = font.typeface.glyphs[unicode]
   return font.getGlyphImage(glyph, glyphOffset)
 
 proc getGlyphImage*(font: Font, unicode: string): Image =
@@ -265,8 +265,8 @@ proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
   ## Draw glyph at a location on the image
   var at = at
   at.y += font.lineHeight
-  if c in font.glyphs:
-    var glyph = font.glyphs[c]
+  if c in font.typeface.glyphs:
+    var glyph = font.typeface.glyphs[c]
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
@@ -289,7 +289,7 @@ proc getGlyphImageOffset*(
 ): Vec2 =
   ## Get image for this glyph
   glyph.makeReady(font)
-  var fontHeight = font.ascent - font.descent
+  var fontHeight = font.typeface.ascent - font.typeface.descent
   var scale = font.size / fontHeight
   var tx = int floor(glyph.bboxMin.x * scale)
   var ty = int floor(glyph.bboxMin.y * scale)

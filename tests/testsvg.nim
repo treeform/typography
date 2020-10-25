@@ -7,11 +7,11 @@ block:
 
   font.size = 40
   font.lineHeight = 40
-  print font.unitsPerEm
+  print font.typeface.unitsPerEm
   #font.unitsPerEm = 2000
-  print font.ascent
-  print font.descent
-  print font.lineGap
+  print font.typeface.ascent
+  print font.typeface.descent
+  print font.typeface.lineGap
 
   #echo pretty %font.otf.os2
   #for glyph in font.glyphArr:
@@ -20,11 +20,11 @@ block:
   var image = newImage(500, 40, 4)
 
   var text = """+Welcome, Earthling."""
-  if "q" notin font.glyphs:
+  if "q" notin font.typeface.glyphs:
     # can't display english, use random glpyhs:
     text = ""
     var i = 0
-    for g in font.glyphs.values:
+    for g in font.typeface.glyphs.values:
       text.add(g.code)
       inc i
       if i > 80:

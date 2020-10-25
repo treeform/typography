@@ -32,7 +32,7 @@ type
     index*: int
     path*: string  # SVG
 
-  Font* = ref object
+  Typeface* = ref object
     ## Main font object contains font information and Glyphs
     filename*: string
     name*: string
@@ -45,15 +45,18 @@ type
     capHeight*: float32
     unitsPerEm*: float32
     lineGap*: float32
-
-    size*: float32
-    lineHeight*: float32
     glyphs*: Table[string, Glyph]
     kerning*: Table[(string, string), float32]
     glyphArr*: seq[Glyph]
-
     otf*: OTFFont
     stream*: Stream
+
+  Font* = ref object
+    ## Contains size, weight and typeface.
+    typeface*: Typeface
+    size*: float32
+    lineHeight*: float32
+    weight*: float32
 
 proc `sizePt`*(font: Font): float32 =
   ## Gets font size in Pt or Point units.
@@ -81,21 +84,21 @@ proc `sizePr=`*(font: Font, sizePercent: float32) =
 
 proc scale*(font: Font): float32 =
   ## Gets the internal scaling of font units to pixles.
-  font.size / font.unitsPerEm
+  font.size / font.typeface.unitsPerEm
 
 proc letterHeight*(font: Font): float32 =
   ## Gets the current letter height based on ascent and descent and the current
   ## size and lineheight.
-  (font.ascent - font.descent) * font.scale
+  (font.typeface.ascent - font.typeface.descent) * font.scale
 
 proc baseline*(font: Font): float32 =
   ## Gets the baseline of the font based on current size and lineheight.
   font.lineHeight / 2 - font.size / 2 + (font.size - font.letterHeight) / 2 +
-    font.ascent * font.scale
+    font.typeface.ascent * font.scale
 
 proc capline*(font: Font): float32 =
   ## Gets the current capline of the font based on current size and lineheight.
-  font.baseline - font.capHeight * font.scale
+  font.baseline - font.typeface.capHeight * font.scale
 
 proc intersects*(a, b: Segment, at: var Vec2): bool =
   ## Checks if the a segment intersects b segment.

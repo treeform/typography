@@ -90,6 +90,10 @@ proc text*(textBox: TextBox): string =
   ## Converts internal runes to string.
   $textBox.runes
 
+proc `text=`*(textBox: TextBox, text: string) =
+  ## Converts string to internal runes.
+  textBox.runes = toRunes(text)
+
 proc multilineCheck(textBox: TextBox) =
   ## Makes sure there are not new lines in a single line text box.
   if not textBox.multiline:

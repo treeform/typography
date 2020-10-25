@@ -513,6 +513,7 @@ proc parseGlyph*(glyph: Glyph, font: Font)
 
 proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] =
   var moreComponents = true
+  var typeface = font.typeface
   while moreComponents:
     let flags = f.readUInt16()
 
@@ -569,7 +570,7 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
       component.scale01 = f.readFixed16()
       component.yScale = f.readFixed16()
 
-    var subGlyph = font.glyphArr[component.glyphIndex]
+    var subGlyph = typeface.glyphArr[component.glyphIndex]
     if subGlyph.commands.len == 0:
       let savedPosition = f.getPosition()
       parseGlyph(subGlyph, font)
@@ -594,8 +595,9 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
 
 proc parseGlyph*(glyph: Glyph, font: Font) =
   var
-    otf = font.otf
-    f = font.stream
+    typeface = font.typeface
+    otf = typeface.otf
+    f = typeface.stream
     index = glyph.index
 
   f.setPosition(otf.glyf.offsets[index].int)
@@ -671,46 +673,48 @@ proc readFontOtf*(f: Stream): Font =
   otf.glyf = f.readGlyfTable(otf.loca)
 
   var font = Font()
-  font.otf = otf
-  font.stream = f
-  font.unitsPerEm = otf.head.unitsPerEm.float32
-  font.bboxMin = vec2(otf.head.xMin.float32, otf.head.yMin.float32)
-  font.bboxMax = vec2(otf.head.xMax.float32, otf.head.yMax.float32)
+  var typeface = Typeface()
+  font.typeface = typeface
+  typeface.otf = otf
+  typeface.stream = f
+  typeface.unitsPerEm = otf.head.unitsPerEm.float32
+  typeface.bboxMin = vec2(otf.head.xMin.float32, otf.head.yMin.float32)
+  typeface.bboxMax = vec2(otf.head.xMax.float32, otf.head.yMax.float32)
   var fontFamily, fontSubfamily: string
   for nameRecord in otf.name.nameRecords:
     if nameRecord.name == ntnFontFamily:
       fontFamily = nameRecord.text
     if nameRecord.name == ntnFontFamily:
       fontSubfamily = nameRecord.text
-  font.name = fontSubfamily & " " & fontSubfamily
+  typeface.name = fontSubfamily & " " & fontSubfamily
 
-  font.ascent = otf.hhea.ascender.float32
-  font.descent = otf.hhea.descender.float32
+  typeface.ascent = otf.hhea.ascender.float32
+  typeface.descent = otf.hhea.descender.float32
 
   if otf.os2 != nil:
-    font.lineGap = otf.os2.sTypoLineGap.float32
-    font.capHeight = otf.os2.sCapHeight.float32
+    typeface.lineGap = otf.os2.sTypoLineGap.float32
+    typeface.capHeight = otf.os2.sCapHeight.float32
   else:
-    font.capHeight = font.ascent - font.descent
-    font.lineGap = font.ascent
+    typeface.capHeight = typeface.ascent - typeface.descent
+    typeface.lineGap = typeface.ascent
 
-  font.glyphArr = newSeq[Glyph](otf.glyf.offsets.len)
-  for i in 0 ..< font.glyphArr.len:
+  typeface.glyphArr = newSeq[Glyph](otf.glyf.offsets.len)
+  for i in 0 ..< typeface.glyphArr.len:
     var glyph = Glyph()
     glyph.index = i
-    font.glyphArr[i] = glyph
+    typeface.glyphArr[i] = glyph
 
-  for i in 0 ..< font.glyphArr.len:
+  for i in 0 ..< typeface.glyphArr.len:
     if i < otf.hmtx.hMetrics.len:
-      font.glyphArr[i].advance = otf.hmtx.hMetrics[i].advanceWidth.float32
+      typeface.glyphArr[i].advance = otf.hmtx.hMetrics[i].advanceWidth.float32
     else:
-      font.glyphArr[i].advance = otf.hmtx.hMetrics[^1].advanceWidth.float32
+      typeface.glyphArr[i].advance = otf.hmtx.hMetrics[^1].advanceWidth.float32
 
-  font.glyphs = initTable[string, Glyph]()
+  typeface.glyphs = initTable[string, Glyph]()
   for unicode, glyphIndex in otf.cmap.glyphIndexMap:
     let code = Rune(unicode).toUTF8()
-    font.glyphs[code] = font.glyphArr[glyphIndex]
-    font.glyphs[code].code = code
+    typeface.glyphs[code] = typeface.glyphArr[glyphIndex]
+    typeface.glyphs[code].code = code
 
   return font
 
