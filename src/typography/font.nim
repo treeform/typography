@@ -57,6 +57,8 @@ type
     size*: float32
     lineHeight*: float32
     weight*: float32
+    glyphs*: Table[string, Glyph]
+    
 
 proc `sizePt`*(font: Font): float32 =
   ## Gets font size in Pt or Point units.
