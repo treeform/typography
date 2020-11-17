@@ -207,15 +207,15 @@ How the font should look on screen is very subjective, some people love the cris
 
 # Subpixel Antialising is on its way out
 
-About a decade ago Subpixel Antialising significantly improved readability of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. Back then the pixels were big and monitors followed predictable patterns first in CRTs then in LCDs.
+About a decade ago use of Subpixel Antialising improved readability of fonts. It would leak a bit of color to the left and right of text because color pixels were not square. The monitors followed predictable pixel patterns first in CRTs then in LCDs.
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/5/57/Subpixel-rendering-RGB.png?raw=true)
 
-Then everything changed. In 2018 our pixels are really small and they don't follow the same typical CRT or LCD orientation.
+Then everything changed. Today our pixels small and they don't follow a typical CRT or LCD orientation.
 
 ![example output](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Pixel_geometry_01_Pengo.jpg/220px-Pixel_geometry_01_Pengo.jpg)
 
-The fact that there is no standard pixel layout grid anymore and the fact that high resolution displays are everywhere makes subpixeling obsolete. Apple, Adobe, Bohemian and other companies in the typography space are abandoning subpixeling for these reasons.
+The fact that there is no standard pixel layout grid anymore. And the fact that high resolution displays are everywhere makes subpixeling obsolete. Apple, Adobe, Bohemian and others in the typography space are abandoning subpixeling.
 
 This library does not support Subpixel Antialising.
 
