@@ -57,6 +57,7 @@ proc typeset*(
     hAlign: HAlignMode = Left,
     vAlign: VAlignMode = Top,
     clip = true,
+    wrap = true,
     tabWidth: float32 = 0.0,
     boundsMin: var Vec2,
     boundsMax: var Vec2
@@ -152,7 +153,7 @@ proc typeset*(
 
     if glyphSize.x != 0 and glyphSize.y != 0:
       # Does it need to wrap?
-      if size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
+      if wrap and size.x != 0 and at.x - pos.x + glyphSize.x > size.x:
         # Wrap to next line.
         let goBack = lastCanWrap - glyphIndex
         if lastCanWrap != -1 and goBack < 0:
@@ -261,13 +262,14 @@ proc typeset*(
     hAlign: HAlignMode = Left,
     vAlign: VAlignMode = Top,
     clip = true,
+    wrap = true,
     tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
   ## Typeset string and return glyph positions that is ready to draw.
   var
     ignoreBoundsMin: Vec2
     ignoreBoundsMax: Vec2
-  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, tabWidth,
+  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, wrap, tabWidth,
     ignoreBoundsMin, ignoreBoundsMax)
 
 proc drawText*(image: Image, layout: seq[GlyphPosition]) =
@@ -282,16 +284,9 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.blitWithAlpha(
+      image.draw(
         img,
-        rect(
-          0, 0,
-          float32 img.width, float32 img.height
-        ),
-        rect(
-          pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y,
-          float32 img.width, float32 img.height
-        )
+        vec2(pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y)
       )
 
 proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
