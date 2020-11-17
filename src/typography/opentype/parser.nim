@@ -717,12 +717,13 @@ proc readFontOtf*(f: Stream): Font =
     typeface.glyphs[code].code = code
 
   font.typeface.kerning = initTable[(string, string), float32]()
-  for table in otf.kern.subTables:
-    for pair in table.kerningPairs:
-      var u1 = typeface.glyphArr[pair.left].code
-      var u2 = typeface.glyphArr[pair.right].code
-      if u1.len > 0 and u2.len > 0:
-        font.typeface.kerning[(u1, u2)] = pair.value.float32
+  if otf.kern != nil:
+    for table in otf.kern.subTables:
+      for pair in table.kerningPairs:
+        var u1 = typeface.glyphArr[pair.left].code
+        var u2 = typeface.glyphArr[pair.right].code
+        if u1.len > 0 and u2.len > 0:
+          font.typeface.kerning[(u1, u2)] = pair.value.float32
 
   return font
 
