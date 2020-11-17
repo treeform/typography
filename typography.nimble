@@ -9,7 +9,7 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.0.0"
-requires "flippy >= 0.4.4"
+requires "flippy >= 0.4.7"
 requires "vmath >= 0.3.1"
 requires "chroma >= 0.1.2"
 requires "print >= 0.1.0"

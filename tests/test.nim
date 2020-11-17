@@ -507,22 +507,22 @@ block:
     glpyhImage = font.getGlyphImage("快")
   var image = glpyhImage.outlineBorder(borderPx)
 
-  image.blitWithMask(
-    glpyhImage,
-    rect(
-      0,
-      0,
-      glpyhImage.width.float32,
-      glpyhImage.height.float32
-    ),
-    rect(
-      borderPx.float32,
-      borderPx.float32,
-      glpyhImage.width.float32,
-      glpyhImage.height.float32
-    ),
-    rgba(0, 0, 0, 255)
-  )
+  # image.blitWithMask(
+  #   glpyhImage,
+  #   rect(
+  #     0,
+  #     0,
+  #     glpyhImage.width.float32,
+  #     glpyhImage.height.float32
+  #   ),
+  #   rect(
+  #     borderPx.float32,
+  #     borderPx.float32,
+  #     glpyhImage.width.float32,
+  #     glpyhImage.height.float32
+  #   ),
+  #   rgba(0, 0, 0, 255)
+  # )
   image.save("withBorders.png")
 
 block:
