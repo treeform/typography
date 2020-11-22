@@ -2,6 +2,18 @@ import chroma, pixie, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
+proc magnifyNearest*(image: Image, scale: int): Image =
+  ## Scales image image up by an integer scale.
+  result = newImage(
+    image.width * scale,
+    image.height * scale,
+  )
+  for y in 0 ..< result.height:
+    for x in 0 ..< result.width:
+      var rgba =
+        image.getRgbaUnsafe(x div scale, y div scale)
+      result.setRgbaUnsafe(x, y, rgba)
+
 proc strokeRect*(image: Image, rect: Rect, rgba: ColorRGBA) =
   ## Draws a rectangle borders only.
   let
@@ -163,7 +175,7 @@ block:
   font.size = 11 # 11px or 8pt
   font.drawText(image, vec2(10, 4), "The quick brown fox jumps over the lazy dog.")
 
-  image = image.magnifyBy2(4)
+  image = image.magnifyNearest(4)
   image.alphaToBlankAndWhite()
   image.writeFile("scaledup.png")
 
@@ -174,7 +186,7 @@ block:
   font.size = 11 # 11px or 8pt
   font.drawText(image, vec2(8, 4), "momomomomomomo")
 
-  image = image.magnifyBy2(6)
+  image = image.magnifyNearest(6)
   image.alphaToBlankAndWhite()
   image.writeFile("subpixelpos.png")
 
@@ -207,8 +219,8 @@ block:
       #)
     )
 
-  let mag = 8.0
-  image = image.magnifyBy2(3)
+  let mag = 6.0
+  image = image.magnifyNearest(mag.int)
   for i in 0..<10:
     let at = vec2(12.0 + float(i)*12, 15) * mag
     font.drawText(image, at + vec2(0, 6), "+0." & $i)
@@ -260,8 +272,8 @@ To where it bent in the undergrowth;""")
   # draw text at a layout
   image.drawText(layout)
 
-  let mag = 4.0
-  image = image.magnifyBy2(2)
+  let mag = 3.0
+  image = image.magnifyNearest(mag.int)
   image.alphaToBlankAndWhite()
 
   # draw layout boxes
