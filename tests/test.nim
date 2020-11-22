@@ -197,7 +197,7 @@ block:
     )
     image = image.draw(
       glyphImage,
-      glyphOffset
+      at + glyphOffset
       # rect(0, 0, float glyphImage.width, float glyphImage.height),
       # rect(
       #   at.x + glyphOffset.x,
@@ -527,36 +527,6 @@ block:
   image.drawText(layout)
   image.alphaToBlankAndWhite()
   image.writeFile("tabs.png")
-
-block:
-  var font = readFontTtf("fonts/silver.ttf")
-  font.size = 19*4
-  font.lineHeight = 19*4
-
-  let borderPx = 2
-  var glpyhImage: Image
-  for i in 0 .. 10000:
-    glpyhImage = font.getGlyphImage("快")
-  var image = glpyhImage.outlineBorder(borderPx)
-
-  image = image.draw( #.blitWithMask(
-    glpyhImage,
-    vec2(borderPx.float32, borderPx.float32)
-    # rect(
-    #   0,
-    #   0,
-    #   glpyhImage.width.float32,
-    #   glpyhImage.height.float32
-    # ),
-    # rect(
-    #   borderPx.float32,
-    #   borderPx.float32,
-    #   glpyhImage.width.float32,
-    #   glpyhImage.height.float32
-    # ),
-    # rgba(0, 0, 0, 255)
-  )
-  image.writeFile("withBorders.png")
 
 block:
 
