@@ -1,4 +1,4 @@
-import flippy, print, tables, typography, vmath, os, osproc
+import pixie, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -55,12 +55,12 @@ block:
         winding=true
       )
 
-      image.save("testchar.png")
+      image.writeFile("testchar.png")
 
       var glyphOffset: Vec2
       image = font.getGlyphImage(glyph, glyphOffset, quality=4)
       image.alphaToBlankAndWhite()
-      image.save("testcharFill.png")
+      image.writeFile("testcharFill.png")
 
       if image.width == 1396:
         quit()

@@ -1,4 +1,4 @@
-import flippy, print, typography, vmath, os, osproc
+import pixie, print, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -13,7 +13,7 @@ block:
   print font.typeface.descent
   print font.typeface.lineGap
 
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
 
   font.drawText(
     image,
@@ -22,7 +22,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.save("testttf.png")
+  image.writeFile("testttf.png")
 
   echo "saved"
 
