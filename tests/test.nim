@@ -196,9 +196,8 @@ block:
   var font = readFontSvg("fonts/DejaVuSans.svg")
   font.size = 11 # 11px or 8pt
   var glyph = font.typeface.glyphs["g"]
-  var under = font.typeface.glyphs["_"]
 
-  for i in 0..<10:
+  for i in 0 ..< 10:
     var glyphOffset: Vec2
     var at = vec2(12.0 + float(i)*12, 11)
     var glyphImage = font.getGlyphImage(
@@ -210,13 +209,6 @@ block:
     image = image.draw(
       glyphImage,
       at + glyphOffset
-      # rect(0, 0, float glyphImage.width, float glyphImage.height),
-      # rect(
-      #   at.x + glyphOffset.x,
-      #   at.y + glyphOffset.y,
-      #   float glyphImage.width,
-      #   float glyphImage.height
-      #)
     )
 
   let mag = 6.0
