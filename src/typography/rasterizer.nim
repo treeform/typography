@@ -1,4 +1,4 @@
-import algorithm, chroma, flippy, font, tables, vmath, opentype/parser
+import algorithm, chroma, pixie, font, tables, vmath, opentype/parser
 
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
@@ -70,7 +70,7 @@ proc getGlyphImage*(
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
 
-  var image = newImage(w, h, 4)
+  var image = newImage(w, h)
   image.fill(whiteTrans)
   let origin = vec2(tx, ty)
 
@@ -127,7 +127,7 @@ proc getGlyphImage*(
             pen -= 1
           inc curHit
         if pen != 0:
-          image.putRgba(x, h-y-1, white)
+          image[x, h-y-1] = white
   else:
     var alphas = newSeq[float32](image.width)
     for y in 0 ..< image.height:
@@ -160,7 +160,7 @@ proc getGlyphImage*(
       for x in 0 ..< image.width:
         var a = clamp(abs(alphas[x]) / float32(quality), 0.0, 1.0)
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
-        image.putRgba(x, h-y-1, color)
+        image[x, h-y-1] = color
 
   return image
 
@@ -188,7 +188,7 @@ proc getGlyphOutlineImage*(
   var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
   var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
 
-  var image = newImage(w, h, 4)
+  var image = newImage(w, h)
   let origin = vec2(float32 tx, float32 ty)
 
   proc adjust(v: Vec2): Vec2 = (v) * scale - origin
@@ -270,15 +270,16 @@ proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
-      img.blit(
-        image,
-        rect(0, 0, float32 img.width, float32 img.height),
-        rect(
-          at.x + origin.x,
-          at.y + origin.y,
-          float32 img.width,
-          float32 img.height
-        )
+      image = image.draw(
+        img,
+        origin
+        # rect(0, 0, float32 img.width, float32 img.height),
+        # rect(
+        #   at.x + origin.x,
+        #   at.y + origin.y,
+        #   float32 img.width,
+        #   float32 img.height
+        # )
       )
 
 proc getGlyphImageOffset*(
@@ -307,9 +308,9 @@ proc alphaToBlankAndWhite*(image: var Image) =
   ## with black text.
   for x in 0..<image.width:
     for y in 0..<image.height:
-      var c = image.getrgba(x, y)
+      var c = image[x, y]
       c.r = uint8(255) - c.a
       c.g = uint8(255) - c.a
       c.b = uint8(255) - c.a
       c.a = 255
-      image.putRgba(x, y, c)
+      image[x, y] = c

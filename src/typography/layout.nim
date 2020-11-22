@@ -1,4 +1,4 @@
-import flippy, font, rasterizer, tables, unicode, vmath
+import pixie, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 ## Default line height of font.size * 1.2
@@ -36,6 +36,21 @@ type
     Middle
     Bottom
 
+  TextCase* = enum
+    tcNormal
+    tcUpper
+    tcLower
+    tcTitle
+    # tcSmallCaps
+    # tcSmallCapsForced
+
+proc convertTextCase*(s: string, textCase: TextCase): string =
+  case textCase:
+  of tcNormal: s
+  of tcUpper: s.toUpper()
+  of tcLower: s.toLower()
+  of tcTitle: s.title()
+
 proc kerningAdjustment*(font: Font, prev, c: string): float32 =
   ## Get Kerning Adjustment between two letters.
   if prev != "":
@@ -58,6 +73,8 @@ proc typeset*(
     vAlign: VAlignMode = Top,
     clip = true,
     wrap = true,
+    kern = true,
+    textCase = tcNormal,
     tabWidth: float32 = 0.0,
     boundsMin: var Vec2,
     boundsMax: var Vec2
@@ -137,7 +154,8 @@ proc typeset*(
         continue
 
     var glyph = font.typeface.glyphs[c]
-    at.x += font.kerningAdjustment(prev, c) * font.scale
+    if kern:
+      at.x += font.kerningAdjustment(prev, c) * font.scale
 
     let q =
       if font.size < 20: 0.1
@@ -263,16 +281,23 @@ proc typeset*(
     vAlign: VAlignMode = Top,
     clip = true,
     wrap = true,
+    kern = true,
+    textCase = tcNormal,
     tabWidth: float32 = 0.0
   ): seq[GlyphPosition] =
   ## Typeset string and return glyph positions that is ready to draw.
   var
     ignoreBoundsMin: Vec2
     ignoreBoundsMax: Vec2
-  typeset(font, toRunes(text), pos, size, hAlign, vAlign, clip, wrap, tabWidth,
-    ignoreBoundsMin, ignoreBoundsMax)
+  typeset(
+    font, toRunes(convertTextCase(text, textCase)), pos, size,
+    hAlign, vAlign,
+    clip, wrap, kern, textCase,
+    tabWidth,
+    ignoreBoundsMin, ignoreBoundsMax
+  )
 
-proc drawText*(image: Image, layout: seq[GlyphPosition]) =
+proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
   ## Draws layout.
   for pos in layout:
     var font = pos.font
@@ -284,12 +309,12 @@ proc drawText*(image: Image, layout: seq[GlyphPosition]) =
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.draw(
+      image = image.draw(
         img,
         vec2(pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y)
       )
 
-proc drawText*(font: Font, image: Image, pos: Vec2, text: string) =
+proc drawText*(font: Font, image: var Image, pos: Vec2, text: string) =
   ## Draw text string
   var layout = font.typeset(text, pos)
   image.drawText(layout)
