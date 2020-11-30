@@ -1,5 +1,40 @@
 import algorithm, chroma, pixie, font, tables, vmath, opentype/parser
 
+proc line*(image: Image, at, to: Vec2, rgba: ColorRGBA) =
+  ## Draws a line from one at vec to to vec.
+  let
+    dx = to.x - at.x
+    dy = to.y - at.y
+  var x = at.x
+  while true:
+    if dx == 0:
+      break
+    let y = at.y + dy * (x - at.x) / dx
+    image[int x, int y] =  rgba
+    if at.x < to.x:
+      x += 1
+      if x > to.x:
+        break
+    else:
+      x -= 1
+      if x < to.x:
+        break
+
+  var y = at.y
+  while true:
+    if dy == 0:
+      break
+    let x = at.x + dx * (y - at.y) / dy
+    image[int x, int y] = rgba
+    if at.y < to.y:
+      y += 1
+      if y > to.y:
+        break
+    else:
+      y -= 1
+      if y < to.y:
+        break
+
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
   var typeface = font.typeface
@@ -70,8 +105,7 @@ proc getGlyphImage*(
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
 
-  var image = newImage(w, h)
-  image.fill(whiteTrans)
+  var image = newImageFill(w, h, whiteTrans)
   let origin = vec2(tx, ty)
 
   glyphOffset.x = origin.x
@@ -261,7 +295,7 @@ proc getGlyphImage*(font: Font, unicode: string): Image =
   var glyphOffset: Vec2
   return font.getGlyphImage(unicode, glyphOffset)
 
-proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
+proc drawGlyph*(font: Font, image: Image, at: Vec2, c: string) =
   ## Draw glyph at a location on the image
   var at = at
   at.y += font.lineHeight
@@ -270,7 +304,7 @@ proc drawGlyph*(font: Font, image: var Image, at: Vec2, c: string) =
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
-      image = image.draw(
+      image.draw(
         img,
         origin
         # rect(0, 0, float32 img.width, float32 img.height),

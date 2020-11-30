@@ -309,7 +309,7 @@ proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image = image.draw(
+      image.draw(
         img,
         vec2(pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y)
       )

@@ -9,7 +9,7 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.0.0"
-requires "https://github.com/treeform/pixie >= 0.0.2"
+requires "pixie >= 0.0.2"
 requires "vmath >= 0.3.3"
 requires "chroma >= 0.1.2"
 requires "print >= 0.1.0"
