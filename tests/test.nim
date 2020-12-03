@@ -206,7 +206,7 @@ block:
       quality = 4,
       subPixelShift = float(i)/10.0
     )
-    image = image.draw(
+    image.draw(
       glyphImage,
       at + glyphOffset
     )
