@@ -1,48 +1,90 @@
-import chroma, flippy, print, tables, typography, vmath, os, osproc
+import chroma, pixie, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
+
+proc magnifyNearest*(image: Image, scale: int): Image =
+  ## Scales image image up by an integer scale.
+  result = newImage(
+    image.width * scale,
+    image.height * scale,
+  )
+  for y in 0 ..< result.height:
+    for x in 0 ..< result.width:
+      var rgba =
+        image.getRgbaUnsafe(x div scale, y div scale)
+      result.setRgbaUnsafe(x, y, rgba)
+
+proc strokeRect*(image: Image, rect: Rect, rgba: ColorRGBA) =
+  ## Draws a rectangle borders only.
+  let
+    at = rect.xy
+    wh = rect.wh - vec2(1, 1) # line width
+  image.line(at, at + vec2(wh.x, 0), rgba)
+  image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), rgba)
+  image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), rgba)
+  image.line(at + vec2(0, wh.y), at, rgba)
+
+proc outlineBorder*(image: Image, borderPx: int): Image =
+  ## Adds n pixel border around alpha parts of the image.
+  result = newImage(
+    image.width + borderPx * 2,
+    image.height + borderPx * 3
+  )
+  for y in 0 ..< result.height:
+    for x in 0 ..< result.width:
+      var filled = false
+      for bx in -borderPx .. borderPx:
+        for by in -borderPx .. borderPx:
+          var rgba = image[x + bx - borderPx, y - by - borderPx]
+          if rgba.a > 0.uint8:
+            filled = true
+            break
+        if filled:
+          break
+      if filled:
+        result.setRgbaUnsafe(x, y, rgba(255, 255, 255, 255))
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
   var image = font.getGlyphImage("h")
   image.alphaToBlankAndWhite()
-  image.save("hFill.png")
+  image.writeFile("hFill.png")
 
 block:
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
   font.lineHeight = 16
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.save("basicSvg.png")
+  image.writeFile("basicSvg.png")
 
 block:
   var font = readFontTtf("fonts/Ubuntu.ttf")
   font.size = 16
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.save("basicTtf.png")
+  image.writeFile("basicTtf.png")
 
 block:
   var font = readFontTtf("fonts/IBMPlexSans-Regular.ttf")
   font.size = 16
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.save("basicTtf2.png")
+  image.writeFile("basicTtf2.png")
 
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")
-  var image = newImage(500, 240, 4)
+  var image = newImage(500, 240)
 
   font.size = 8
   font.drawText(image, vec2(10, 10), "The quick brown fox jumps over the lazy dog.")
@@ -58,10 +100,10 @@ block:
   font.drawText(image, vec2(10, 180), "The quick brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.save("sizes.png")
+  image.writeFile("sizes.png")
 
 block:
-  var image = newImage(800, 220, 4)
+  var image = newImage(800, 220)
   var font = readFontSvg("fonts/DejaVuSans.svg")
 
   font.size = 16
@@ -69,43 +111,43 @@ block:
   font.drawText(image, vec2(10, 10), readFile("sample.ru.txt"))
 
   image.alphaToBlankAndWhite()
-  image.save("ru.png")
+  image.writeFile("ru.png")
 
 block:
-  var image = newImage(800, 200, 4)
+  var image = newImage(800, 200)
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
   font.lineHeight = 20
   print "svg:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
-  image.save("sample_svg.png")
+  image.writeFile("sample_svg.png")
 
 block:
-  var image = newImage(800, 200, 4)
+  var image = newImage(800, 200)
   var font = readFontTtf("fonts/Ubuntu.ttf")
   font.size = 16
   font.lineHeight = 20
   print "ttf:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
-  image.save("sample_ttf.png")
+  image.writeFile("sample_ttf.png")
 
 
 block:
   var
-    sample = loadImage("sample_ttf.png")
-    master = loadImage("sample_master.png")
+    sample = readImage("sample_ttf.png")
+    master = readImage("sample_master.png")
   for x in 0 ..< sample.width:
     for y in 0 ..< sample.height:
-      var a = master.getRgba(x, y).color
-      var b = sample.getRgba(x, y).color
+      var a = master[x, y].color
+      var b = sample[x, y].color
       var c = mix(a, b)
-      sample.putRgba(x, y, c.rgba)
-  sample.save("sample_blur.png")
+      sample[x, y] = c.rgba
+  sample.writeFile("sample_blur.png")
 
 # block:
-#   var image = newImage(800, 200, 4)
+#   var image = newImage(800, 200)
 #   var font = readFontOtf("fonts/Ubuntu.ttf")
 
 #   font.size = 16
@@ -113,10 +155,10 @@ block:
 #   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
 
 #   image.alphaToBlankAndWhite()
-#   image.save("otf.png")
+#   image.writeFile("otf.png")
 
 block:
-  var image = newImage(600, 620, 4)
+  var image = newImage(600, 620)
   var font = readFontTtf("fonts/hanazono/HanaMinA.ttf")
   font.size = 16
   font.lineHeight = 20
@@ -124,39 +166,38 @@ block:
   font.drawText(image, vec2(10, 10), readFile("sample.ch.txt"))
 
   image.alphaToBlankAndWhite()
-  image.save("ch.png")
+  image.writeFile("ch.png")
 
 block:
-  var image = newImage(250, 20, 4)
+  var image = newImage(250, 20)
 
   var font = readFontSvg("fonts/DejaVuSans.svg")
   font.size = 11 # 11px or 8pt
   font.drawText(image, vec2(10, 4), "The quick brown fox jumps over the lazy dog.")
 
-  image = image.magnify(4)
+  image = image.magnifyNearest(4)
   image.alphaToBlankAndWhite()
-  image.save("scaledup.png")
+  image.writeFile("scaledup.png")
 
 block:
-  var image = newImage(140, 20, 4)
+  var image = newImage(140, 20)
 
   var font = readFontSvg("fonts/DejaVuSans.svg")
   font.size = 11 # 11px or 8pt
   font.drawText(image, vec2(8, 4), "momomomomomomo")
 
-  image = image.magnify(6)
+  image = image.magnifyNearest(6)
   image.alphaToBlankAndWhite()
-  image.save("subpixelpos.png")
+  image.writeFile("subpixelpos.png")
 
 block:
-  var image = newImage(140, 20, 4)
+  var image = newImage(140, 20)
 
   var font = readFontSvg("fonts/DejaVuSans.svg")
   font.size = 11 # 11px or 8pt
   var glyph = font.typeface.glyphs["g"]
-  var under = font.typeface.glyphs["_"]
 
-  for i in 0..<10:
+  for i in 0 ..< 10:
     var glyphOffset: Vec2
     var at = vec2(12.0 + float(i)*12, 11)
     var glyphImage = font.getGlyphImage(
@@ -165,33 +206,28 @@ block:
       quality = 4,
       subPixelShift = float(i)/10.0
     )
-    image.blit(
+    image.draw(
       glyphImage,
-      rect(0, 0, float glyphImage.width, float glyphImage.height),
-      rect(
-        at.x + glyphOffset.x,
-        at.y + glyphOffset.y,
-        float glyphImage.width,
-        float glyphImage.height
-      )
+      at + glyphOffset
     )
 
-  image = image.magnify(6)
+  let mag = 6.0
+  image = image.magnifyNearest(mag.int)
   for i in 0..<10:
-    let at = vec2(12.0 + float(i)*12, 15) * 6
+    let at = vec2(12.0 + float(i)*12, 15) * mag
     font.drawText(image, at + vec2(0, 6), "+0." & $i)
 
   image.alphaToBlankAndWhite()
 
   let red = rgba(255, 0, 0, 255)
   for i in 0..<10:
-    let at = vec2(12.0 + float(i)*12, 15) * 6
-    image.line(at, at + vec2(7*6, 0), red)
-    image.line(at + vec2(7*6, 0), at + vec2(7*6, -13*6), red)
-    image.line(at + vec2(0, -13*6), at + vec2(7*6, -13*6), red)
-    image.line(at + vec2(0, -13*6), at, red)
+    let at = vec2(12.0 + float(i)*12, 15) * mag
+    image.line(at, at + vec2(7 * mag, 0), red)
+    image.line(at + vec2(7 * mag, 0), at + vec2(7 * mag, -13 * mag), red)
+    image.line(at + vec2(0, -13 * mag), at + vec2(7 * mag, -13 * mag), red)
+    image.line(at + vec2(0, -13 * mag), at, red)
 
-  image.save("subpixelglyphs.png")
+  image.writeFile("subpixelglyphs.png")
 
 block:
   var font = readFontTtf("fonts/Moon Bold.otf")
@@ -202,14 +238,14 @@ block:
 
   echo font.typeface.glyphs["Q"].path
 
-  image.save("qOutLine.png")
+  image.writeFile("qOutLine.png")
 
   image = font.getGlyphImage("Q")
   image.alphaToBlankAndWhite()
-  image.save("qFill.png")
+  image.writeFile("qFill.png")
 
 block:
-  var image = newImage(200, 100, 4)
+  var image = newImage(200, 100)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 11 # 11px or 8pt
@@ -229,7 +265,7 @@ To where it bent in the undergrowth;""")
   image.drawText(layout)
 
   let mag = 3.0
-  image = image.magnify(int mag)
+  image = image.magnifyNearest(mag.int)
   image.alphaToBlankAndWhite()
 
   # draw layout boxes
@@ -250,7 +286,7 @@ To where it bent in the undergrowth;""")
         ),
         rgba(255, 0, 0, 255)
       )
-  image.save("layout.png")
+  image.writeFile("layout.png")
 
   image.fill(rgba(255, 255, 255, 255))
   # draw layout boxes only
@@ -271,10 +307,10 @@ To where it bent in the undergrowth;""")
         ),
         rgba(255, 0, 0, 255)
       )
-  image.save("layoutNoText.png")
+  image.writeFile("layoutNoText.png")
 
 block:
-  var image = newImage(500, 200, 4)
+  var image = newImage(500, 200)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 11 # 11px or 8pt
@@ -371,10 +407,10 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.save("alignment.png")
+  image.writeFile("alignment.png")
 
 block:
-  var image = newImage(500, 200, 4)
+  var image = newImage(500, 200)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
@@ -393,10 +429,10 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.save("wordwrap.png")
+  image.writeFile("wordwrap.png")
 
 block:
-  var image = newImage(500, 200, 4)
+  var image = newImage(500, 200)
 
   var font = readFontTtf("fonts/hanazono/HanaMinA.ttf")
   font.size = 16
@@ -415,10 +451,10 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.save("wordwrapch.png")
+  image.writeFile("wordwrapch.png")
 
 block:
-  var image = newImage(300, 120, 4)
+  var image = newImage(300, 120)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16 # 11px or 8pt
@@ -443,11 +479,11 @@ To where it bent in the undergrowth;""",
   for rect in selectionRects:
     image.strokeRect(rect, rgba(255, 0, 0, 255))
 
-  image.save("selection.png")
+  image.writeFile("selection.png")
 
 block:
 
-  var image = newImage(300, 120, 4)
+  var image = newImage(300, 120)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
@@ -473,10 +509,10 @@ To where it bent in the undergrowth;""",
   image.strokeRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
   image.strokeRect(g.selectRect, rgba(255, 0, 0, 255))
 
-  image.save("picking.png")
+  image.writeFile("picking.png")
 
 block:
-  var image = newImage(500, 120, 4)
+  var image = newImage(500, 120)
 
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 16
@@ -494,42 +530,13 @@ block:
   # draw text at a layout
   image.drawText(layout)
   image.alphaToBlankAndWhite()
-  image.save("tabs.png")
-
-block:
-  var font = readFontTtf("fonts/silver.ttf")
-  font.size = 19*4
-  font.lineHeight = 19*4
-
-  let borderPx = 2
-  var glpyhImage: Image
-  for i in 0 .. 10000:
-    glpyhImage = font.getGlyphImage("快")
-  var image = glpyhImage.outlineBorder(borderPx)
-
-  # image.blitWithMask(
-  #   glpyhImage,
-  #   rect(
-  #     0,
-  #     0,
-  #     glpyhImage.width.float32,
-  #     glpyhImage.height.float32
-  #   ),
-  #   rect(
-  #     borderPx.float32,
-  #     borderPx.float32,
-  #     glpyhImage.width.float32,
-  #     glpyhImage.height.float32
-  #   ),
-  #   rgba(0, 0, 0, 255)
-  # )
-  image.save("withBorders.png")
+  image.writeFile("tabs.png")
 
 block:
 
   var mainFont = readFontTtf("fonts/Ubuntu.ttf")
 
-  var image = newImage(1200, 400, 4)
+  var image = newImage(1200, 400)
   var y = 10.0
   for fontPath in [
     "fonts/Jura-Regular.ttf",
@@ -563,19 +570,19 @@ block:
 
     y += 50
 
-  var master = loadImage("font_metrics_master.png")
+  var master = readImage("font_metrics_master.png")
 
   image.alphaToBlankAndWhite()
-  image.save("font_metrics.png")
+  image.writeFile("font_metrics.png")
 
   for x in 0 ..< image.width:
     for y in 0 ..< image.height:
-      var a = master.getRgba(x, y).color
-      var b = image.getRgba(x, y).color
+      var a = master[x, y].color
+      var b = image[x, y].color
       var c = mix(a, b)
-      image.putRgba(x, y, c.rgba)
+      image[x, y] = c.rgba
 
-  image.save("font_metrics_blur.png")
+  image.writeFile("font_metrics_blur.png")
 
 let (outp, _) = execCmdEx("git diff tests/*.png")
 if len(outp) != 0:

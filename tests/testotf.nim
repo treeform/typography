@@ -1,4 +1,4 @@
-import chroma, flippy, print, tables, typography, typography, vmath, json, os, osproc
+import chroma, pixie, print, tables, typography, typography, vmath, json, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -25,7 +25,7 @@ block:
   #for glyph in font.glyphArr:
   #  print glyph.code, glyph.advance
 
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
   image.line(vec2(0, font.capline), vec2(500, font.capline), rgba(0,0,0,255))
   image.line(vec2(0, font.baseline), vec2(500, font.baseline), rgba(0,0,0,255))
 
@@ -47,7 +47,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.save("testotf.png")
+  image.writeFile("testotf.png")
 
   echo "saved"
 

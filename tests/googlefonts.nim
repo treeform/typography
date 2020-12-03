@@ -1,6 +1,6 @@
 ## Loads google fonts and draws a text sample.
 
-import algorithm, flippy, math, os, ospaths, strutils,
+import algorithm, pixie, math, os, ospaths, strutils,
     tables, typography, vmath, strformat, chroma
 
 proc textStr(font: Font): string =
@@ -29,7 +29,7 @@ var mainFont = readFontTtf("fonts/Ubuntu.ttf")
 
 for pageNum in 0 ..< fontPaths.len div 100 + 1:
   echo "page ", pageNum
-  var image = newImage(800, 100*40, 4)
+  var image = newImage(800, 100*40)
   for fontNum in 0 .. 100:
     if fontNum + pageNum * 100 >= fontPaths.len:
       break
@@ -71,4 +71,4 @@ for pageNum in 0 ..< fontPaths.len div 100 + 1:
   image.alphaToBlankAndWhite()
   let imagePath = &"samples/googlefonts_{pageNum}.png"
   echo "saving ", imagePath
-  image.save(imagePath)
+  image.writeFile(imagePath)

@@ -1,4 +1,4 @@
-import flippy, print, tables, typography, typography, vmath, os, osproc
+import pixie, print, tables, typography, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -17,7 +17,7 @@ block:
   #for glyph in font.glyphArr:
   #  print glyph.code, glyph.advance
 
-  var image = newImage(500, 40, 4)
+  var image = newImage(500, 40)
 
   var text = """+Welcome, Earthling."""
   if "q" notin font.typeface.glyphs:
@@ -37,7 +37,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.save("testsvg.png")
+  image.writeFile("testsvg.png")
 
   echo "saved"
 
