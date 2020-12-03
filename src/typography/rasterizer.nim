@@ -105,7 +105,8 @@ proc getGlyphImage*(
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
 
-  var image = newImageFill(w, h, whiteTrans)
+  var image = newImage(w, h)
+  image.fill(whiteTrans)
   let origin = vec2(tx, ty)
 
   glyphOffset.x = origin.x
