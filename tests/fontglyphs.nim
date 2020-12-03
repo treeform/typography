@@ -1,6 +1,6 @@
 ## Loads ttf system fonts and prodces a grid of their glphys
 
-import algorithm, chroma, flippy, math, os, ospaths, print, sequtils, strutils,
+import algorithm, chroma, pixie, math, os, ospaths, print, sequtils, strutils,
     tables, typography, typography/sysfonts, vmath
 
 proc alphaWhite(image: var Image) =
@@ -33,7 +33,7 @@ for fontPath in getSystemFonts():
       width = 1000
       height = 100 * int(ceil(float(font.glyphs.len) / 10.0))
 
-    var ctx = newImage(width, height, 4)
+    var ctx = newImage(width, height)
     ctx.fill(rgba(255, 255, 255, 255))
     var x, y: int
     var names = toSeq(font.glyphs.keys)
@@ -51,7 +51,6 @@ for fontPath in getSystemFonts():
       else:
         try:
           var img = font.getGlyphImage(name)
-          #img.save("samples/letter" & $i & ".png")
           ctx.blitWithMask(
             img,
             rect(
@@ -78,4 +77,4 @@ for fontPath in getSystemFonts():
       if x >= 1000:
         x = 0
         y += 100
-    ctx.save("samples/" & name & ".png")
+    ctx.writeFile("samples/" & name & ".png")

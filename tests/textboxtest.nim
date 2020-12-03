@@ -1,20 +1,20 @@
-import chroma, flippy, print, strformat, typography, typography/textboxes,
+import chroma, pixie, print, strformat, typography, typography/textboxes,
     unicode, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
 proc alphaWhite(image: var Image) =
-  ## Typography deals mostly with transperant images with white text
+  ## Typography deals mostly with transparent images with white text
   ## This is hard to see in tests so we convert it to white background
   ## with black text.
   for x in 0..<image.width:
     for y in 0..<image.height:
-      var c = image.getrgba(x, y)
+      var c = image[x, y]
       c.r = uint8(255) - c.a
       c.g = uint8(255) - c.a
       c.b = uint8(255) - c.a
       c.a = 255
-      image.putrgba(x, y, c)
+      image[x, y] = c
 
 proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
   var wh = wh - vec2(1, 1) # line width
@@ -27,7 +27,7 @@ proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
   image.drawRect(rect.xy, rect.wh, color)
 
 proc draw(textBox: TextBox, imageName: string) =
-  var image = newImage(textBox.width, textBox.innerHeight, 4)
+  var image = newImage(textBox.width, textBox.innerHeight)
 
   # draw text at a layout
   image.drawText(textBox.layout)
@@ -50,7 +50,7 @@ proc draw(textBox: TextBox, imageName: string) =
   # draw mouse pos
   image.drawRect(rect(textBox.mousePos, vec2(4, 4)), rgba(255, 128, 128, 255))
 
-  image.save(imageName)
+  image.writeFile(imageName)
 
 var font = readFontSvg("fonts/Ubuntu.svg")
 font.size = 16

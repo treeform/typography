@@ -1,6 +1,6 @@
 ## Bare-bones SDL2 example
 
-import chroma, flippy, hashes, sdl2, tables, times, typography, unicode, vmath
+import chroma, pixie, hashes, sdl2, tables, times, typography, unicode, vmath
 
 discard sdl2.init(INIT_EVERYTHING)
 
@@ -39,7 +39,7 @@ type GlyphEntry = object
 var glyphCache = newTable[GlyphKey, GlyphEntry]()
 
 proc texture(image: Image): TexturePtr =
-  # convert a flippy image to a SDL texture
+  # convert a pixie image to a SDL texture
   const
     rmask = uint32 0x000000ff
     gmask = uint32 0x0000ff00
@@ -93,7 +93,7 @@ And looked down one as far as I could
 To where it bent in the undergrowth;""")
 
     # draw text at a layout
-    var image = newImage(500, 100, 4)
+    var image = newImage(500, 100)
     image.drawText(layout)
 
     var destRect = sdl2.rect(

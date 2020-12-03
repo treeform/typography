@@ -578,8 +578,8 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
 
     # Transform commands path.
     let mat = mat3(
-      component.xScale, component.scale01, 0.0,
-      component.scale10, component.yScale, 0.0,
+      component.xScale, component.scale10, 0.0,
+      component.scale01, component.yScale, 0.0,
       component.dx, component.dy, 1.0
     )
     # Copy commands.

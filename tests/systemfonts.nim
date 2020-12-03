@@ -1,6 +1,6 @@
 ## Loads google fonts and draws a text sample.
 
-import algorithm, chroma, flippy, math, os, ospaths, print, sequtils, strutils,
+import algorithm, chroma, pixie, math, os, ospaths, print, sequtils, strutils,
     tables, typography, typography/sysfonts, vmath
 
 var fontPaths: seq[string]
@@ -11,7 +11,7 @@ for fontPath in getSystemFonts():
 
 fontPaths.sort()
 
-var image = newImage(1000, fontPaths.len*40, 4)
+var image = newImage(1000, fontPaths.len*40)
 
 var mainFont = readFontTtf("fonts/Ubuntu.ttf")
 
@@ -48,10 +48,10 @@ for fontNum, fontPath in fontPaths:
 image.alphaToBlankAndWhite()
 
 when defined(windows):
-  image.save("systemfonts.windows.png")
+  image.writeFile("systemfonts.windows.png")
 elif defined(macos) or defined(macosx):
-  image.save("systemfonts.macos.png")
+  image.writeFile("systemfonts.macos.png")
 elif defined(linux):
-  image.save("systemfonts.linux.png")
+  image.writeFile("systemfonts.linux.png")
 else:
   quit("unknown os")
