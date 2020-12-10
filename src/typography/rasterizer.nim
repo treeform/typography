@@ -1,4 +1,4 @@
-import algorithm, chroma, pixie, font, tables, vmath, opentype/parser
+import algorithm, bumpy, chroma, pixie, font, tables, vmath, opentype/parser
 
 proc line*(image: Image, at, to: Vec2, rgba: ColorRGBA) =
   ## Draws a line from one at vec to to vec.

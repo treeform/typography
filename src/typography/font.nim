@@ -1,4 +1,4 @@
-import streams, strutils, tables, vmath, opentype/types, pixie
+import bumpy, streams, strutils, tables, vmath, opentype/types
 
 type
   # Segment* = object
