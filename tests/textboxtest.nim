@@ -1,4 +1,4 @@
-import chroma, pixie, print, strformat, typography, typography/textboxes,
+import bumpy, chroma, pixie, print, strformat, typography, typography/textboxes,
     unicode, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")

@@ -1,4 +1,4 @@
-import chroma, pixie, print, tables, typography, vmath, os, osproc
+import bumpy, chroma, pixie, print, tables, typography, vmath, os, osproc
 
 setCurrentDir(getCurrentDir() / "tests")
 
