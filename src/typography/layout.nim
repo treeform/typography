@@ -1,4 +1,4 @@
-import pixie, font, rasterizer, tables, unicode, vmath
+import bumpy, pixie, font, rasterizer, tables, unicode, vmath
 
 const
   normalLineHeight* = 0 ## Default line height of font.size * 1.2
