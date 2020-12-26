@@ -1,102 +1,27 @@
-import ../font, os, streams, tables, unicode, vmath, json,
-  sequtils, algorithm, types, pixie/paths, flatty/binny
+import ../font, os, streams, tables, unicode, vmath, types, pixie/paths,
+  flatty/binny
 
-proc `%`*(t: Table[int, int]): JsonNode =
-  result = newJObject()
-  var keys = toSeq(t.keys)
-  keys.sort()
-  for k in keys:
-    result[$k] = newJInt(t[k])
-
-func swap(u: int16): int16 =
-  cast[int16](cast[uint16](u).swap())
-
-func swap(u: int32): int32 =
-  cast[int32](cast[uint32](u).swap())
-
-proc read*[T](s: Stream, result: var T) =
-  if readData(s, addr(result), sizeof(T)) != sizeof(T):
-    raise newException(
-      ValueError,
-      "cannot read from stream at " & $s.getPosition()
-    )
-
-proc readUInt8*(stream: Stream): uint8 =
-  var val: uint8 = 0
-  stream.read(val)
-  return val
-
-proc readInt8*(stream: Stream): int8 =
-  var val: int8 = 0
-  stream.read(val)
-  return val
-
-proc readUInt16*(stream: Stream): uint16 =
-  var val: uint16 = 0
-  stream.read(val)
-  return val.swap()
-
-proc readUInt16Seq*(stream: Stream, len: int): seq[uint16] =
+proc readUint16Seq(stream: Stream, len: int): seq[uint16] =
   result = newSeq[uint16](len)
-  for i in 0..<len:
-    result[i] = stream.readUInt16()
+  for i in 0 ..< len:
+    result[i] = stream.readUint16().swap()
 
-proc readInt16Seq*(stream: Stream, len: int): seq[int16] =
-  result = newSeq[int16](len)
-  for i in 0..<len:
-    result[i] = stream.readInt16()
+proc readFixed32(stream: Stream): float32 =
+  ceil(float32(stream.readInt32().swap()) / 65536.0 * 100000.0) / 100000.0
 
-proc readInt16*(stream: Stream): int16 =
-  var val: int16 = 0
-  stream.read(val)
-  return val.swap()
-
-proc readUInt32*(stream: Stream): uint32 =
-  var val: uint32 = 0
-  stream.read(val)
-  return val.swap()
-
-proc readInt32*(stream: Stream): int32 =
-  var val: int32 = 0
-  stream.read(val)
-  return val.swap()
-
-proc readString*(stream: Stream, size: int): string =
-  var val = ""
-  var i = 0
-  while i < size:
-    let c = stream.readChar()
-    if ord(c) == 0:
-      break
-    val &= c
-    inc i
-  while i < size:
-    discard stream.readChar()
-    inc i
-  return val
-
-proc readFixed32*(stream: Stream): float32 =
-  var val: int32 = 0
-  stream.read(val)
-  return ceil(float32(val.swap()) / 65536.0 * 100000.0) / 100000.0
-
-proc readFixed16*(stream: Stream): float32 =
-  float32(stream.readInt16()) / 16384.0
-
-proc readLongDateTime*(stream: Stream): float64 =
-  discard stream.readUInt32()
-  return float64(int64(stream.readUInt32()) - 2080198800000)/1000.0 # 1904/1/1
+proc readFixed16(stream: Stream): float32 =
+  float32(stream.readInt16().swap()) / 16384.0
 
 proc fromUTF16BE*(input: string): string =
   ## Converts UTF16 to utf8 string.
   var
     s = newStringStream(input)
   while not s.atEnd():
-    var u1 = s.readUInt16()
+    var u1 = s.readUint16().swap()
     if u1 - 0xd800 >= 0x800'u16:
       result.add Rune(u1.int)
     else:
-      var u2 = s.readUInt16()
+      var u2 = s.readUint16().swap()
       if ((u1 and 0xfc00) == 0xd800) and ((u2 and 0xfc00) == 0xdc00):
         result.add Rune((u1.uint32 shl 10) + u2.uint32 - 0x35fdc00)
       else:
@@ -105,45 +30,45 @@ proc fromUTF16BE*(input: string): string =
 
 proc readHeadTable(f: Stream): HeadTable =
   result = HeadTable()
-  result.majorVersion = f.readUint16()
+  result.majorVersion = f.readUint16().swap()
   assert result.majorVersion == 1
-  result.minorVersion = f.readUint16()
+  result.minorVersion = f.readUint16().swap()
   assert result.minorVersion == 0
   result.fontRevision = f.readFixed32()
-  result.checkSumAdjustment = f.readUint32()
-  result.magicNumber = f.readUint32()
-  result.flags = f.readUint16()
-  result.unitsPerEm = f.readUint16()
-  result.created = f.readLongDateTime()
-  result.modified = f.readLongDateTime()
-  result.xMin = f.readInt16()
-  result.yMin = f.readInt16()
-  result.xMax = f.readInt16()
-  result.yMax = f.readInt16()
-  result.macStyle = f.readUint16()
-  result.lowestRecPPEM = f.readUint16()
-  result.fontDirectionHint = f.readInt16()
-  result.indexToLocFormat = f.readInt16()
-  result.glyphDataFormat = f.readInt16()
+  result.checkSumAdjustment = f.readUint32().swap()
+  result.magicNumber = f.readUint32().swap()
+  result.flags = f.readUint16().swap()
+  result.unitsPerEm = f.readUint16().swap()
+  result.created = f.readInt64().swap()
+  result.modified = f.readInt64().swap()
+  result.xMin = f.readInt16().swap()
+  result.yMin = f.readInt16().swap()
+  result.xMax = f.readInt16().swap()
+  result.yMax = f.readInt16().swap()
+  result.macStyle = f.readUint16().swap()
+  result.lowestRecPPEM = f.readUint16().swap()
+  result.fontDirectionHint = f.readInt16().swap()
+  result.indexToLocFormat = f.readInt16().swap()
+  result.glyphDataFormat = f.readInt16().swap()
   assert result.glyphDataFormat == 0
 
 proc readNameTable*(f: Stream): NameTable =
   result = NameTable()
   let at = f.getPosition()
-  result.format = f.readUint16()
+  result.format = f.readUint16().swap()
   assert result.format == 0
-  result.count = f.readUint16()
-  result.stringOffset = f.readUint16()
+  result.count = f.readUint16().swap()
+  result.stringOffset = f.readUint16().swap()
 
   for i in 0 ..< result.count.int:
     var record = NameRecord()
-    record.platformID = f.readUint16()
-    record.encodingID = f.readUint16()
-    record.languageID = f.readUint16()
-    record.nameID = f.readUint16()
+    record.platformID = f.readUint16().swap()
+    record.encodingID = f.readUint16().swap()
+    record.languageID = f.readUint16().swap()
+    record.nameID = f.readUint16().swap()
     record.name = cast[NameTableNames](record.nameID)
-    record.length = f.readUint16()
-    record.offset = f.readUint16()
+    record.length = f.readUint16().swap()
+    record.offset = f.readUint16().swap()
 
     let save = f.getPosition()
     f.setPosition(at + int(result.stringOffset + record.offset))
@@ -164,66 +89,66 @@ proc readNameTable*(f: Stream): NameTable =
 proc readMaxpTable*(f: Stream): MaxpTable =
   result = MaxpTable()
   result.version = f.readFixed32()
-  result.numGlyphs = f.readUInt16()
-  result.maxPoints = f.readUInt16()
-  result.maxContours = f.readUInt16()
-  result.maxCompositePoints = f.readUInt16()
-  result.maxCompositeContours = f.readUInt16()
-  result.maxZones = f.readUInt16()
-  result.maxTwilightPoints = f.readUInt16()
-  result.maxStorage = f.readUInt16()
-  result.maxFunctionDefs = f.readUInt16()
-  result.maxInstructionDefs = f.readUInt16()
-  result.maxStackElements = f.readUInt16()
-  result.maxSizeOfInstructions = f.readUInt16()
-  result.maxComponentElements = f.readUInt16()
-  result.maxComponentDepth = f.readUInt16()
+  result.numGlyphs = f.readUint16().swap()
+  result.maxPoints = f.readUint16().swap()
+  result.maxContours = f.readUint16().swap()
+  result.maxCompositePoints = f.readUint16().swap()
+  result.maxCompositeContours = f.readUint16().swap()
+  result.maxZones = f.readUint16().swap()
+  result.maxTwilightPoints = f.readUint16().swap()
+  result.maxStorage = f.readUint16().swap()
+  result.maxFunctionDefs = f.readUint16().swap()
+  result.maxInstructionDefs = f.readUint16().swap()
+  result.maxStackElements = f.readUint16().swap()
+  result.maxSizeOfInstructions = f.readUint16().swap()
+  result.maxComponentElements = f.readUint16().swap()
+  result.maxComponentDepth = f.readUint16().swap()
 
 proc readOS2Table*(f: Stream): OS2Table =
   result = OS2Table()
-  result.version = f.readUInt16()
-  result.xAvgCharWidth = f.readInt16()
-  result.usWeightClass = f.readUInt16()
-  result.usWidthClass = f.readUInt16()
-  result.fsType = f.readUInt16()
-  result.ySubscriptXSize = f.readInt16()
-  result.ySubscriptYSize = f.readInt16()
-  result.ySubscriptXOffset = f.readInt16()
-  result.ySubscriptYOffset = f.readInt16()
-  result.ySuperscriptXSize = f.readInt16()
-  result.ySuperscriptYSize = f.readInt16()
-  result.ySuperscriptXOffset = f.readInt16()
-  result.ySuperscriptYOffset = f.readInt16()
-  result.yStrikeoutSize = f.readInt16()
-  result.yStrikeoutPosition = f.readInt16()
-  result.sFamilyClass = f.readInt16()
+  result.version = f.readUint16().swap()
+  result.xAvgCharWidth = f.readInt16().swap()
+  result.usWeightClass = f.readUint16().swap()
+  result.usWidthClass = f.readUint16().swap()
+  result.fsType = f.readUint16().swap()
+  result.ySubscriptXSize = f.readInt16().swap()
+  result.ySubscriptYSize = f.readInt16().swap()
+  result.ySubscriptXOffset = f.readInt16().swap()
+  result.ySubscriptYOffset = f.readInt16().swap()
+  result.ySuperscriptXSize = f.readInt16().swap()
+  result.ySuperscriptYSize = f.readInt16().swap()
+  result.ySuperscriptXOffset = f.readInt16().swap()
+  result.ySuperscriptYOffset = f.readInt16().swap()
+  result.yStrikeoutSize = f.readInt16().swap()
+  result.yStrikeoutPosition = f.readInt16().swap()
+  result.sFamilyClass = f.readInt16().swap()
   for i in 0 ..< 10:
-    result.panose[i] = f.readUInt8()
-  result.ulUnicodeRange1 = f.readUInt32()
-  result.ulUnicodeRange2 = f.readUInt32()
-  result.ulUnicodeRange3 = f.readUInt32()
-  result.ulUnicodeRange4 = f.readUInt32()
+    result.panose[i] = f.readUint8()
+  result.ulUnicodeRange1 = f.readUint32().swap()
+  result.ulUnicodeRange2 = f.readUint32().swap()
+  result.ulUnicodeRange3 = f.readUint32().swap()
+  result.ulUnicodeRange4 = f.readUint32().swap()
   result.achVendID = f.readStr(4)
-  result.fsSelection = f.readUInt16()
-  result.usFirstCharIndex = f.readUInt16()
-  result.usLastCharIndex = f.readUInt16()
-  result.sTypoAscender = f.readInt16()
-  result.sTypoDescender = f.readInt16()
-  result.sTypoLineGap = f.readInt16()
-  result.usWinAscent = f.readUInt16()
-  result.usWinDescent = f.readUInt16()
+  result.fsSelection = f.readUint16().swap()
+  result.usFirstCharIndex = f.readUint16().swap()
+  result.usLastCharIndex = f.readUint16().swap()
+  result.sTypoAscender = f.readInt16().swap()
+  result.sTypoDescender = f.readInt16().swap()
+  result.sTypoLineGap = f.readInt16().swap()
+  result.usWinAscent = f.readUint16().swap()
+  result.usWinDescent = f.readUint16().swap()
   if result.version >= 1.uint16:
-    result.ulCodePageRange1 = f.readUInt32()
-    result.ulCodePageRange2 = f.readUInt32()
+    result.ulCodePageRange1 = f.readUint32().swap()
+    result.ulCodePageRange2 = f.readUint32().swap()
   if result.version >= 2.uint16:
-    result.sxHeight = f.readInt16()
-    result.sCapHeight = f.readInt16()
-    result.usDefaultChar = f.readUInt16()
-    result.usBreakChar = f.readUInt16()
-    result.usMaxContext = f.readUInt16()
+    result.sxHeight = f.readInt16().swap()
+    result.sCapHeight = f.readInt16().swap()
+    result.usDefaultChar = f.readUint16().swap()
+    result.usBreakChar = f.readUint16().swap()
+    result.usMaxContext = f.readUint16().swap()
   if result.version >= 5.uint16:
-    result.usLowerOpticalPointSize = f.readUInt16()
-    result.usUpperOpticalPointSize = f.readUInt16()
+    result.usLowerOpticalPointSize = f.readUint16().swap()
+    result.usUpperOpticalPointSize = f.readUint16().swap()
 
 proc readLocaTable*(f: Stream, head: HeadTable, maxp: MaxpTable): LocaTable =
   result = LocaTable()
@@ -231,71 +156,71 @@ proc readLocaTable*(f: Stream, head: HeadTable, maxp: MaxpTable): LocaTable =
   if head.indexToLocFormat == 0:
     # Uses uint16.
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(f.readUint16().uint32 * 2)
+      result.offsets.add(f.readUint16().swap().uint32 * 2)
       locaOffset += 2
   else:
     # Users uint32.
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(f.readUint32())
+      result.offsets.add(f.readUint32().swap())
       locaOffset += 4
 
 proc readHheaTable*(f: Stream): HheaTable =
   result = HheaTable()
-  result.majorVersion = f.readUInt16()
+  result.majorVersion = f.readUint16().swap()
   assert result.majorVersion == 1
-  result.minorVersion = f.readUInt16()
+  result.minorVersion = f.readUint16().swap()
   assert result.minorVersion == 0
-  result.ascender = f.readInt16()
-  result.descender = f.readInt16()
-  result.lineGap = f.readInt16()
-  result.advanceWidthMax = f.readUInt16()
-  result.minLeftSideBearing = f.readInt16()
-  result.minRightSideBearing = f.readInt16()
-  result.xMaxExtent = f.readInt16()
-  result.caretSlopeRise = f.readInt16()
-  result.caretSlopeRun = f.readInt16()
-  result.caretOffset = f.readInt16()
-  discard f.readUInt16()
-  discard f.readUInt16()
-  discard f.readUInt16()
-  discard f.readUInt16()
-  result.metricDataFormat = f.readInt16()
+  result.ascender = f.readInt16().swap()
+  result.descender = f.readInt16().swap()
+  result.lineGap = f.readInt16().swap()
+  result.advanceWidthMax = f.readUint16().swap()
+  result.minLeftSideBearing = f.readInt16().swap()
+  result.minRightSideBearing = f.readInt16().swap()
+  result.xMaxExtent = f.readInt16().swap()
+  result.caretSlopeRise = f.readInt16().swap()
+  result.caretSlopeRun = f.readInt16().swap()
+  result.caretOffset = f.readInt16().swap()
+  discard f.readUint16().swap()
+  discard f.readUint16().swap()
+  discard f.readUint16().swap()
+  discard f.readUint16().swap()
+  result.metricDataFormat = f.readInt16().swap()
   assert result.metricDataFormat == 0
-  result.numberOfHMetrics = f.readUInt16()
+  result.numberOfHMetrics = f.readUint16().swap()
 
 proc readHmtxTable*(f: Stream, maxp: MaxpTable, hhea: HheaTable): HmtxTable =
   result = HmtxTable()
   for i in 0 ..< maxp.numGlyphs.int:
     if i < hhea.numberOfHMetrics.int:
       var record = LongHorMetricRecrod()
-      record.advanceWidth = f.readUInt16()
-      record.lsb = f.readInt16()
+      record.advanceWidth = f.readUint16().swap()
+      record.lsb = f.readInt16().swap()
       result.hMetrics.add(record)
     else:
-      result.leftSideBearings.add(f.readInt16())
+      result.leftSideBearings.add(f.readInt16().swap())
 
 proc readKernTable*(f: Stream): KernTable =
   result = KernTable()
-  result.version = f.readUint16()
+  result.version = f.readUint16().swap()
   if result.version == 0:
     # Windows format.
-    result.nTables = f.readUint16()
+    result.nTables = f.readUint16().swap()
     for i in 0 ..< result.nTables.int:
       var subTable = KernSubTable()
-      subTable.version = f.readUint16()
+      subTable.version = f.readUint16().swap()
       assert subTable.version == 0
-      subTable.length = f.readUint16()
-      subTable.coverage = f.readUint16()
+      subTable.length = f.readUint16().swap()
+      subTable.coverage = f.readUint16().swap()
       # TODO: check coverage
-      subTable.numPairs = f.readUint16()
-      subTable.searchRange = f.readUint16()
-      subTable.entrySelector = f.readUint16()
-      subTable.rangeShift = f.readUint16()
+      subTable.numPairs = f.readUint16().swap()
+      subTable.searchRange = f.readUint16().swap()
+      subTable.entrySelector = f.readUint16().swap()
+      subTable.rangeShift = f.readUint16().swap()
       for i in 0 ..< subTable.numPairs.int:
         var pair = KerningPair()
-        pair.left = f.readUint16()
-        pair.right = f.readUint16()
-        pair.value = f.readInt16()
+        pair.left = f.readUint16().swap()
+        pair.right = f.readUint16().swap()
+        pair.value = f.readInt16().swap()
         subTable.kerningPairs.add(pair)
       result.subTables.add(subTable)
   elif result.version == 1:
@@ -308,32 +233,32 @@ proc readKernTable*(f: Stream): KernTable =
 proc readCmapTable*(f: Stream): CmapTable =
   let cmapOffset = f.getPosition()
   result = CmapTable()
-  result.version = f.readUint16()
-  result.numTables = f.readUint16()
+  result.version = f.readUint16().swap()
+  result.numTables = f.readUint16().swap()
   for i in 0 ..< result.numTables.int:
     var record = EncodingRecord()
-    record.platformID = f.readUint16()
-    record.encodingID = f.readUint16()
-    record.offset = f.readUint32()
+    record.platformID = f.readUint16().swap()
+    record.encodingID = f.readUint16().swap()
+    record.offset = f.readUint32().swap()
 
     if record.platformID == 3:
       # Windows format unicode format.
       f.setPosition(cmapOffset + record.offset.int)
-      let format = f.readUint16()
+      let format = f.readUint16().swap()
       if format == 4:
         var subRecord = SegmentMapping()
         subRecord.format = format
-        subRecord.length = f.readUint16()
-        subRecord.language = f.readUint16()
-        subRecord.segCountX2 = f.readUint16()
+        subRecord.length = f.readUint16().swap()
+        subRecord.language = f.readUint16().swap()
+        subRecord.segCountX2 = f.readUint16().swap()
         let segCount = (subRecord.segCountX2 div 2).int
-        subRecord.searchRange = f.readUint16()
-        subRecord.entrySelector = f.readUint16()
-        subRecord.rangeShift = f.readUint16()
+        subRecord.searchRange = f.readUint16().swap()
+        subRecord.entrySelector = f.readUint16().swap()
+        subRecord.rangeShift = f.readUint16().swap()
         subRecord.endCode = f.readUint16Seq(segCount)
-        subRecord.reservedPad = f.readUint16()
+        subRecord.reservedPad = f.readUint16().swap()
         subRecord.startCode = f.readUint16Seq(segCount)
-        subRecord.idDelta = f.readUInt16Seq(segCount)
+        subRecord.idDelta = f.readUint16Seq(segCount)
         let idRangeAddress = f.getPosition()
         subRecord.idRangeOffset = f.readUint16Seq(segCount)
         for j in 0 ..< segCount:
@@ -348,7 +273,7 @@ proc readCmapTable*(f: Stream): CmapTable =
               glyphIndexOffset += int(idRangeOffset)
               glyphIndexOffset += int(c - startCount) * 2
               f.setPosition(glyphIndexOffset)
-              glyphIndex = int f.readUint16()
+              glyphIndex = int f.readUint16().swap()
               if glyphIndex != 0:
                 glyphIndex = int((uint16(glyphIndex) + idDelta) and 0xFFFF)
             else:
@@ -378,12 +303,12 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
   var endPtsOfContours = newSeq[int]()
   if glyph.numberOfContours >= 0:
     for i in 0 ..< glyph.numberOfContours:
-      endPtsOfContours.add int f.readUint16()
+      endPtsOfContours.add int f.readUint16().swap()
 
   if endPtsOfContours.len == 0:
     return
 
-  let instructionLength = f.readUint16()
+  let instructionLength = f.readUint16().swap()
   for i in 0..<int(instructionLength):
     discard f.readChar()
 
@@ -416,7 +341,7 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
       elif (flag and 16) != 0:
         x = 0
       else:
-        x = int f.readInt16()
+        x = int f.readInt16().swap()
       prevX += x
       coordinates[i].x = prevX
       coordinates[i].isOnCurve = (flag and 1) != 0
@@ -432,7 +357,7 @@ proc parseGlyphPath(f: Stream, glyph: Glyph): seq[PathCommand] =
       elif (flag and 32) != 0:
         y = 0
       else:
-        y = int f.readInt16()
+        y = int f.readInt16().swap()
       prevY += y
       coordinates[i].y = prevY
 
@@ -505,7 +430,7 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
   var moreComponents = true
   var typeface = font.typeface
   while moreComponents:
-    let flags = f.readUInt16()
+    let flags = f.readUint16().swap()
 
     type TtfComponent = object
       glyphIndex: uint16
@@ -518,7 +443,7 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
       matchedPoints: array[2, int]
 
     var component = TtfComponent()
-    component.glyphIndex = f.readUInt16()
+    component.glyphIndex = f.readUint16().swap()
     component.xScale = 1
     component.yScale = 1
 
@@ -529,11 +454,11 @@ proc parseCompositeGlyph(f: Stream, glyph: Glyph, font: Font): seq[PathCommand] 
       # The arguments are words.
       if flags.checkBit(2):
         # Values are offset.
-        component.dx = f.readInt16().float32
-        component.dy = f.readInt16().float32
+        component.dx = f.readInt16().swap().float32
+        component.dy = f.readInt16().swap().float32
       else:
         # Values are matched points.
-        component.matchedPoints = [int f.readUInt16(), int f.readUInt16()]
+        component.matchedPoints = [int f.readUint16().swap(), int f.readUint16().swap()]
 
     else:
       # The arguments are bytes.
@@ -597,12 +522,12 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
     glyph.isEmpty = true
     return
 
-  glyph.numberOfContours = f.readInt16()
+  glyph.numberOfContours = f.readInt16().swap()
   let
-    xMin = f.readInt16()
-    yMin = f.readInt16()
-    xMax = f.readInt16()
-    yMax = f.readInt16()
+    xMin = f.readInt16().swap()
+    yMin = f.readInt16().swap()
+    xMax = f.readInt16().swap()
+    yMax = f.readInt16().swap()
   glyph.bboxMin = vec2(xMin.float32, yMin.float32)
   glyph.bboxMax = vec2(xMax.float32, yMax.float32)
 
@@ -616,18 +541,18 @@ proc readFontOtf*(f: Stream): Font =
 
   var otf = OTFFont()
   otf.stream = f
-  otf.version = f.readFixed32()
-  otf.numTables = f.readUInt16()
-  otf.searchRange = f.readUInt16()
-  otf.entrySelector = f.readUInt16()
-  otf.rangeShift = f.readUInt16()
+  otf.version = f.readUint32().swap()
+  otf.numTables = f.readUint16().swap()
+  otf.searchRange = f.readUint16().swap()
+  otf.entrySelector = f.readUint16().swap()
+  otf.rangeShift = f.readUint16().swap()
 
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
-    chunk.tag = f.readString(4)
-    chunk.checkSum = f.readUInt32()
-    chunk.offset = f.readUInt32()
-    chunk.length = f.readUInt32()
+    chunk.tag = f.readStr(4)
+    chunk.checkSum = f.readUint32().swap()
+    chunk.offset = f.readUint32().swap()
+    chunk.length = f.readUint32().swap()
     otf.chunks[chunk.tag] = chunk
 
   f.setPosition(otf.chunks["head"].offset.int)
