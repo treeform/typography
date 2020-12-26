@@ -14,21 +14,24 @@ proc readFixed16(stream: Stream): float32 =
   ## Reads 16-bit signed fixed number with the low 14 bits of fraction (2.14).
   float32(stream.readInt16().swap()) / 16384.0
 
-proc fromUTF16BE*(input: string): string =
-  ## Converts UTF16 to utf8 string.
-  var
-    s = newStringStream(input)
-  while not s.atEnd():
-    var u1 = s.readUint16().swap()
+proc fromUtf16BE*(input: string): string =
+  ## Converts UTF-16 to UTF-8.
+  var pos: int
+  while pos < input.len:
+    let u1 = input.readUint16(pos).swap()
+    pos += 2
+
     if u1 - 0xd800 >= 0x800'u16:
-      result.add Rune(u1.int)
+      result.add(Rune(u1.int32))
     else:
-      var u2 = s.readUint16().swap()
+      let u2 = input.readUint16(pos).swap()
+      pos += 2
+
       if ((u1 and 0xfc00) == 0xd800) and ((u2 and 0xfc00) == 0xdc00):
-        result.add Rune((u1.uint32 shl 10) + u2.uint32 - 0x35fdc00)
+        result.add(Rune((u1.int32 shl 10) + u2.int32 - 0x35fdc00))
       else:
         # Error, produce tofu character.
-        result.add "□"
+        result.add("□")
 
 proc readHeadTable(f: Stream): HeadTable =
   result = HeadTable()
@@ -79,10 +82,10 @@ proc readNameTable*(f: Stream): NameTable =
 
     if record.platformID == 3 and record.encodingID == 1:
       # Windows UTF-16BE.
-      record.text = record.text.fromUTF16BE()
+      record.text = record.text.fromUtf16BE()
     if record.platformID == 3 and record.encodingID == 0:
       # Windows UTF-16BE.
-      record.text = record.text.fromUTF16BE()
+      record.text = record.text.fromUtf16BE()
     if record.encodingID == 1 and record.encodingID == 0:
       # Mac unicode.
       discard
@@ -648,12 +651,7 @@ proc readFontOtf*(filePath: string): Font =
   if not fileExists(filePath):
     raise newException(IOError, "File `" & filePath & "` does not exist.")
 
-  var f = newStringStream(readFile(filePath))
-  return readFontOtf(f)
-
-proc readFontTtf*(file: Stream): Font =
-  ## OTF Supports all TTF features.
-  readFontOtf(file)
+  readFontOtf(newStringStream(readFile(filePath)))
 
 proc readFontTtf*(filePath: string): Font =
   ## OTF Supports most of TTF features.
