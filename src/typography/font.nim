@@ -1,21 +1,6 @@
-import bumpy, streams, strutils, tables, vmath, opentype/types
+import bumpy, streams, strutils, tables, vmath, opentype/types, pixie/paths
 
 type
-  # Segment* = object
-  #   ## A math segment from point "at" to point "to"
-  #   at*: Vec2
-  #   to*: Vec2
-
-  PathCommandKind* = enum
-    ## Type of binary commands
-    Start, Move, Line, HLine, VLine, Cubic, SCurve, Quad, TQuad, End
-    RMove, RLine, RHLine, RVLine, RCubic, RSCurve, RQuad, RTQuad
-
-  PathCommand* = object
-    ## Binary version of an SVG command
-    kind*: PathCommandKind
-    numbers*: seq[float32]
-
   Glyph* = ref object
     ## Contains information about Glyphs or "letters"
     ## SVG Path, command buffer, and shapes of lines.
@@ -99,27 +84,6 @@ proc baseline*(font: Font): float32 =
 proc capline*(font: Font): float32 =
   ## Gets the current capline of the font based on current size and lineheight.
   font.baseline - font.typeface.capHeight * font.scale
-
-# proc intersects*(a, b: Segment, at: var Vec2): bool =
-#   ## Checks if the a segment intersects b segment.
-#   ## If it returns true, at will have point of intersection
-#   var s1_x, s1_y, s2_x, s2_y: float32
-#   s1_x = a.to.x - a.at.x
-#   s1_y = a.to.y - a.at.y
-#   s2_x = b.to.x - b.at.x
-#   s2_y = b.to.y - b.at.y
-
-#   var s, t: float32
-#   s = (-s1_y * (a.at.x - b.at.x) + s1_x * (a.at.y - b.at.y)) /
-#       (-s2_x * s1_y + s1_x * s2_y)
-#   t = (s2_x * (a.at.y - b.at.y) - s2_y * (a.at.x - b.at.x)) /
-#       (-s2_x * s1_y + s1_x * s2_y)
-
-#   if s >= 0 and s < 1 and t >= 0 and t < 1:
-#     at.x = a.at.x + (t * s1_x)
-#     at.y = a.at.y + (t * s1_y)
-#     return true
-#   return false
 
 proc glyphPathToCommands*(glyph: Glyph) =
   ## Converts a glyph into lines-shape
