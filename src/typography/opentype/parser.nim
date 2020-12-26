@@ -1,5 +1,5 @@
 import ../font, os, streams, tables, unicode, vmath, json,
-  sequtils, algorithm, types
+  sequtils, algorithm, types, pixie/paths, flatty/binny
 
 proc `%`*(t: Table[int, int]): JsonNode =
   result = newJObject()
@@ -8,18 +8,8 @@ proc `%`*(t: Table[int, int]): JsonNode =
   for k in keys:
     result[$k] = newJInt(t[k])
 
-func swap(u: uint16): uint16 =
-  ((u and 0x00FF) shl 8) or
-  ((u and 0xFF00) shr 8)
-
 func swap(u: int16): int16 =
   cast[int16](cast[uint16](u).swap())
-
-func swap(u: uint32): uint32 =
-  ((u and 0x000000FF.uint32) shl 24) or
-  ((u and 0x0000FF00.uint32) shl 8) or
-  ((u and 0x00FF0000.uint32) shr 8) or
-  ((u and 0xFF000000.uint32) shr 24)
 
 func swap(u: int32): int32 =
   cast[int32](cast[uint32](u).swap())
