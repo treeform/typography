@@ -7,9 +7,11 @@ proc readUint16Seq(stream: Stream, len: int): seq[uint16] =
     result[i] = stream.readUint16().swap()
 
 proc readFixed32(stream: Stream): float32 =
-  ceil(float32(stream.readInt32().swap()) / 65536.0 * 100000.0) / 100000.0
+  ## Packed 32-bit value with major and minor version numbers.
+  ceil(stream.readInt32().swap().float32 / 65536.0 * 100000.0) / 100000.0
 
 proc readFixed16(stream: Stream): float32 =
+  ## Reads 16-bit signed fixed number with the low 14 bits of fraction (2.14).
   float32(stream.readInt16().swap()) / 16384.0
 
 proc fromUTF16BE*(input: string): string =
