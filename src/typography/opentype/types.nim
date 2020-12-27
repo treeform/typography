@@ -1,4 +1,4 @@
-import tables, streams
+import tables
 
 type
   Offset16 = uint16
@@ -227,7 +227,7 @@ type
     length*: uint32
 
   OtfFont* = ref object
-    stream*: Stream
+    data*: string
     version*: uint32
     numTables*: uint16
     searchRange*: uint16

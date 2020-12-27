@@ -1,4 +1,4 @@
-import bumpy, streams, strutils, tables, vmath, opentype/types, pixie/paths
+import bumpy, strutils, tables, vmath, opentype/types, pixie/paths
 
 type
   Glyph* = ref object
@@ -34,7 +34,6 @@ type
     kerning*: Table[(string, string), float32]
     glyphArr*: seq[Glyph]
     otf*: OTFFont
-    stream*: Stream
 
   Font* = ref object
     ## Contains size, weight and typeface.
