@@ -62,28 +62,32 @@ proc readHeadTable(input: string, p: int): HeadTable =
   result.glyphDataFormat = input.readInt16(p + 52).swap()
   assert result.glyphDataFormat == 0
 
-proc readNameTable*(f: Stream): NameTable =
+proc readNameTable*(input: string, p: int): NameTable =
   result = NameTable()
-  let at = f.getPosition()
-  result.format = f.readUint16().swap()
+  result.format = input.readUint16(p + 0).swap()
   assert result.format == 0
-  result.count = f.readUint16().swap()
-  result.stringOffset = f.readUint16().swap()
+  result.count = input.readUint16(p + 2).swap()
+  result.stringOffset = input.readUint16(p + 4).swap()
+
+  var p = p + 6
+  let start = p
 
   for i in 0 ..< result.count.int:
     var record = NameRecord()
-    record.platformID = f.readUint16().swap()
-    record.encodingID = f.readUint16().swap()
-    record.languageID = f.readUint16().swap()
-    record.nameID = f.readUint16().swap()
+    record.platformID = input.readUint16(p + 0).swap()
+    record.encodingID = input.readUint16(p + 2).swap()
+    record.languageID = input.readUint16(p + 4).swap()
+    record.nameID = input.readUint16(p + 6).swap()
     record.name = cast[NameTableNames](record.nameID)
-    record.length = f.readUint16().swap()
-    record.offset = f.readUint16().swap()
+    record.length = input.readUint16(p + 8).swap()
+    record.offset = input.readUint16(p + 10).swap()
 
-    let save = f.getPosition()
-    f.setPosition(at + int(result.stringOffset + record.offset))
-    record.text = f.readStr(record.length.int)
-    f.setPosition(save)
+    p += 12
+
+    record.text = input.readStr(
+      start + result.stringOffset.int + record.offset.int,
+      record.length.int
+    )
 
     if record.platformID == 3 and record.encodingID == 1:
       # Windows UTF-16BE.
@@ -160,78 +164,89 @@ proc readOS2Table*(input: string, p: int): OS2Table =
     result.usLowerOpticalPointSize = input.readUint16(p + 96).swap()
     result.usUpperOpticalPointSize = input.readUint16(p + 98).swap()
 
-proc readLocaTable*(f: Stream, head: HeadTable, maxp: MaxpTable): LocaTable =
+proc readLocaTable*(
+  input: string, p: int, head: HeadTable, maxp: MaxpTable
+): LocaTable =
   result = LocaTable()
-  var locaOffset = f.getPosition()
+  var p = p
   if head.indexToLocFormat == 0:
     # Uses uint16.
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(f.readUint16().swap().uint32 * 2)
-      locaOffset += 2
+      result.offsets.add(input.readUint16(p).swap().uint32 * 2)
+      p += 2
   else:
-    # Users uint32.
+    # Uses uint32.
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(f.readUint32().swap())
-      locaOffset += 4
+      result.offsets.add(input.readUint32(p).swap())
+      p += 4
 
-proc readHheaTable*(f: Stream): HheaTable =
+proc readHheaTable*(input: string, p: int): HheaTable =
   result = HheaTable()
-  result.majorVersion = f.readUint16().swap()
+  result.majorVersion = input.readUint16(p + 0).swap()
   assert result.majorVersion == 1
-  result.minorVersion = f.readUint16().swap()
+  result.minorVersion = input.readUint16(p + 2).swap()
   assert result.minorVersion == 0
-  result.ascender = f.readInt16().swap()
-  result.descender = f.readInt16().swap()
-  result.lineGap = f.readInt16().swap()
-  result.advanceWidthMax = f.readUint16().swap()
-  result.minLeftSideBearing = f.readInt16().swap()
-  result.minRightSideBearing = f.readInt16().swap()
-  result.xMaxExtent = f.readInt16().swap()
-  result.caretSlopeRise = f.readInt16().swap()
-  result.caretSlopeRun = f.readInt16().swap()
-  result.caretOffset = f.readInt16().swap()
-  discard f.readUint16().swap()
-  discard f.readUint16().swap()
-  discard f.readUint16().swap()
-  discard f.readUint16().swap()
-  result.metricDataFormat = f.readInt16().swap()
+  result.ascender = input.readInt16(p + 4).swap()
+  result.descender = input.readInt16(p + 6).swap()
+  result.lineGap = input.readInt16(p + 8).swap()
+  result.advanceWidthMax = input.readUint16(p + 10).swap()
+  result.minLeftSideBearing = input.readInt16(p + 12).swap()
+  result.minRightSideBearing = input.readInt16(p + 14).swap()
+  result.xMaxExtent = input.readInt16(p + 16).swap()
+  result.caretSlopeRise = input.readInt16(p + 18).swap()
+  result.caretSlopeRun = input.readInt16(p + 20).swap()
+  result.caretOffset = input.readInt16(p + 22).swap()
+  discard input.readUint16(p + 24).swap()
+  discard input.readUint16(p + 26).swap()
+  discard input.readUint16(p + 28).swap()
+  discard input.readUint16(p + 30).swap()
+  result.metricDataFormat = input.readInt16(p + 32).swap()
   assert result.metricDataFormat == 0
-  result.numberOfHMetrics = f.readUint16().swap()
+  result.numberOfHMetrics = input.readUint16(p + 34).swap()
 
-proc readHmtxTable*(f: Stream, maxp: MaxpTable, hhea: HheaTable): HmtxTable =
+proc readHmtxTable*(
+  input: string, p: int, maxp: MaxpTable, hhea: HheaTable
+): HmtxTable =
   result = HmtxTable()
+  var p = p
   for i in 0 ..< maxp.numGlyphs.int:
     if i < hhea.numberOfHMetrics.int:
       var record = LongHorMetricRecrod()
-      record.advanceWidth = f.readUint16().swap()
-      record.lsb = f.readInt16().swap()
+      record.advanceWidth = input.readUint16(p + 0).swap()
+      record.lsb = input.readInt16(p + 2).swap()
       result.hMetrics.add(record)
+      p += 4
     else:
-      result.leftSideBearings.add(f.readInt16().swap())
+      result.leftSideBearings.add(input.readInt16(p + 0).swap())
+      p += 2
 
-proc readKernTable*(f: Stream): KernTable =
+proc readKernTable*(input: string, p: int): KernTable =
   result = KernTable()
-  result.version = f.readUint16().swap()
+  result.version = input.readUint16(p + 0).swap()
+  var p = p
   if result.version == 0:
     # Windows format.
-    result.nTables = f.readUint16().swap()
+    result.nTables = input.readUint16(p + 2).swap()
+    p += 4
     for i in 0 ..< result.nTables.int:
       var subTable = KernSubTable()
-      subTable.version = f.readUint16().swap()
+      subTable.version = input.readUint16(p + 0).swap()
       assert subTable.version == 0
-      subTable.length = f.readUint16().swap()
-      subTable.coverage = f.readUint16().swap()
+      subTable.length = input.readUint16(p + 2).swap()
+      subTable.coverage = input.readUint16(p + 4).swap()
       # TODO: check coverage
-      subTable.numPairs = f.readUint16().swap()
-      subTable.searchRange = f.readUint16().swap()
-      subTable.entrySelector = f.readUint16().swap()
-      subTable.rangeShift = f.readUint16().swap()
+      subTable.numPairs = input.readUint16(p + 6).swap()
+      subTable.searchRange = input.readUint16(p + 8).swap()
+      subTable.entrySelector = input.readUint16(p + 10).swap()
+      subTable.rangeShift = input.readUint16(p + 12).swap()
+      p += 14
       for i in 0 ..< subTable.numPairs.int:
         var pair = KerningPair()
-        pair.left = f.readUint16().swap()
-        pair.right = f.readUint16().swap()
-        pair.value = f.readInt16().swap()
+        pair.left = input.readUint16(p + 0).swap()
+        pair.right = input.readUint16(p + 2).swap()
+        pair.value = input.readInt16(p + 4).swap()
         subTable.kerningPairs.add(pair)
+        p += 6
       result.subTables.add(subTable)
   elif result.version == 1:
     # Mac format.
@@ -573,26 +588,25 @@ proc parseOtf(input: string): Font =
 
   otf.head = readHeadTable(input, otf.chunks["head"].offset.int)
 
-  f.setPosition(otf.chunks["name"].offset.int)
-  otf.name = f.readNameTable()
+  otf.name = readNameTable(input, otf.chunks["name"].offset.int)
 
   otf.maxp = readMaxpTable(input, otf.chunks["maxp"].offset.int)
 
   if "OS/2" in otf.chunks:
     otf.os2 = readOS2Table(input, otf.chunks["OS/2"].offset.int)
 
-  f.setPosition(otf.chunks["loca"].offset.int)
-  otf.loca = f.readLocaTable(otf.head, otf.maxp)
+  otf.loca = readLocaTable(
+    input, otf.chunks["loca"].offset.int, otf.head, otf.maxp
+  )
 
-  f.setPosition(otf.chunks["hhea"].offset.int)
-  otf.hhea = f.readHheaTable()
+  otf.hhea = readHheaTable(input, otf.chunks["hhea"].offset.int)
 
-  f.setPosition(otf.chunks["hmtx"].offset.int)
-  otf.hmtx = f.readHmtxTable(otf.maxp, otf.hhea)
+  otf.hmtx = readHmtxTable(
+    input, otf.chunks["hmtx"].offset.int, otf.maxp, otf.hhea
+  )
 
   if "kern" in otf.chunks:
-    f.setPosition(otf.chunks["kern"].offset.int)
-    otf.kern = f.readKernTable()
+    otf.kern = readKernTable(input, otf.chunks["kern"].offset.int)
 
   f.setPosition(otf.chunks["cmap"].offset.int)
   otf.cmap = f.readCmapTable()
