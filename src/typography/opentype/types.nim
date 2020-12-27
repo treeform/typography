@@ -67,7 +67,7 @@ type
     ntnWwsSubfamily            # 22
 
   MaxpTable* = ref object
-    version*: float ## 0x00010000 for version 1.0.
+    version*: float32 ## 0x00010000 for version 1.0.
     numGlyphs*: uint16 ## The number of glyphs in the otf.
     maxPoints*: uint16 ## Maximum points in a non-composite glyph.
     maxContours*: uint16 ## Maximum contours in a non-composite glyph.
@@ -228,7 +228,7 @@ type
 
   OtfFont* = ref object
     stream*: Stream
-    version*: float
+    version*: uint32
     numTables*: uint16
     searchRange*: uint16
     entrySelector*: uint16
