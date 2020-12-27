@@ -15,7 +15,7 @@ proc readFixed16(stream: Stream): float32 =
   float32(stream.readInt16().swap()) / 16384.0
 
 proc readLongDateTime*(stream: Stream): float64 =
-  result = stream.readInt64().swap().float64 - 2082844800
+  stream.readInt64().swap().float64 - 2082844800
 
 proc fromUtf16BE*(input: string): string =
   ## Converts UTF-16 to UTF-8.
