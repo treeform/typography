@@ -1,14 +1,11 @@
 import tables
 
 type
-  Offset16 = uint16
-  Offset32 = uint32
-
   HeadTable* = ref object
     majorVersion*: uint16 ## Major version number of the font header table — set to 1.
     minorVersion*: uint16 ## Minor version number of the font header table — set to 0.
     fontRevision*: float32 ## Set by font manufacturer.
-    checkSumAdjustment*: uint32 #
+    checkSumAdjustment*: uint32 ## Ignored.
     magicNumber*: uint32 ## Set to 0x5F0F3CF5.
     flags*: uint16
     unitsPerEm*: uint16 ## Set to a value from 16 to 16384.
@@ -18,16 +15,16 @@ type
     yMin*: int16 ## For all glyph bounding boxes.
     xMax*: int16 ## For all glyph bounding boxes.
     yMax*: int16 ## For all glyph bounding boxes.
-    macStyle*: uint16
+    macStyle*: uint16 ## Bit flags.
     lowestRecPPEM*: uint16 ## Smallest readable size in pixels.
-    fontDirectionHint*: int16 ## Deprecated
-    indexToLocFormat*: int16 ## for short offsets (Offset16), 1 for (Offset32).
+    fontDirectionHint*: int16 ## Deprecated.
+    indexToLocFormat*: int16 ## 0 for short offsets (Offset16), 1 for long (Offset32).
     glyphDataFormat*: int16 ## 0 for current format.
 
   NameTable* = ref object
-    format*: uint16
+    version*: uint16
     count*: uint16
-    stringOffset*: Offset16
+    stringOffset*: uint16
     nameRecords*: seq[NameRecord]
 
   NameRecord* = object
@@ -37,8 +34,7 @@ type
     nameID*: uint16 # Name ID.
     name*: NameTableNames
     length*: uint16 # String length (in bytes).
-    offset*: Offset16 # String offset from start of storage area (in bytes).
-
+    offset*: uint16 # String offset from start of storage area (in bytes).
     text*: string
 
   NameTableNames* = enum
@@ -184,7 +180,7 @@ type
   EncodingRecord* = object
     platformID*: uint16 ## Platform ID.
     encodingID*: uint16 ## Platform-specific encoding ID.
-    offset*: Offset32 ## Byte offset from beginning of table to the subtable for this encoding.
+    subtableOffset*: uint32 ## Byte offset from beginning of table to the subtable for this encoding.
 
   SegmentMapping* = ref object
     format*: uint16 ## Format number is set to 4.
@@ -227,7 +223,7 @@ type
     length*: uint32
 
   OtfFont* = ref object
-    data*: string
+    buf*: string
     version*: uint32
     numTables*: uint16
     searchRange*: uint16
