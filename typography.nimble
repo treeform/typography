@@ -10,7 +10,7 @@ requires "vmath >= 0.4.0"
 requires "chroma >= 0.1.2"
 requires "print >= 0.1.0"
 requires "bumpy >= 0.2.0"
-requires "flatty >= 0.1.2"
+requires "flatty >= 0.1.3"
 
 task docs, "Generate API documents":
   exec "nimble doc --index:on --project --out:docs --hints:off src/typography.nim"

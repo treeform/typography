@@ -15,6 +15,8 @@ proc readFixed16(stream: Stream): float32 =
   float32(stream.readInt16().swap()) / 16384.0
 
 proc readLongDateTime*(stream: Stream): float64 =
+  ## Date and time represented in number of seconds since 12:00 midnight,
+  ## January 1, 1904, UTC.
   stream.readInt64().swap().float64 - 2082844800
 
 proc fromUtf16BE*(input: string): string =
