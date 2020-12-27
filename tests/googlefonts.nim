@@ -1,6 +1,6 @@
 ## Loads google fonts and draws a text sample.
 
-import algorithm, pixie, math, os, ospaths, strutils, cligen,
+import algorithm, pixie, math, os, strutils, cligen,
     tables, typography, vmath, strformat, chroma
 
 proc textStr(font: Font): string =

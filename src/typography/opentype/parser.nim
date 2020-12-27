@@ -6,18 +6,18 @@ proc readUint16Seq(stream: Stream, len: int): seq[uint16] =
   for i in 0 ..< len:
     result[i] = stream.readUint16().swap()
 
-proc readFixed32(stream: Stream): float32 =
+proc readFixed32(input: string, p: int): float32 =
   ## Packed 32-bit value with major and minor version numbers.
-  ceil(stream.readInt32().swap().float32 / 65536.0 * 100000.0) / 100000.0
+  ceil(input.readInt32(p).swap().float32 / 65536.0 * 100000.0) / 100000.0
 
 proc readFixed16(stream: Stream): float32 =
   ## Reads 16-bit signed fixed number with the low 14 bits of fraction (2.14).
   float32(stream.readInt16().swap()) / 16384.0
 
-proc readLongDateTime*(stream: Stream): float64 =
+proc readLongDateTime*(input: string, p: int): float64 =
   ## Date and time represented in number of seconds since 12:00 midnight,
   ## January 1, 1904, UTC.
-  stream.readInt64().swap().float64 - 2082844800
+  input.readInt64(p).swap().float64 - 2082844800
 
 proc fromUtf16BE*(input: string): string =
   ## Converts UTF-16 to UTF-8.
@@ -38,28 +38,28 @@ proc fromUtf16BE*(input: string): string =
         # Error, produce tofu character.
         result.add("□")
 
-proc readHeadTable(f: Stream): HeadTable =
+proc readHeadTable(input: string, p: int): HeadTable =
   result = HeadTable()
-  result.majorVersion = f.readUint16().swap()
+  result.majorVersion = input.readUint16(p + 0).swap()
   assert result.majorVersion == 1
-  result.minorVersion = f.readUint16().swap()
+  result.minorVersion = input.readUint16(p + 2).swap()
   assert result.minorVersion == 0
-  result.fontRevision = f.readFixed32()
-  result.checkSumAdjustment = f.readUint32().swap()
-  result.magicNumber = f.readUint32().swap()
-  result.flags = f.readUint16().swap()
-  result.unitsPerEm = f.readUint16().swap()
-  result.created = f.readLongDateTime()
-  result.modified = f.readLongDateTime()
-  result.xMin = f.readInt16().swap()
-  result.yMin = f.readInt16().swap()
-  result.xMax = f.readInt16().swap()
-  result.yMax = f.readInt16().swap()
-  result.macStyle = f.readUint16().swap()
-  result.lowestRecPPEM = f.readUint16().swap()
-  result.fontDirectionHint = f.readInt16().swap()
-  result.indexToLocFormat = f.readInt16().swap()
-  result.glyphDataFormat = f.readInt16().swap()
+  result.fontRevision = input.readFixed32(p + 4)
+  result.checkSumAdjustment = input.readUint32(p + 8).swap()
+  result.magicNumber = input.readUint32(p + 12).swap()
+  result.flags = input.readUint16(p + 16).swap()
+  result.unitsPerEm = input.readUint16(p + 18).swap()
+  result.created = input.readLongDateTime(p + 20)
+  result.modified = input.readLongDateTime(p + 28)
+  result.xMin = input.readInt16(p + 36).swap()
+  result.yMin = input.readInt16(p + 38).swap()
+  result.xMax = input.readInt16(p + 40).swap()
+  result.yMax = input.readInt16(p + 42).swap()
+  result.macStyle = input.readUint16(p + 44).swap()
+  result.lowestRecPPEM = input.readUint16(p + 46).swap()
+  result.fontDirectionHint = input.readInt16(p + 48).swap()
+  result.indexToLocFormat = input.readInt16(p + 50).swap()
+  result.glyphDataFormat = input.readInt16(p + 52).swap()
   assert result.glyphDataFormat == 0
 
 proc readNameTable*(f: Stream): NameTable =
@@ -96,69 +96,69 @@ proc readNameTable*(f: Stream): NameTable =
       discard
     result.nameRecords.add(record)
 
-proc readMaxpTable*(f: Stream): MaxpTable =
+proc readMaxpTable*(input: string, p: int): MaxpTable =
   result = MaxpTable()
-  result.version = f.readFixed32()
-  result.numGlyphs = f.readUint16().swap()
-  result.maxPoints = f.readUint16().swap()
-  result.maxContours = f.readUint16().swap()
-  result.maxCompositePoints = f.readUint16().swap()
-  result.maxCompositeContours = f.readUint16().swap()
-  result.maxZones = f.readUint16().swap()
-  result.maxTwilightPoints = f.readUint16().swap()
-  result.maxStorage = f.readUint16().swap()
-  result.maxFunctionDefs = f.readUint16().swap()
-  result.maxInstructionDefs = f.readUint16().swap()
-  result.maxStackElements = f.readUint16().swap()
-  result.maxSizeOfInstructions = f.readUint16().swap()
-  result.maxComponentElements = f.readUint16().swap()
-  result.maxComponentDepth = f.readUint16().swap()
+  result.version = input.readFixed32(p + 0)
+  result.numGlyphs = input.readUint16(p + 4).swap()
+  result.maxPoints = input.readUint16(p + 6).swap()
+  result.maxContours = input.readUint16(p + 8).swap()
+  result.maxCompositePoints = input.readUint16(p + 10).swap()
+  result.maxCompositeContours = input.readUint16(p + 12).swap()
+  result.maxZones = input.readUint16(p + 14).swap()
+  result.maxTwilightPoints = input.readUint16(p + 16).swap()
+  result.maxStorage = input.readUint16(p + 18).swap()
+  result.maxFunctionDefs = input.readUint16(p + 20).swap()
+  result.maxInstructionDefs = input.readUint16(p + 22).swap()
+  result.maxStackElements = input.readUint16(p + 24).swap()
+  result.maxSizeOfInstructions = input.readUint16(p + 26).swap()
+  result.maxComponentElements = input.readUint16(p + 28).swap()
+  result.maxComponentDepth = input.readUint16(p + 30).swap()
 
-proc readOS2Table*(f: Stream): OS2Table =
+proc readOS2Table*(input: string, p: int): OS2Table =
   result = OS2Table()
-  result.version = f.readUint16().swap()
-  result.xAvgCharWidth = f.readInt16().swap()
-  result.usWeightClass = f.readUint16().swap()
-  result.usWidthClass = f.readUint16().swap()
-  result.fsType = f.readUint16().swap()
-  result.ySubscriptXSize = f.readInt16().swap()
-  result.ySubscriptYSize = f.readInt16().swap()
-  result.ySubscriptXOffset = f.readInt16().swap()
-  result.ySubscriptYOffset = f.readInt16().swap()
-  result.ySuperscriptXSize = f.readInt16().swap()
-  result.ySuperscriptYSize = f.readInt16().swap()
-  result.ySuperscriptXOffset = f.readInt16().swap()
-  result.ySuperscriptYOffset = f.readInt16().swap()
-  result.yStrikeoutSize = f.readInt16().swap()
-  result.yStrikeoutPosition = f.readInt16().swap()
-  result.sFamilyClass = f.readInt16().swap()
+  result.version = input.readUint16(p + 0).swap()
+  result.xAvgCharWidth = input.readInt16(p + 2).swap()
+  result.usWeightClass = input.readUint16(p + 4).swap()
+  result.usWidthClass = input.readUint16(p + 6).swap()
+  result.fsType = input.readUint16(p + 8).swap()
+  result.ySubscriptXSize = input.readInt16(p + 10).swap()
+  result.ySubscriptYSize = input.readInt16(p + 12).swap()
+  result.ySubscriptXOffset = input.readInt16(p + 14).swap()
+  result.ySubscriptYOffset = input.readInt16(p + 16).swap()
+  result.ySuperscriptXSize = input.readInt16(p + 18).swap()
+  result.ySuperscriptYSize = input.readInt16(p + 20).swap()
+  result.ySuperscriptXOffset = input.readInt16(p + 22).swap()
+  result.ySuperscriptYOffset = input.readInt16(p + 24).swap()
+  result.yStrikeoutSize = input.readInt16(p + 26).swap()
+  result.yStrikeoutPosition = input.readInt16(p + 28).swap()
+  result.sFamilyClass = input.readInt16(p + 30).swap()
   for i in 0 ..< 10:
-    result.panose[i] = f.readUint8()
-  result.ulUnicodeRange1 = f.readUint32().swap()
-  result.ulUnicodeRange2 = f.readUint32().swap()
-  result.ulUnicodeRange3 = f.readUint32().swap()
-  result.ulUnicodeRange4 = f.readUint32().swap()
-  result.achVendID = f.readStr(4)
-  result.fsSelection = f.readUint16().swap()
-  result.usFirstCharIndex = f.readUint16().swap()
-  result.usLastCharIndex = f.readUint16().swap()
-  result.sTypoAscender = f.readInt16().swap()
-  result.sTypoDescender = f.readInt16().swap()
-  result.sTypoLineGap = f.readInt16().swap()
-  result.usWinAscent = f.readUint16().swap()
-  result.usWinDescent = f.readUint16().swap()
+    result.panose[i] = input.readUint8(p + 32 + i)
+  result.ulUnicodeRange1 = input.readUint32(p + 42).swap()
+  result.ulUnicodeRange2 = input.readUint32(p + 46).swap()
+  result.ulUnicodeRange3 = input.readUint32(p + 50).swap()
+  result.ulUnicodeRange4 = input.readUint32(p + 54).swap()
+  result.achVendID = input.readStr(p + 58, 4)
+  result.fsSelection = input.readUint16(p + 62).swap()
+  result.usFirstCharIndex = input.readUint16(p + 64).swap()
+  result.usLastCharIndex = input.readUint16(p + 66).swap()
+  result.sTypoAscender = input.readInt16(p + 68).swap()
+  result.sTypoDescender = input.readInt16(p + 70).swap()
+  result.sTypoLineGap = input.readInt16(p + 72).swap()
+  result.usWinAscent = input.readUint16(p + 74).swap()
+  result.usWinDescent = input.readUint16(p + 76).swap()
   if result.version >= 1.uint16:
-    result.ulCodePageRange1 = f.readUint32().swap()
-    result.ulCodePageRange2 = f.readUint32().swap()
+    result.ulCodePageRange1 = input.readUint32(p + 78).swap()
+    result.ulCodePageRange2 = input.readUint32(p + 82).swap()
   if result.version >= 2.uint16:
-    result.sxHeight = f.readInt16().swap()
-    result.sCapHeight = f.readInt16().swap()
-    result.usDefaultChar = f.readUint16().swap()
-    result.usBreakChar = f.readUint16().swap()
-    result.usMaxContext = f.readUint16().swap()
+    result.sxHeight = input.readInt16(p + 86).swap()
+    result.sCapHeight = input.readInt16(p + 88).swap()
+    result.usDefaultChar = input.readUint16(p + 90).swap()
+    result.usBreakChar = input.readUint16(p + 92).swap()
+    result.usMaxContext = input.readUint16(p + 94).swap()
   if result.version >= 5.uint16:
-    result.usLowerOpticalPointSize = f.readUint16().swap()
-    result.usUpperOpticalPointSize = f.readUint16().swap()
+    result.usLowerOpticalPointSize = input.readUint16(p + 96).swap()
+    result.usUpperOpticalPointSize = input.readUint16(p + 98).swap()
 
 proc readLocaTable*(f: Stream, head: HeadTable, maxp: MaxpTable): LocaTable =
   result = LocaTable()
@@ -547,36 +547,39 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
   else:
     glyph.commands = f.parseGlyphPath(glyph)
 
-proc readFontOtf*(f: Stream): Font =
+proc parseOtf(input: string): Font =
+  var
+    f = newStringStream(input)
+    p: int
 
   var otf = OTFFont()
   otf.stream = f
-  otf.version = f.readUint32().swap()
-  otf.numTables = f.readUint16().swap()
-  otf.searchRange = f.readUint16().swap()
-  otf.entrySelector = f.readUint16().swap()
-  otf.rangeShift = f.readUint16().swap()
+  otf.version = input.readUint32(p + 0).swap()
+  otf.numTables = input.readUint16(p + 4).swap()
+  otf.searchRange = input.readUint16(p + 6).swap()
+  otf.entrySelector = input.readUint16(p + 8).swap()
+  otf.rangeShift = input.readUint16(p + 10).swap()
+
+  p += 12
 
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
-    chunk.tag = f.readStr(4)
-    chunk.checkSum = f.readUint32().swap()
-    chunk.offset = f.readUint32().swap()
-    chunk.length = f.readUint32().swap()
+    chunk.tag = input.readStr(p + 0, 4)
+    chunk.checkSum = input.readUint32(p + 4).swap()
+    chunk.offset = input.readUint32(p + 8).swap()
+    chunk.length = input.readUint32(p + 12).swap()
     otf.chunks[chunk.tag] = chunk
+    p += 16
 
-  f.setPosition(otf.chunks["head"].offset.int)
-  otf.head = f.readHeadTable()
+  otf.head = readHeadTable(input, otf.chunks["head"].offset.int)
 
   f.setPosition(otf.chunks["name"].offset.int)
   otf.name = f.readNameTable()
 
-  f.setPosition(otf.chunks["maxp"].offset.int)
-  otf.maxp = f.readMaxpTable()
+  otf.maxp = readMaxpTable(input, otf.chunks["maxp"].offset.int)
 
   if "OS/2" in otf.chunks:
-    f.setPosition(otf.chunks["OS/2"].offset.int)
-    otf.os2 = f.readOS2Table()
+    otf.os2 = readOS2Table(input, otf.chunks["OS/2"].offset.int)
 
   f.setPosition(otf.chunks["loca"].offset.int)
   otf.loca = f.readLocaTable(otf.head, otf.maxp)
@@ -656,7 +659,7 @@ proc readFontOtf*(filePath: string): Font =
   if not fileExists(filePath):
     raise newException(IOError, "File `" & filePath & "` does not exist.")
 
-  readFontOtf(newStringStream(readFile(filePath)))
+  parseOtf(readFile(filePath))
 
 proc readFontTtf*(filePath: string): Font =
   ## OTF Supports most of TTF features.
