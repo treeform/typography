@@ -12,8 +12,8 @@ type
     magicNumber*: uint32 ## Set to 0x5F0F3CF5.
     flags*: uint16
     unitsPerEm*: uint16 ## Set to a value from 16 to 16384.
-    created*: int64
-    modified*: int64
+    created*: float64
+    modified*: float64
     xMin*: int16 ## For all glyph bounding boxes.
     yMin*: int16 ## For all glyph bounding boxes.
     xMax*: int16 ## For all glyph bounding boxes.

@@ -14,6 +14,9 @@ proc readFixed16(stream: Stream): float32 =
   ## Reads 16-bit signed fixed number with the low 14 bits of fraction (2.14).
   float32(stream.readInt16().swap()) / 16384.0
 
+proc readLongDateTime*(stream: Stream): float64 =
+  result = stream.readInt64().swap().float64 - 2082844800
+
 proc fromUtf16BE*(input: string): string =
   ## Converts UTF-16 to UTF-8.
   var pos: int
@@ -44,8 +47,8 @@ proc readHeadTable(f: Stream): HeadTable =
   result.magicNumber = f.readUint32().swap()
   result.flags = f.readUint16().swap()
   result.unitsPerEm = f.readUint16().swap()
-  result.created = f.readInt64().swap()
-  result.modified = f.readInt64().swap()
+  result.created = f.readLongDateTime()
+  result.modified = f.readLongDateTime()
   result.xMin = f.readInt16().swap()
   result.yMin = f.readInt16().swap()
   result.xMax = f.readInt16().swap()
