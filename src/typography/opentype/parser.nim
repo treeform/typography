@@ -1,4 +1,5 @@
-import ../font, os, tables, unicode, vmath, types, pixie/paths, flatty/binny
+import ../font, os, tables, unicode, vmath, types, pixie/paths, flatty/binny,
+  typography/typographyerror
 
 proc readUint16Seq(buf: string, offset, len: int): seq[uint16] =
   result = newSeq[uint16](len)
@@ -20,7 +21,12 @@ proc readLongDateTime(buf: string, offset: int): float64 =
 
 proc eofCheck(buf: string, readTo: int) {.inline.} =
   if readTo > buf.len:
-    raise newException(ValueError, "Unexpected error reading font data, EOF.")
+    raise newException(
+      TypographyError, "Unexpected error reading font data, EOF"
+    )
+
+proc failUnsupported() =
+  raise newException(TypographyError, "Unsupported font data")
 
 proc fromUtf16be(buf: string): string =
   ## Converts UTF-16 to UTF-8.
@@ -49,9 +55,11 @@ proc parseHeadTable(buf: string, offset: int): HeadTable =
   buf.eofCheck(offset + 54)
   result = HeadTable()
   result.majorVersion = buf.readUint16(offset + 0).swap()
-  assert result.majorVersion == 1
+  if result.majorVersion != 1:
+    failUnsupported()
   result.minorVersion = buf.readUint16(offset + 2).swap()
-  assert result.minorVersion == 0
+  if result.minorVersion != 0:
+    failUnsupported()
   result.fontRevision = buf.readFixed32(offset + 4)
   result.checkSumAdjustment = buf.readUint32(offset + 8).swap()
   result.magicNumber = buf.readUint32(offset + 12).swap()
@@ -68,7 +76,8 @@ proc parseHeadTable(buf: string, offset: int): HeadTable =
   result.fontDirectionHint = buf.readInt16(offset + 48).swap()
   result.indexToLocFormat = buf.readInt16(offset + 50).swap()
   result.glyphDataFormat = buf.readInt16(offset + 52).swap()
-  assert result.glyphDataFormat == 0
+  if result.glyphDataFormat != 0:
+    failUnsupported()
 
 proc parseNameTable(buf: string, offset: int): NameTable =
   var p = offset
@@ -76,7 +85,8 @@ proc parseNameTable(buf: string, offset: int): NameTable =
 
   result = NameTable()
   result.format = buf.readUint16(p + 0).swap()
-  assert result.format == 0
+  if result.format != 0:
+    failUnsupported()
   result.count = buf.readUint16(p + 2).swap()
   result.stringOffset = buf.readUint16(p + 4).swap()
 
@@ -118,7 +128,8 @@ proc parseMaxpTable(buf: string, offset: int): MaxpTable =
   buf.eofCheck(offset + 32)
   result = MaxpTable()
   result.version = buf.readFixed32(offset + 0)
-  assert result.version == 1.0
+  if result.version != 1.0:
+    failUnsupported()
   result.numGlyphs = buf.readUint16(offset + 4).swap()
   result.maxPoints = buf.readUint16(offset + 6).swap()
   result.maxContours = buf.readUint16(offset + 8).swap()
@@ -215,9 +226,11 @@ proc parseHheaTable(buf: string, offset: int): HheaTable =
   buf.eofCheck(offset + 36)
   result = HheaTable()
   result.majorVersion = buf.readUint16(offset + 0).swap()
-  assert result.majorVersion == 1
+  if result.majorVersion != 1:
+    failUnsupported()
   result.minorVersion = buf.readUint16(offset + 2).swap()
-  assert result.minorVersion == 0
+  if result.minorVersion != 0:
+    failUnsupported()
   result.ascender = buf.readInt16(offset + 4).swap()
   result.descender = buf.readInt16(offset + 6).swap()
   result.lineGap = buf.readInt16(offset + 8).swap()
@@ -233,7 +246,8 @@ proc parseHheaTable(buf: string, offset: int): HheaTable =
   discard buf.readUint16(offset + 28).swap() # Reserved, discard
   discard buf.readUint16(offset + 30).swap() # Reserved, discard
   result.metricDataFormat = buf.readInt16(offset + 32).swap()
-  assert result.metricDataFormat == 0
+  if result.metricDataFormat != 0:
+    failUnsupported()
   result.numberOfHMetrics = buf.readUint16(offset + 34).swap()
 
 proc parseHmtxTable(
@@ -269,7 +283,8 @@ proc parseKernTable(buf: string, offset: int): KernTable =
       buf.eofCheck(p + 14)
       var subTable = KernSubTable()
       subTable.version = buf.readUint16(p + 0).swap()
-      assert subTable.version == 0
+      if subTable.version != 0:
+        failUnsupported()
       subTable.length = buf.readUint16(p + 2).swap()
       subTable.coverage = buf.readUint16(p + 4).swap()
       # TODO: check coverage
@@ -291,7 +306,7 @@ proc parseKernTable(buf: string, offset: int): KernTable =
     # TODO: Mac kern format
     discard
   else:
-    assert false
+    failUnsupported()
 
 proc parseCmapTable(buf: string, offset: int): CmapTable =
   var p = offset
