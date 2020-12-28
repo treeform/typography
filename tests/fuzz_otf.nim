@@ -11,9 +11,9 @@ for fontPath in walkDirRec("tests/fonts"):
 fontPaths.sort()
 
 for i in 0 ..< 10000:
-  let file = fontPaths[rand(fontPaths.len - 1)]
-  var data = readFile(file)
-  let
+  var
+    file = fontPaths[rand(fontPaths.len - 1)]
+    data = readFile(file)
     pos = rand(data.len)
     value = rand(255).char
   data[pos] = value
