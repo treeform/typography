@@ -18,13 +18,10 @@ proc textStr(font: Font): string =
 
 proc main(fonts = "/p/googlefonts/") =
   var fontPaths: seq[string]
-
   for fontPath in walkDirRec(fonts):
     if fontPath.endsWith(".ttf"):
       fontPaths.add(fontPath)
-
   fontPaths.sort()
-  fontPaths = fontPaths
 
   var mainFont = readFontTtf("tests/fonts/Ubuntu.ttf")
 

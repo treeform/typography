@@ -1,34 +1,42 @@
 import ../font, os, tables, unicode, vmath, types, pixie/paths, flatty/binny
 
-proc readUint16Seq(input: string, p, len: int): seq[uint16] =
+proc readUint16Seq(buf: string, offset, len: int): seq[uint16] =
   result = newSeq[uint16](len)
   for i in 0 ..< len:
-    result[i] = input.readUint16(p + i * 2).swap()
+    result[i] = buf.readUint16(offset + i * 2).swap()
 
-proc readFixed32(input: string, p: int): float32 =
+proc readFixed32(buf: string, offset: int): float32 =
   ## Packed 32-bit value with major and minor version numbers.
-  ceil(input.readInt32(p).swap().float32 / 65536.0 * 100000.0) / 100000.0
+  ceil(buf.readInt32(offset).swap().float32 / 65536.0 * 100000.0) / 100000.0
 
-proc readFixed16(input: string, p: int): float32 =
+proc readFixed16(buf: string, offset: int): float32 =
   ## Reads 16-bit signed fixed number with the low 14 bits of fraction (2.14).
-  input.readInt16(p).swap().float32 / 16384.0
+  buf.readInt16(offset).swap().float32 / 16384.0
 
-proc readLongDateTime*(input: string, p: int): float64 =
+proc readLongDateTime(buf: string, offset: int): float64 =
   ## Date and time represented in number of seconds since 12:00 midnight,
   ## January 1, 1904, UTC.
-  input.readInt64(p).swap().float64 - 2082844800
+  buf.readInt64(offset).swap().float64 - 2082844800
 
-proc fromUtf16BE*(input: string): string =
+proc eofCheck(buf: string, readTo: int) {.inline.} =
+  if readTo > buf.len:
+    raise newException(ValueError, "Unexpected error reading font data, EOF.")
+
+proc fromUtf16be(buf: string): string =
   ## Converts UTF-16 to UTF-8.
   var pos: int
-  while pos < input.len:
-    let u1 = input.readUint16(pos).swap()
+  while pos < buf.len:
+    buf.eofCheck(pos + 2)
+
+    let u1 = buf.readUint16(pos).swap()
     pos += 2
 
     if u1 - 0xd800 >= 0x800'u16:
       result.add(Rune(u1.int32))
     else:
-      let u2 = input.readUint16(pos).swap()
+      buf.eofCheck(pos + 2)
+
+      let u2 = buf.readUint16(pos).swap()
       pos += 2
 
       if ((u1 and 0xfc00) == 0xd800) and ((u2 and 0xfc00) == 0xdc00):
@@ -37,261 +45,299 @@ proc fromUtf16BE*(input: string): string =
         # Error, produce tofu character.
         result.add("□")
 
-proc readHeadTable(input: string, p: int): HeadTable =
+proc parseHeadTable(buf: string, offset: int): HeadTable =
+  buf.eofCheck(offset + 54)
   result = HeadTable()
-  result.majorVersion = input.readUint16(p + 0).swap()
+  result.majorVersion = buf.readUint16(offset + 0).swap()
   assert result.majorVersion == 1
-  result.minorVersion = input.readUint16(p + 2).swap()
+  result.minorVersion = buf.readUint16(offset + 2).swap()
   assert result.minorVersion == 0
-  result.fontRevision = input.readFixed32(p + 4)
-  result.checkSumAdjustment = input.readUint32(p + 8).swap()
-  result.magicNumber = input.readUint32(p + 12).swap()
-  result.flags = input.readUint16(p + 16).swap()
-  result.unitsPerEm = input.readUint16(p + 18).swap()
-  result.created = input.readLongDateTime(p + 20)
-  result.modified = input.readLongDateTime(p + 28)
-  result.xMin = input.readInt16(p + 36).swap()
-  result.yMin = input.readInt16(p + 38).swap()
-  result.xMax = input.readInt16(p + 40).swap()
-  result.yMax = input.readInt16(p + 42).swap()
-  result.macStyle = input.readUint16(p + 44).swap()
-  result.lowestRecPPEM = input.readUint16(p + 46).swap()
-  result.fontDirectionHint = input.readInt16(p + 48).swap()
-  result.indexToLocFormat = input.readInt16(p + 50).swap()
-  result.glyphDataFormat = input.readInt16(p + 52).swap()
+  result.fontRevision = buf.readFixed32(offset + 4)
+  result.checkSumAdjustment = buf.readUint32(offset + 8).swap()
+  result.magicNumber = buf.readUint32(offset + 12).swap()
+  result.flags = buf.readUint16(offset + 16).swap()
+  result.unitsPerEm = buf.readUint16(offset + 18).swap()
+  result.created = buf.readLongDateTime(offset + 20)
+  result.modified = buf.readLongDateTime(offset + 28)
+  result.xMin = buf.readInt16(offset + 36).swap()
+  result.yMin = buf.readInt16(offset + 38).swap()
+  result.xMax = buf.readInt16(offset + 40).swap()
+  result.yMax = buf.readInt16(offset + 42).swap()
+  result.macStyle = buf.readUint16(offset + 44).swap()
+  result.lowestRecPPEM = buf.readUint16(offset + 46).swap()
+  result.fontDirectionHint = buf.readInt16(offset + 48).swap()
+  result.indexToLocFormat = buf.readInt16(offset + 50).swap()
+  result.glyphDataFormat = buf.readInt16(offset + 52).swap()
   assert result.glyphDataFormat == 0
 
-proc readNameTable*(input: string, p: int): NameTable =
-  result = NameTable()
-  result.format = input.readUint16(p + 0).swap()
-  assert result.format == 0
-  result.count = input.readUint16(p + 2).swap()
-  result.stringOffset = input.readUint16(p + 4).swap()
+proc parseNameTable(buf: string, offset: int): NameTable =
+  var p = offset
+  buf.eofCheck(p + 6)
 
-  var p = p + 6
-  let start = p
+  result = NameTable()
+  result.format = buf.readUint16(p + 0).swap()
+  assert result.format == 0
+  result.count = buf.readUint16(p + 2).swap()
+  result.stringOffset = buf.readUint16(p + 4).swap()
+
+  p += 6
+
+  buf.eofCheck(p + result.count.int * 12)
 
   for i in 0 ..< result.count.int:
     var record = NameRecord()
-    record.platformID = input.readUint16(p + 0).swap()
-    record.encodingID = input.readUint16(p + 2).swap()
-    record.languageID = input.readUint16(p + 4).swap()
-    record.nameID = input.readUint16(p + 6).swap()
-    record.name = cast[NameTableNames](record.nameID)
-    record.length = input.readUint16(p + 8).swap()
-    record.offset = input.readUint16(p + 10).swap()
+    record.platformID = buf.readUint16(p + 0).swap()
+    record.encodingID = buf.readUint16(p + 2).swap()
+    record.languageID = buf.readUint16(p + 4).swap()
+    record.nameID = buf.readUint16(p + 6).swap()
+    record.length = buf.readUint16(p + 8).swap()
+    record.offset = buf.readUint16(p + 10).swap()
 
     p += 12
 
-    record.text = input.readStr(
-      start + result.stringOffset.int + record.offset.int,
-      record.length.int
-    )
+    if record.nameID < ord(NameTableNames.low) or
+      record.nameID > ord(NameTableNames.high):
+      continue
 
-    if record.platformID == 3 and record.encodingID == 1:
-      # Windows UTF-16BE.
-      record.text = record.text.fromUtf16BE()
-    if record.platformID == 3 and record.encodingID == 0:
-      # Windows UTF-16BE.
-      record.text = record.text.fromUtf16BE()
-    if record.encodingID == 1 and record.encodingID == 0:
-      # Mac unicode.
-      discard
+    record.name = NameTableNames(record.nameID)
+
+    let textOffset = offset + result.stringOffset.int + record.offset.int
+    buf.eofCheck(textOffset + record.length.int)
+    record.text = buf.readStr(textOffset, record.length.int)
+
+    if record.platformID == 3:
+      if record.encodingID == 0 or record.encodingID == 1:
+        record.text = record.text.fromUtf16be()
+    elif record.platformID == 1:
+      if record.encodingId == 0:
+        discard
+
     result.nameRecords.add(record)
 
-proc readMaxpTable*(input: string, p: int): MaxpTable =
+proc parseMaxpTable(buf: string, offset: int): MaxpTable =
+  buf.eofCheck(offset + 32)
   result = MaxpTable()
-  result.version = input.readFixed32(p + 0)
-  result.numGlyphs = input.readUint16(p + 4).swap()
-  result.maxPoints = input.readUint16(p + 6).swap()
-  result.maxContours = input.readUint16(p + 8).swap()
-  result.maxCompositePoints = input.readUint16(p + 10).swap()
-  result.maxCompositeContours = input.readUint16(p + 12).swap()
-  result.maxZones = input.readUint16(p + 14).swap()
-  result.maxTwilightPoints = input.readUint16(p + 16).swap()
-  result.maxStorage = input.readUint16(p + 18).swap()
-  result.maxFunctionDefs = input.readUint16(p + 20).swap()
-  result.maxInstructionDefs = input.readUint16(p + 22).swap()
-  result.maxStackElements = input.readUint16(p + 24).swap()
-  result.maxSizeOfInstructions = input.readUint16(p + 26).swap()
-  result.maxComponentElements = input.readUint16(p + 28).swap()
-  result.maxComponentDepth = input.readUint16(p + 30).swap()
+  result.version = buf.readFixed32(offset + 0)
+  assert result.version == 1.0
+  result.numGlyphs = buf.readUint16(offset + 4).swap()
+  result.maxPoints = buf.readUint16(offset + 6).swap()
+  result.maxContours = buf.readUint16(offset + 8).swap()
+  result.maxCompositePoints = buf.readUint16(offset + 10).swap()
+  result.maxCompositeContours = buf.readUint16(offset + 12).swap()
+  result.maxZones = buf.readUint16(offset + 14).swap()
+  result.maxTwilightPoints = buf.readUint16(offset + 16).swap()
+  result.maxStorage = buf.readUint16(offset + 18).swap()
+  result.maxFunctionDefs = buf.readUint16(offset + 20).swap()
+  result.maxInstructionDefs = buf.readUint16(offset + 22).swap()
+  result.maxStackElements = buf.readUint16(offset + 24).swap()
+  result.maxSizeOfInstructions = buf.readUint16(offset + 26).swap()
+  result.maxComponentElements = buf.readUint16(offset + 28).swap()
+  result.maxComponentDepth = buf.readUint16(offset + 30).swap()
 
-proc readOS2Table*(input: string, p: int): OS2Table =
+proc parseOS2Table(buf: string, offset: int): OS2Table =
+  var p = offset
+  buf.eofCheck(p + 78)
   result = OS2Table()
-  result.version = input.readUint16(p + 0).swap()
-  result.xAvgCharWidth = input.readInt16(p + 2).swap()
-  result.usWeightClass = input.readUint16(p + 4).swap()
-  result.usWidthClass = input.readUint16(p + 6).swap()
-  result.fsType = input.readUint16(p + 8).swap()
-  result.ySubscriptXSize = input.readInt16(p + 10).swap()
-  result.ySubscriptYSize = input.readInt16(p + 12).swap()
-  result.ySubscriptXOffset = input.readInt16(p + 14).swap()
-  result.ySubscriptYOffset = input.readInt16(p + 16).swap()
-  result.ySuperscriptXSize = input.readInt16(p + 18).swap()
-  result.ySuperscriptYSize = input.readInt16(p + 20).swap()
-  result.ySuperscriptXOffset = input.readInt16(p + 22).swap()
-  result.ySuperscriptYOffset = input.readInt16(p + 24).swap()
-  result.yStrikeoutSize = input.readInt16(p + 26).swap()
-  result.yStrikeoutPosition = input.readInt16(p + 28).swap()
-  result.sFamilyClass = input.readInt16(p + 30).swap()
+  result.version = buf.readUint16(p + 0).swap()
+  result.xAvgCharWidth = buf.readInt16(p + 2).swap()
+  result.usWeightClass = buf.readUint16(p + 4).swap()
+  result.usWidthClass = buf.readUint16(p + 6).swap()
+  result.fsType = buf.readUint16(p + 8).swap()
+  result.ySubscriptXSize = buf.readInt16(p + 10).swap()
+  result.ySubscriptYSize = buf.readInt16(p + 12).swap()
+  result.ySubscriptXOffset = buf.readInt16(p + 14).swap()
+  result.ySubscriptYOffset = buf.readInt16(p + 16).swap()
+  result.ySuperscriptXSize = buf.readInt16(p + 18).swap()
+  result.ySuperscriptYSize = buf.readInt16(p + 20).swap()
+  result.ySuperscriptXOffset = buf.readInt16(p + 22).swap()
+  result.ySuperscriptYOffset = buf.readInt16(p + 24).swap()
+  result.yStrikeoutSize = buf.readInt16(p + 26).swap()
+  result.yStrikeoutPosition = buf.readInt16(p + 28).swap()
+  result.sFamilyClass = buf.readInt16(p + 30).swap()
+  p += 32
   for i in 0 ..< 10:
-    result.panose[i] = input.readUint8(p + 32 + i)
-  result.ulUnicodeRange1 = input.readUint32(p + 42).swap()
-  result.ulUnicodeRange2 = input.readUint32(p + 46).swap()
-  result.ulUnicodeRange3 = input.readUint32(p + 50).swap()
-  result.ulUnicodeRange4 = input.readUint32(p + 54).swap()
-  result.achVendID = input.readStr(p + 58, 4)
-  result.fsSelection = input.readUint16(p + 62).swap()
-  result.usFirstCharIndex = input.readUint16(p + 64).swap()
-  result.usLastCharIndex = input.readUint16(p + 66).swap()
-  result.sTypoAscender = input.readInt16(p + 68).swap()
-  result.sTypoDescender = input.readInt16(p + 70).swap()
-  result.sTypoLineGap = input.readInt16(p + 72).swap()
-  result.usWinAscent = input.readUint16(p + 74).swap()
-  result.usWinDescent = input.readUint16(p + 76).swap()
-  if result.version >= 1.uint16:
-    result.ulCodePageRange1 = input.readUint32(p + 78).swap()
-    result.ulCodePageRange2 = input.readUint32(p + 82).swap()
-  if result.version >= 2.uint16:
-    result.sxHeight = input.readInt16(p + 86).swap()
-    result.sCapHeight = input.readInt16(p + 88).swap()
-    result.usDefaultChar = input.readUint16(p + 90).swap()
-    result.usBreakChar = input.readUint16(p + 92).swap()
-    result.usMaxContext = input.readUint16(p + 94).swap()
-  if result.version >= 5.uint16:
-    result.usLowerOpticalPointSize = input.readUint16(p + 96).swap()
-    result.usUpperOpticalPointSize = input.readUint16(p + 98).swap()
+    result.panose[i] = buf.readUint8(p + i)
+  p += 10
+  result.ulUnicodeRange1 = buf.readUint32(p + 0).swap()
+  result.ulUnicodeRange2 = buf.readUint32(p + 4).swap()
+  result.ulUnicodeRange3 = buf.readUint32(p + 8).swap()
+  result.ulUnicodeRange4 = buf.readUint32(p + 12).swap()
+  result.achVendID = buf.readStr(p + 16, 4)
+  result.fsSelection = buf.readUint16(p + 20).swap()
+  result.usFirstCharIndex = buf.readUint16(p + 22).swap()
+  result.usLastCharIndex = buf.readUint16(p + 24).swap()
+  result.sTypoAscender = buf.readInt16(p + 26).swap()
+  result.sTypoDescender = buf.readInt16(p + 28).swap()
+  result.sTypoLineGap = buf.readInt16(p + 30).swap()
+  result.usWinAscent = buf.readUint16(p + 32).swap()
+  result.usWinDescent = buf.readUint16(p + 34).swap()
+  p += 36
 
-proc readLocaTable*(
-  input: string, p: int, head: HeadTable, maxp: MaxpTable
+  if result.version >= 1.uint16:
+    buf.eofCheck(p + 8)
+    result.ulCodePageRange1 = buf.readUint32(p + 0).swap()
+    result.ulCodePageRange2 = buf.readUint32(p + 4).swap()
+    p += 8
+  if result.version >= 2.uint16:
+    buf.eofCheck(p + 10)
+    result.sxHeight = buf.readInt16(p + 0).swap()
+    result.sCapHeight = buf.readInt16(p + 2).swap()
+    result.usDefaultChar = buf.readUint16(p + 4).swap()
+    result.usBreakChar = buf.readUint16(p + 6).swap()
+    result.usMaxContext = buf.readUint16(p + 8).swap()
+    p += 10
+  if result.version >= 5.uint16:
+    buf.eofCheck(p + 4)
+    result.usLowerOpticalPointSize = buf.readUint16(p + 0).swap()
+    result.usUpperOpticalPointSize = buf.readUint16(p + 2).swap()
+    p += 4
+
+proc parseLocaTable(
+  buf: string, offset: int, head: HeadTable, maxp: MaxpTable
 ): LocaTable =
+  var p = offset
+
   result = LocaTable()
-  var p = p
   if head.indexToLocFormat == 0:
     # Uses uint16.
+    buf.eofCheck(p + maxp.numGlyphs.int * 2)
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(input.readUint16(p).swap().uint32 * 2)
+      result.offsets.add(buf.readUint16(p).swap().uint32 * 2)
       p += 2
   else:
     # Uses uint32.
+    buf.eofCheck(p + maxp.numGlyphs.int * 4)
     for i in 0 ..< maxp.numGlyphs.int:
-      result.offsets.add(input.readUint32(p).swap())
+      result.offsets.add(buf.readUint32(p).swap())
       p += 4
 
-proc readHheaTable*(input: string, p: int): HheaTable =
+proc parseHheaTable(buf: string, offset: int): HheaTable =
+  buf.eofCheck(offset + 36)
   result = HheaTable()
-  result.majorVersion = input.readUint16(p + 0).swap()
+  result.majorVersion = buf.readUint16(offset + 0).swap()
   assert result.majorVersion == 1
-  result.minorVersion = input.readUint16(p + 2).swap()
+  result.minorVersion = buf.readUint16(offset + 2).swap()
   assert result.minorVersion == 0
-  result.ascender = input.readInt16(p + 4).swap()
-  result.descender = input.readInt16(p + 6).swap()
-  result.lineGap = input.readInt16(p + 8).swap()
-  result.advanceWidthMax = input.readUint16(p + 10).swap()
-  result.minLeftSideBearing = input.readInt16(p + 12).swap()
-  result.minRightSideBearing = input.readInt16(p + 14).swap()
-  result.xMaxExtent = input.readInt16(p + 16).swap()
-  result.caretSlopeRise = input.readInt16(p + 18).swap()
-  result.caretSlopeRun = input.readInt16(p + 20).swap()
-  result.caretOffset = input.readInt16(p + 22).swap()
-  discard input.readUint16(p + 24).swap()
-  discard input.readUint16(p + 26).swap()
-  discard input.readUint16(p + 28).swap()
-  discard input.readUint16(p + 30).swap()
-  result.metricDataFormat = input.readInt16(p + 32).swap()
+  result.ascender = buf.readInt16(offset + 4).swap()
+  result.descender = buf.readInt16(offset + 6).swap()
+  result.lineGap = buf.readInt16(offset + 8).swap()
+  result.advanceWidthMax = buf.readUint16(offset + 10).swap()
+  result.minLeftSideBearing = buf.readInt16(offset + 12).swap()
+  result.minRightSideBearing = buf.readInt16(offset + 14).swap()
+  result.xMaxExtent = buf.readInt16(offset + 16).swap()
+  result.caretSlopeRise = buf.readInt16(offset + 18).swap()
+  result.caretSlopeRun = buf.readInt16(offset + 20).swap()
+  result.caretOffset = buf.readInt16(offset + 22).swap()
+  discard buf.readUint16(offset + 24).swap() # Reserved, discard
+  discard buf.readUint16(offset + 26).swap() # Reserved, discard
+  discard buf.readUint16(offset + 28).swap() # Reserved, discard
+  discard buf.readUint16(offset + 30).swap() # Reserved, discard
+  result.metricDataFormat = buf.readInt16(offset + 32).swap()
   assert result.metricDataFormat == 0
-  result.numberOfHMetrics = input.readUint16(p + 34).swap()
+  result.numberOfHMetrics = buf.readUint16(offset + 34).swap()
 
-proc readHmtxTable*(
-  input: string, p: int, maxp: MaxpTable, hhea: HheaTable
+proc parseHmtxTable(
+  buf: string, offset: int, maxp: MaxpTable, hhea: HheaTable
 ): HmtxTable =
+  var p = offset
+
   result = HmtxTable()
-  var p = p
   for i in 0 ..< maxp.numGlyphs.int:
     if i < hhea.numberOfHMetrics.int:
+      buf.eofCheck(p + 4)
       var record = LongHorMetricRecrod()
-      record.advanceWidth = input.readUint16(p + 0).swap()
-      record.lsb = input.readInt16(p + 2).swap()
+      record.advanceWidth = buf.readUint16(p + 0).swap()
+      record.lsb = buf.readInt16(p + 2).swap()
       result.hMetrics.add(record)
       p += 4
     else:
-      result.leftSideBearings.add(input.readInt16(p + 0).swap())
+      buf.eofCheck(p + 2)
+      result.leftSideBearings.add(buf.readInt16(p).swap())
       p += 2
 
-proc readKernTable*(input: string, p: int): KernTable =
+proc parseKernTable(buf: string, offset: int): KernTable =
+  var p = offset
+  buf.eofCheck(p + 2)
   result = KernTable()
-  result.version = input.readUint16(p + 0).swap()
-  var p = p
+  result.version = buf.readUint16(p + 0).swap()
   if result.version == 0:
     # Windows format.
-    result.nTables = input.readUint16(p + 2).swap()
+    buf.eofCheck(p + 4)
+    result.nTables = buf.readUint16(p + 2).swap()
     p += 4
     for i in 0 ..< result.nTables.int:
+      buf.eofCheck(p + 14)
       var subTable = KernSubTable()
-      subTable.version = input.readUint16(p + 0).swap()
+      subTable.version = buf.readUint16(p + 0).swap()
       assert subTable.version == 0
-      subTable.length = input.readUint16(p + 2).swap()
-      subTable.coverage = input.readUint16(p + 4).swap()
+      subTable.length = buf.readUint16(p + 2).swap()
+      subTable.coverage = buf.readUint16(p + 4).swap()
       # TODO: check coverage
-      subTable.numPairs = input.readUint16(p + 6).swap()
-      subTable.searchRange = input.readUint16(p + 8).swap()
-      subTable.entrySelector = input.readUint16(p + 10).swap()
-      subTable.rangeShift = input.readUint16(p + 12).swap()
+      subTable.numPairs = buf.readUint16(p + 6).swap()
+      subTable.searchRange = buf.readUint16(p + 8).swap()
+      subTable.entrySelector = buf.readUint16(p + 10).swap()
+      subTable.rangeShift = buf.readUint16(p + 12).swap()
       p += 14
       for i in 0 ..< subTable.numPairs.int:
+        buf.eofCheck(p + 6)
         var pair = KerningPair()
-        pair.left = input.readUint16(p + 0).swap()
-        pair.right = input.readUint16(p + 2).swap()
-        pair.value = input.readInt16(p + 4).swap()
+        pair.left = buf.readUint16(p + 0).swap()
+        pair.right = buf.readUint16(p + 2).swap()
+        pair.value = buf.readInt16(p + 4).swap()
         subTable.kerningPairs.add(pair)
         p += 6
       result.subTables.add(subTable)
   elif result.version == 1:
-    # Mac format.
-    # TODO: add mac kern format
+    # TODO: Mac kern format
     discard
   else:
     assert false
 
-proc readCmapTable*(input: string, p: int): CmapTable =
-  let cmapOffset = p
+proc parseCmapTable(buf: string, offset: int): CmapTable =
+  var p = offset
+  buf.eofCheck(p + 4)
+
   result = CmapTable()
-  result.version = input.readUint16(p + 0).swap()
-  result.numTables = input.readUint16(p + 2).swap()
-  var p = p + 4
+  result.version = buf.readUint16(p + 0).swap()
+  result.numTables = buf.readUint16(p + 2).swap()
+  p += 4
+
   for i in 0 ..< result.numTables.int:
+    buf.eofCheck(p + 8)
     var record = EncodingRecord()
-    record.platformID = input.readUint16(p + 0).swap()
-    record.encodingID = input.readUint16(p + 2).swap()
-    record.offset = input.readUint32(p + 4).swap()
+    record.platformID = buf.readUint16(p + 0).swap()
+    record.encodingID = buf.readUint16(p + 2).swap()
+    record.offset = buf.readUint32(p + 4).swap()
     p += 8
 
     if record.platformID == 3:
       # Windows format unicode format.
-      var p = cmapOffset + record.offset.int
-      let format = input.readUint16(p + 0).swap()
+      var p = offset + record.offset.int
+      buf.eofCheck(p + 2)
+      let format = buf.readUint16(p + 0).swap()
       if format == 4:
+        buf.eofCheck(p + 14)
         var subRecord = SegmentMapping()
         subRecord.format = format
-        subRecord.length = input.readUint16(p + 2).swap()
-        subRecord.language = input.readUint16(p + 4).swap()
-        subRecord.segCountX2 = input.readUint16(p + 6).swap()
+        subRecord.length = buf.readUint16(p + 2).swap()
+        subRecord.language = buf.readUint16(p + 4).swap()
+        subRecord.segCountX2 = buf.readUint16(p + 6).swap()
         let segCount = (subRecord.segCountX2 div 2).int
-        subRecord.searchRange = input.readUint16(p + 8).swap()
-        subRecord.entrySelector = input.readUint16(p + 10).swap()
-        subRecord.rangeShift = input.readUint16(p + 12).swap()
+        subRecord.searchRange = buf.readUint16(p + 8).swap()
+        subRecord.entrySelector = buf.readUint16(p + 10).swap()
+        subRecord.rangeShift = buf.readUint16(p + 12).swap()
         p += 14
-        subRecord.endCode = input.readUint16Seq(p, segCount)
+        buf.eofCheck(p + 2 + 4 * segCount * 2)
+        subRecord.endCode = buf.readUint16Seq(p, segCount)
         p += segCount * 2
-        subRecord.reservedPad = input.readUint16(p + 0).swap()
+        subRecord.reservedPad = buf.readUint16(p + 0).swap()
         p += 2
-        subRecord.startCode = input.readUint16Seq(p, segCount)
+        subRecord.startCode = buf.readUint16Seq(p, segCount)
         p += segCount * 2
-        subRecord.idDelta = input.readUint16Seq(p, segCount)
+        subRecord.idDelta = buf.readUint16Seq(p, segCount)
         p += segCount * 2
-        let idRangeAddress = p
-        subRecord.idRangeOffset = input.readUint16Seq(p, segCount)
+        let idRangeOffsetPos = p
+        subRecord.idRangeOffset = buf.readUint16Seq(p, segCount)
         p += segCount * 2
         for j in 0 ..< segCount:
           let
@@ -302,10 +348,11 @@ proc readCmapTable*(input: string, p: int): CmapTable =
           for c in startCount .. endCount:
             var glyphIndex = 0
             if idRangeOffset != 0:
-              var glyphIndexOffset = idRangeAddress + j * 2
+              var glyphIndexOffset = idRangeOffsetPos + j * 2
               glyphIndexOffset += idRangeOffset
               glyphIndexOffset += (c - startCount) * 2
-              glyphIndex = input.readUint16(glyphIndexOffset).swap().int
+              buf.eofCheck(glyphIndexOffset + 2)
+              glyphIndex = buf.readUint16(glyphIndexOffset).swap().int
               if glyphIndex != 0:
                 glyphIndex = (glyphIndex + idDelta) and 0xFFFF
             else:
@@ -321,43 +368,44 @@ proc readCmapTable*(input: string, p: int): CmapTable =
 
     result.encodingRecords.add(record)
 
-proc readGlyfTable*(input: string, p: int, loca: LocaTable): GlyfTable =
+proc parseGlyfTable(buf: string, offset: int, loca: LocaTable): GlyfTable =
   result = GlyfTable()
-
-  let glyphOffset = p
   for glyphIndex in 0 ..< loca.offsets.len:
     let locaOffset = loca.offsets[glyphIndex]
-    let offset = glyphOffset + locaOffset.int
-    result.offsets.add(offset)
+    result.offsets.add(offset + locaOffset.int)
 
-proc parseGlyphPath(input: string, p: int, glyph: Glyph): seq[PathCommand] =
+proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
   if glyph.numberOfContours <= 0:
     return
 
-  var p = p
+  var p = offset
+  buf.eofCheck(p + glyph.numberOfContours * 2)
 
   var endPtsOfContours = newSeq[int](glyph.numberOfContours)
   for i in 0 ..< glyph.numberOfContours:
-    endPtsOfContours[i] = input.readUint16(p).swap().int
+    endPtsOfContours[i] = buf.readUint16(p).swap().int
     p += 2
 
-  let instructionLength = input.readUint16(p).swap()
+  buf.eofCheck(p + 2)
+
+  let instructionLength = buf.readUint16(p).swap()
   p += 2 + instructionLength.int
 
-  var flags = newSeq[uint8]()
-
   let totalOfCoordinates = endPtsOfContours[endPtsOfContours.len - 1] + 1
-  var coordinates = newSeq[TtfCoordinate](totalOfCoordinates)
-
-  var i = 0
+  var
+    flags = newSeq[uint8]()
+    coordinates = newSeq[TtfCoordinate](totalOfCoordinates)
+    i = 0
   while i < totalOfCoordinates:
-    let flag = input.readUint8(p)
+    buf.eofCheck(p + 1)
+    let flag = buf.readUint8(p)
     flags.add(flag)
     inc i
     inc p
 
     if (flag and 0x8) != 0 and i < totalOfCoordinates:
-      let repeat = input.readUint8(p)
+      buf.eofCheck(p + 1)
+      let repeat = buf.readUint8(p)
       inc p
       for j in 0 ..< repeat.int:
         flags.add(flag)
@@ -368,14 +416,16 @@ proc parseGlyphPath(input: string, p: int, glyph: Glyph): seq[PathCommand] =
   for i, flag in flags:
     var x = 0
     if (flag and 0x2) != 0:
-      x = input.readUint8(p).int
+      buf.eofCheck(p + 1)
+      x = buf.readUint8(p).int
       inc p
       if (flag and 16) == 0:
         x = -x
     elif (flag and 16) != 0:
       x = 0
     else:
-      x = input.readInt16(p).swap().int
+      buf.eofCheck(p + 1)
+      x = buf.readInt16(p).swap().int
       p += 2
     prevX += x
     coordinates[i].x = prevX
@@ -386,41 +436,43 @@ proc parseGlyphPath(input: string, p: int, glyph: Glyph): seq[PathCommand] =
   for i, flag in flags:
     var y = 0
     if (flag and 0x4) != 0:
-      y = input.readUint8(p).int
+      buf.eofCheck(p + 1)
+      y = buf.readUint8(p).int
       inc p
       if (flag and 32) == 0:
         y = -y
     elif (flag and 32) != 0:
       y = 0
     else:
-      y = input.readInt16(p).swap().int
+      buf.eofCheck(p + 2)
+      y = buf.readInt16(p).swap().int
       p += 2
     prevY += y
     coordinates[i].y = prevY
 
   # Make an svg path out of this crazy stuff.
-  var path = newSeq[PathCommand]()
 
-  proc cmd(kind: PathCommandKind, x, y: int) =
-    path.add PathCommand(kind: kind, numbers: @[float32 x, float32 y])
+  template cmd(k: PathCommandKind, x, y: int) =
+    result.add(PathCommand(kind: k, numbers: @[float32 x, float32 y]))
 
-  proc cmd(kind: PathCommandKind) =
-    path.add PathCommand(kind: kind, numbers: @[])
+  template cmd(k: PathCommandKind) =
+    result.add(PathCommand(kind: k))
 
-  proc cmd(x, y: int) =
-    path[^1].numbers.add float32(x)
-    path[^1].numbers.add float32(y)
+  template cmd(x, y: int) =
+    result[^1].numbers.add([x.float32, y.float32])
 
-  var contours: seq[seq[TtfCoordinate]]
-  var currIdx = 0
+  var
+    contours: seq[seq[TtfCoordinate]]
+    currIdx = 0
   for endIdx in endPtsOfContours:
     contours.add(coordinates[currIdx .. endIdx])
     currIdx = endIdx + 1
 
   for contour in contours:
-    var prev: TtfCoordinate
-    var curr: TtfCoordinate = contour[^1]
-    var next: TtfCoordinate = contour[0]
+    var
+      prev: TtfCoordinate
+      curr: TtfCoordinate = contour[^1]
+      next: TtfCoordinate = contour[0]
 
     if curr.isOnCurve:
       cmd(Move, curr.x, curr.y)
@@ -440,14 +492,14 @@ proc parseGlyphPath(input: string, p: int, glyph: Glyph): seq[PathCommand] =
         # This is a straight line.
         cmd(Line, curr.x, curr.y)
       else:
-        var prev2 = prev
+        # var prev2 = prev
         var next2 = next
 
-        if not prev.isOnCurve:
-          prev2 = TtfCoordinate(
-            x: (curr.x + prev.x) div 2,
-            y: (curr.y + prev.y) div 2
-          )
+        # if not prev.isOnCurve:
+        #   prev2 = TtfCoordinate(
+        #     x: (curr.x + prev.x) div 2,
+        #     y: (curr.y + prev.y) div 2
+        #   )
         if not next.isOnCurve:
           next2 = TtfCoordinate(
             x: (curr.x + next.x) div 2,
@@ -459,17 +511,17 @@ proc parseGlyphPath(input: string, p: int, glyph: Glyph): seq[PathCommand] =
 
     cmd(End)
 
-  return path
-
 proc parseGlyph*(glyph: Glyph, font: Font)
 
-proc parseCompositeGlyph(input: string, p: int, glyph: Glyph, font: Font): seq[PathCommand] =
+proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): seq[PathCommand] =
   var
     typeface = font.typeface
     moreComponents = true
-    p = p
+    p = offset
   while moreComponents:
-    let flags = input.readUint16(p + 0).swap()
+    buf.eofCheck(p + 4)
+
+    let flags = buf.readUint16(p + 0).swap()
 
     type TtfComponent = object
       glyphIndex: uint16
@@ -482,7 +534,7 @@ proc parseCompositeGlyph(input: string, p: int, glyph: Glyph, font: Font): seq[P
       matchedPoints: array[2, int]
 
     var component = TtfComponent()
-    component.glyphIndex = input.readUint16(p + 2).swap()
+    component.glyphIndex = buf.readUint16(p + 2).swap()
     component.xScale = 1
     component.yScale = 1
 
@@ -493,45 +545,52 @@ proc parseCompositeGlyph(input: string, p: int, glyph: Glyph, font: Font): seq[P
 
     if flags.checkBit(1):
       # The arguments are words.
+      buf.eofCheck(p + 4)
       if flags.checkBit(2):
         # Values are offset.
-        component.dx = input.readInt16(p + 0).swap().float32
-        component.dy = input.readInt16(p + 2).swap().float32
+        component.dx = buf.readInt16(p + 0).swap().float32
+        component.dy = buf.readInt16(p + 2).swap().float32
       else:
         # Values are matched points.
         component.matchedPoints = [
-          input.readUint16(p + 0).swap().int, input.readUint16(p + 2).swap().int
+          buf.readUint16(p + 0).swap().int,
+          buf.readUint16(p + 2).swap().int
         ]
       p += 4
     else:
       # The arguments are bytes.
+      buf.eofCheck(p + 2)
       if flags.checkBit(2):
         # Values are offset.
-        component.dx = input.readInt8(p + 0).float32
-        component.dy = input.readInt8(p + 1).float32
+        component.dx = buf.readInt8(p + 0).float32
+        component.dy = buf.readInt8(p + 1).float32
       else:
         # Values are matched points.
         component.matchedPoints = [
-          input.readInt8(p + 0).int, input.readInt8(p + 1).int
+          buf.readInt8(p + 0).int,
+          buf.readInt8(p + 1).int
         ]
       p += 2
 
     if flags.checkBit(8):
       # We have a scale.
-      component.xScale = input.readFixed16(p + 0)
+      buf.eofCheck(p + 2)
+      component.xScale = buf.readFixed16(p + 0)
       component.yScale = component.xScale
       p += 2
     elif flags.checkBit(64):
       # We have an X / Y scale.
-      component.xScale = input.readFixed16(p + 0)
-      component.yScale = input.readFixed16(p + 2)
+      buf.eofCheck(p + 4)
+      component.xScale = buf.readFixed16(p + 0)
+      component.yScale = buf.readFixed16(p + 2)
       p += 4
     elif flags.checkBit(128):
       # We have a 2x2 transformation.
-      component.xScale = input.readFixed16(p + 0)
-      component.scale10 = input.readFixed16(p + 2)
-      component.scale01 = input.readFixed16(p + 4)
-      component.yScale = input.readFixed16(p + 6)
+      buf.eofCheck(p + 8)
+      component.xScale = buf.readFixed16(p + 0)
+      component.scale10 = buf.readFixed16(p + 2)
+      component.scale01 = buf.readFixed16(p + 4)
+      component.yScale = buf.readFixed16(p + 6)
       p += 8
 
     var subGlyph = typeface.glyphArr[component.glyphIndex]
@@ -550,8 +609,7 @@ proc parseCompositeGlyph(input: string, p: int, glyph: Glyph, font: Font): seq[P
       for n in 0 ..< command.numbers.len div 2:
         var pos = vec2(command.numbers[n*2+0], command.numbers[n*2+1])
         pos = mat * pos
-        newCommand.numbers.add pos.x
-        newCommand.numbers.add pos.y
+        newCommand.numbers.add([pos.x, pos.y])
       result.add(newCommand)
     moreComponents = flags.checkBit(32)
 
@@ -560,19 +618,19 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
     otf = font.typeface.otf
     index = glyph.index
 
-  var p = otf.glyf.offsets[index].int
-
   if index + 1 < otf.glyf.offsets.len and
     otf.glyf.offsets[index] == otf.glyf.offsets[index + 1]:
     glyph.isEmpty = true
     return
 
-  glyph.numberOfContours = otf.data.readInt16(p + 0).swap()
+  var p = otf.glyf.offsets[index].int
+  otf.buf.eofCheck(p + 10)
+  glyph.numberOfContours = otf.buf.readInt16(p + 0).swap()
   let
-    xMin = otf.data.readInt16(p + 2).swap()
-    yMin = otf.data.readInt16(p + 4).swap()
-    xMax = otf.data.readInt16(p + 6).swap()
-    yMax = otf.data.readInt16(p + 8).swap()
+    xMin = otf.buf.readInt16(p + 2).swap()
+    yMin = otf.buf.readInt16(p + 4).swap()
+    xMax = otf.buf.readInt16(p + 6).swap()
+    yMax = otf.buf.readInt16(p + 8).swap()
   glyph.bboxMin = vec2(xMin.float32, yMin.float32)
   glyph.bboxMax = vec2(xMax.float32, yMax.float32)
 
@@ -580,58 +638,60 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
 
   if glyph.numberOfContours == -1:
     glyph.isComposite = true
-    glyph.commands = parseCompositeGlyph(otf.data, p, glyph, font)
+    glyph.commands = parseCompositeGlyph(otf.buf, p, glyph, font)
   else:
-    glyph.commands = parseGlyphPath(otf.data, p, glyph)
+    glyph.commands = parseGlyphPath(otf.buf, p, glyph)
 
-proc parseOtf(input: string): Font =
+proc parseOtf(buf: string): Font =
   var
     otf = OTFFont()
     p: int
 
-  otf.data = input
-  otf.version = input.readUint32(p + 0).swap()
-  otf.numTables = input.readUint16(p + 4).swap()
-  otf.searchRange = input.readUint16(p + 6).swap()
-  otf.entrySelector = input.readUint16(p + 8).swap()
-  otf.rangeShift = input.readUint16(p + 10).swap()
+  buf.eofCheck(p + 12)
+
+  otf.buf = buf
+  otf.version = buf.readUint32(p + 0).swap()
+  otf.numTables = buf.readUint16(p + 4).swap()
+  otf.searchRange = buf.readUint16(p + 6).swap()
+  otf.entrySelector = buf.readUint16(p + 8).swap()
+  otf.rangeShift = buf.readUint16(p + 10).swap()
 
   p += 12
 
+  buf.eofCheck(p + otf.numTables.int * 16)
+
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
-    chunk.tag = input.readStr(p + 0, 4)
-    chunk.checkSum = input.readUint32(p + 4).swap()
-    chunk.offset = input.readUint32(p + 8).swap()
-    chunk.length = input.readUint32(p + 12).swap()
+    chunk.tag = buf.readStr(p + 0, 4)
+    chunk.checkSum = buf.readUint32(p + 4).swap()
+    chunk.offset = buf.readUint32(p + 8).swap()
+    chunk.length = buf.readUint32(p + 12).swap()
     otf.chunks[chunk.tag] = chunk
     p += 16
 
-  otf.head = readHeadTable(input, otf.chunks["head"].offset.int)
+  otf.head = parseHeadTable(buf, otf.chunks["head"].offset.int)
 
-  otf.name = readNameTable(input, otf.chunks["name"].offset.int)
+  otf.name = parseNameTable(buf, otf.chunks["name"].offset.int)
 
-  otf.maxp = readMaxpTable(input, otf.chunks["maxp"].offset.int)
+  otf.maxp = parseMaxpTable(buf, otf.chunks["maxp"].offset.int)
 
   if "OS/2" in otf.chunks:
-    otf.os2 = readOS2Table(input, otf.chunks["OS/2"].offset.int)
+    otf.os2 = parseOS2Table(buf, otf.chunks["OS/2"].offset.int)
 
-  otf.loca = readLocaTable(
-    input, otf.chunks["loca"].offset.int, otf.head, otf.maxp
-  )
+  otf.loca =
+    parseLocaTable(buf, otf.chunks["loca"].offset.int, otf.head, otf.maxp)
 
-  otf.hhea = readHheaTable(input, otf.chunks["hhea"].offset.int)
+  otf.hhea = parseHheaTable(buf, otf.chunks["hhea"].offset.int)
 
-  otf.hmtx = readHmtxTable(
-    input, otf.chunks["hmtx"].offset.int, otf.maxp, otf.hhea
-  )
+  otf.hmtx =
+    parseHmtxTable(buf, otf.chunks["hmtx"].offset.int, otf.maxp, otf.hhea)
 
   if "kern" in otf.chunks:
-    otf.kern = readKernTable(input, otf.chunks["kern"].offset.int)
+    otf.kern = parseKernTable(buf, otf.chunks["kern"].offset.int)
 
-  otf.cmap = readCmapTable(input, otf.chunks["cmap"].offset.int)
+  otf.cmap = parseCmapTable(buf, otf.chunks["cmap"].offset.int)
 
-  otf.glyf = readGlyfTable(input, otf.chunks["glyf"].offset.int, otf.loca)
+  otf.glyf = parseGlyfTable(buf, otf.chunks["glyf"].offset.int, otf.loca)
 
   var font = Font()
   var typeface = Typeface()
