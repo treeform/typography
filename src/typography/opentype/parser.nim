@@ -18,7 +18,7 @@ proc readLongDateTime(buf: string, offset: int): float64 =
   ## January 1, 1904, UTC.
   buf.readInt64(offset).swap().float64 - 2082844800
 
-proc eofCheck(buf: string, readTo: int) =
+proc eofCheck(buf: string, readTo: int) {.inline.} =
   if readTo > buf.len:
     raise newException(ValueError, "Unexpected error reading font data, EOF.")
 
