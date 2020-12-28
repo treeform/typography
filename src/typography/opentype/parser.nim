@@ -18,15 +18,15 @@ proc readLongDateTime(buf: string, offset: int): float64 =
   ## January 1, 1904, UTC.
   buf.readInt64(offset).swap().float64 - 2082844800
 
-template failEOF() =
-  raise newException(ValueError, "Unexpected error reading font data, EOF.")
+proc eofCheck(buf: string, readTo: int) =
+  if readTo > buf.len:
+    raise newException(ValueError, "Unexpected error reading font data, EOF.")
 
 proc fromUtf16be(buf: string): string =
   ## Converts UTF-16 to UTF-8.
   var pos: int
   while pos < buf.len:
-    if pos + 2 > buf.len:
-      failEOF()
+    buf.eofCheck(pos + 2)
 
     let u1 = buf.readUint16(pos).swap()
     pos += 2
@@ -34,8 +34,7 @@ proc fromUtf16be(buf: string): string =
     if u1 - 0xd800 >= 0x800'u16:
       result.add(Rune(u1.int32))
     else:
-      if pos + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(pos + 2)
 
       let u2 = buf.readUint16(pos).swap()
       pos += 2
@@ -47,9 +46,7 @@ proc fromUtf16be(buf: string): string =
         result.add("□")
 
 proc parseHeadTable(buf: string, offset: int): HeadTable =
-  if offset + 54 > buf.len:
-    failEOF()
-
+  buf.eofCheck(offset + 54)
   result = HeadTable()
   result.majorVersion = buf.readUint16(offset + 0).swap()
   assert result.majorVersion == 1
@@ -73,11 +70,9 @@ proc parseHeadTable(buf: string, offset: int): HeadTable =
   result.glyphDataFormat = buf.readInt16(offset + 52).swap()
   assert result.glyphDataFormat == 0
 
-proc parseNameTable*(buf: string, offset: int): NameTable =
+proc parseNameTable(buf: string, offset: int): NameTable =
   var p = offset
-
-  if p + 6 > buf.len:
-    failEOF()
+  buf.eofCheck(p + 6)
 
   result = NameTable()
   result.version = buf.readUint16(p + 0).swap()
@@ -87,8 +82,7 @@ proc parseNameTable*(buf: string, offset: int): NameTable =
 
   p += 6
 
-  if p + result.count.int * 12 > buf.len:
-    failEOF()
+  buf.eofCheck(p + result.count.int * 12)
 
   for i in 0 ..< result.count.int:
     var record = NameRecord()
@@ -108,9 +102,7 @@ proc parseNameTable*(buf: string, offset: int): NameTable =
     record.name = NameTableNames(record.nameID)
 
     let textOffset = offset + result.stringOffset.int + record.offset.int
-    if textOffset + record.length.int > buf.len:
-      failEOF()
-
+    buf.eofCheck(textOffset + record.length.int)
     record.text = buf.readStr(textOffset, record.length.int)
 
     if record.platformID == 3:
@@ -122,10 +114,8 @@ proc parseNameTable*(buf: string, offset: int): NameTable =
 
     result.nameRecords.add(record)
 
-proc parseMaxpTable*(buf: string, offset: int): MaxpTable =
-  if offset + 32 > buf.len:
-    failEOF()
-
+proc parseMaxpTable(buf: string, offset: int): MaxpTable =
+  buf.eofCheck(offset + 32)
   result = MaxpTable()
   result.version = buf.readFixed32(offset + 0)
   assert result.version == 1.0
@@ -144,12 +134,9 @@ proc parseMaxpTable*(buf: string, offset: int): MaxpTable =
   result.maxComponentElements = buf.readUint16(offset + 28).swap()
   result.maxComponentDepth = buf.readUint16(offset + 30).swap()
 
-proc parseOS2Table*(buf: string, offset: int): OS2Table =
+proc parseOS2Table(buf: string, offset: int): OS2Table =
   var p = offset
-
-  if p + 78 > buf.len:
-    failEOF()
-
+  buf.eofCheck(p + 78)
   result = OS2Table()
   result.version = buf.readUint16(p + 0).swap()
   result.xAvgCharWidth = buf.readInt16(p + 2).swap()
@@ -187,14 +174,12 @@ proc parseOS2Table*(buf: string, offset: int): OS2Table =
   p += 36
 
   if result.version >= 1.uint16:
-    if p + 8 > buf.len:
-      failEOF()
+    buf.eofCheck(p + 8)
     result.ulCodePageRange1 = buf.readUint32(p + 0).swap()
     result.ulCodePageRange2 = buf.readUint32(p + 4).swap()
     p += 8
   if result.version >= 2.uint16:
-    if p + 10 > buf.len:
-      failEOF()
+    buf.eofCheck(p + 10)
     result.sxHeight = buf.readInt16(p + 0).swap()
     result.sCapHeight = buf.readInt16(p + 2).swap()
     result.usDefaultChar = buf.readUint16(p + 4).swap()
@@ -202,13 +187,12 @@ proc parseOS2Table*(buf: string, offset: int): OS2Table =
     result.usMaxContext = buf.readUint16(p + 8).swap()
     p += 10
   if result.version >= 5.uint16:
-    if p + 4 > buf.len:
-      failEOF()
+    buf.eofCheck(p + 4)
     result.usLowerOpticalPointSize = buf.readUint16(p + 0).swap()
     result.usUpperOpticalPointSize = buf.readUint16(p + 2).swap()
     p += 4
 
-proc parseLocaTable*(
+proc parseLocaTable(
   buf: string, offset: int, head: HeadTable, maxp: MaxpTable
 ): LocaTable =
   var p = offset
@@ -216,23 +200,19 @@ proc parseLocaTable*(
   result = LocaTable()
   if head.indexToLocFormat == 0:
     # Uses uint16.
-    if p + maxp.numGlyphs.int * 2 > buf.len:
-      failEOF()
+    buf.eofCheck(p + maxp.numGlyphs.int * 2)
     for i in 0 ..< maxp.numGlyphs.int:
       result.offsets.add(buf.readUint16(p).swap().uint32 * 2)
       p += 2
   else:
     # Uses uint32.
-    if p + maxp.numGlyphs.int * 4 > buf.len:
-      failEOF()
+    buf.eofCheck(p + maxp.numGlyphs.int * 4)
     for i in 0 ..< maxp.numGlyphs.int:
       result.offsets.add(buf.readUint32(p).swap())
       p += 4
 
-proc parseHheaTable*(buf: string, offset: int): HheaTable =
-  if offset + 36 > buf.len:
-    failEOF()
-
+proc parseHheaTable(buf: string, offset: int): HheaTable =
+  buf.eofCheck(offset + 36)
   result = HheaTable()
   result.majorVersion = buf.readUint16(offset + 0).swap()
   assert result.majorVersion == 1
@@ -256,7 +236,7 @@ proc parseHheaTable*(buf: string, offset: int): HheaTable =
   assert result.metricDataFormat == 0
   result.numberOfHMetrics = buf.readUint16(offset + 34).swap()
 
-proc parseHmtxTable*(
+proc parseHmtxTable(
   buf: string, offset: int, maxp: MaxpTable, hhea: HheaTable
 ): HmtxTable =
   var p = offset
@@ -264,36 +244,29 @@ proc parseHmtxTable*(
   result = HmtxTable()
   for i in 0 ..< maxp.numGlyphs.int:
     if i < hhea.numberOfHMetrics.int:
-      if p + 4 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 4)
       var record = LongHorMetricRecrod()
       record.advanceWidth = buf.readUint16(p + 0).swap()
       record.lsb = buf.readInt16(p + 2).swap()
       result.hMetrics.add(record)
       p += 4
     else:
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 2)
       result.leftSideBearings.add(buf.readInt16(p).swap())
       p += 2
 
-proc parseKernTable*(buf: string, offset: int): KernTable =
+proc parseKernTable(buf: string, offset: int): KernTable =
   var p = offset
-
-  if p + 2 > buf.len:
-    failEOF()
-
+  buf.eofCheck(p + 2)
   result = KernTable()
   result.version = buf.readUint16(p + 0).swap()
   if result.version == 0:
     # Windows format.
-    if p + 4 > buf.len:
-        failEOF()
+    buf.eofCheck(p + 4)
     result.nTables = buf.readUint16(p + 2).swap()
     p += 4
     for i in 0 ..< result.nTables.int:
-      if p + 14 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 14)
       var subTable = KernSubTable()
       subTable.version = buf.readUint16(p + 0).swap()
       assert subTable.version == 0
@@ -306,8 +279,7 @@ proc parseKernTable*(buf: string, offset: int): KernTable =
       subTable.rangeShift = buf.readUint16(p + 12).swap()
       p += 14
       for i in 0 ..< subTable.numPairs.int:
-        if p + 6 > buf.len:
-          failEOF()
+        buf.eofCheck(p + 6)
         var pair = KerningPair()
         pair.left = buf.readUint16(p + 0).swap()
         pair.right = buf.readUint16(p + 2).swap()
@@ -321,11 +293,9 @@ proc parseKernTable*(buf: string, offset: int): KernTable =
   else:
     assert false
 
-proc parseCmapTable*(buf: string, offset: int): CmapTable =
+proc parseCmapTable(buf: string, offset: int): CmapTable =
   var p = offset
-
-  if p + 4 > buf.len:
-    failEOF()
+  buf.eofCheck(p + 4)
 
   result = CmapTable()
   result.version = buf.readUint16(p + 0).swap()
@@ -333,9 +303,7 @@ proc parseCmapTable*(buf: string, offset: int): CmapTable =
   p += 4
 
   for i in 0 ..< result.numTables.int:
-    if p + 8 > buf.len:
-      failEOF()
-
+    buf.eofCheck(p + 8)
     var record = EncodingRecord()
     record.platformID = buf.readUint16(p + 0).swap()
     record.encodingID = buf.readUint16(p + 2).swap()
@@ -345,12 +313,10 @@ proc parseCmapTable*(buf: string, offset: int): CmapTable =
     if record.platformID == 3:
       # Windows format unicode format.
       var p = offset + record.subtableOffset.int
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 2)
       let format = buf.readUint16(p + 0).swap()
       if format == 4:
-        if p + 14 > buf.len:
-          failEOF()
+        buf.eofCheck(p + 14)
         var subRecord = SegmentMapping()
         subRecord.format = format
         subRecord.length = buf.readUint16(p + 2).swap()
@@ -361,8 +327,7 @@ proc parseCmapTable*(buf: string, offset: int): CmapTable =
         subRecord.entrySelector = buf.readUint16(p + 10).swap()
         subRecord.rangeShift = buf.readUint16(p + 12).swap()
         p += 14
-        if p + 2 + 4 * segCount * 2 > buf.len:
-          failEOF()
+        buf.eofCheck(p + 2 + 4 * segCount * 2)
         subRecord.endCode = buf.readUint16Seq(p, segCount)
         p += segCount * 2
         subRecord.reservedPad = buf.readUint16(p + 0).swap()
@@ -386,8 +351,7 @@ proc parseCmapTable*(buf: string, offset: int): CmapTable =
               var glyphIndexOffset = idRangeOffsetPos + j * 2
               glyphIndexOffset += idRangeOffset
               glyphIndexOffset += (c - startCount) * 2
-              if glyphIndexOffset + 2 > buf.len:
-                failEOF()
+              buf.eofCheck(glyphIndexOffset + 2)
               glyphIndex = buf.readUint16(glyphIndexOffset).swap().int
               if glyphIndex != 0:
                 glyphIndex = (glyphIndex + idDelta) and 0xFFFF
@@ -404,7 +368,7 @@ proc parseCmapTable*(buf: string, offset: int): CmapTable =
 
     result.encodingRecords.add(record)
 
-proc parseGlyfTable*(buf: string, offset: int, loca: LocaTable): GlyfTable =
+proc parseGlyfTable(buf: string, offset: int, loca: LocaTable): GlyfTable =
   result = GlyfTable()
   for glyphIndex in 0 ..< loca.offsets.len:
     let locaOffset = loca.offsets[glyphIndex]
@@ -415,17 +379,14 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
     return
 
   var p = offset
-
-  if p + glyph.numberOfContours * 2 > buf.len:
-    failEOF()
+  buf.eofCheck(p + glyph.numberOfContours * 2)
 
   var endPtsOfContours = newSeq[int](glyph.numberOfContours)
   for i in 0 ..< glyph.numberOfContours:
     endPtsOfContours[i] = buf.readUint16(p).swap().int
     p += 2
 
-  if p + 2 > buf.len:
-    failEOF()
+  buf.eofCheck(p + 2)
 
   let instructionLength = buf.readUint16(p).swap()
   p += 2 + instructionLength.int
@@ -436,16 +397,14 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
     coordinates = newSeq[TtfCoordinate](totalOfCoordinates)
     i = 0
   while i < totalOfCoordinates:
-    if p + 1 > buf.len:
-      failEOF()
+    buf.eofCheck(p + 1)
     let flag = buf.readUint8(p)
     flags.add(flag)
     inc i
     inc p
 
     if (flag and 0x8) != 0 and i < totalOfCoordinates:
-      if p + 1 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 1)
       let repeat = buf.readUint8(p)
       inc p
       for j in 0 ..< repeat.int:
@@ -457,8 +416,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
   for i, flag in flags:
     var x = 0
     if (flag and 0x2) != 0:
-      if p + 1 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 1)
       x = buf.readUint8(p).int
       inc p
       if (flag and 16) == 0:
@@ -466,8 +424,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
     elif (flag and 16) != 0:
       x = 0
     else:
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 1)
       x = buf.readInt16(p).swap().int
       p += 2
     prevX += x
@@ -479,8 +436,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
   for i, flag in flags:
     var y = 0
     if (flag and 0x4) != 0:
-      if p + 1 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 1)
       y = buf.readUint8(p).int
       inc p
       if (flag and 32) == 0:
@@ -488,8 +444,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
     elif (flag and 32) != 0:
       y = 0
     else:
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 2)
       y = buf.readInt16(p).swap().int
       p += 2
     prevY += y
@@ -564,8 +519,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
     moreComponents = true
     p = offset
   while moreComponents:
-    if p + 4 > buf.len:
-      failEOF()
+    buf.eofCheck(p + 4)
 
     let flags = buf.readUint16(p + 0).swap()
 
@@ -591,8 +545,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
 
     if flags.checkBit(1):
       # The arguments are words.
-      if p + 4 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 4)
       if flags.checkBit(2):
         # Values are offset.
         component.dx = buf.readInt16(p + 0).swap().float32
@@ -605,8 +558,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
       p += 4
     else:
       # The arguments are bytes.
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 2)
       if flags.checkBit(2):
         # Values are offset.
         component.dx = buf.readInt8(p + 0).float32
@@ -620,22 +572,19 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
 
     if flags.checkBit(8):
       # We have a scale.
-      if p + 2 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 2)
       component.xScale = buf.readFixed16(p + 0)
       component.yScale = component.xScale
       p += 2
     elif flags.checkBit(64):
       # We have an X / Y scale.
-      if p + 4 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 4)
       component.xScale = buf.readFixed16(p + 0)
       component.yScale = buf.readFixed16(p + 2)
       p += 4
     elif flags.checkBit(128):
       # We have a 2x2 transformation.
-      if p + 8 > buf.len:
-        failEOF()
+      buf.eofCheck(p + 8)
       component.xScale = buf.readFixed16(p + 0)
       component.scale10 = buf.readFixed16(p + 2)
       component.scale01 = buf.readFixed16(p + 4)
@@ -673,10 +622,7 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
     return
 
   var p = otf.glyf.offsets[index].int
-
-  if p + 10 > otf.buf.len:
-      failEOF()
-
+  otf.buf.eofCheck(p + 10)
   glyph.numberOfContours = otf.buf.readInt16(p + 0).swap()
   let
     xMin = otf.buf.readInt16(p + 2).swap()
@@ -695,12 +641,11 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
     glyph.commands = parseGlyphPath(otf.buf, p, glyph)
 
 proc parseOtf(buf: string): Font =
-  if buf.len < 12:
-    failEOF()
-
   var
     otf = OTFFont()
     p: int
+
+  buf.eofCheck(p + 12)
 
   otf.buf = buf
   otf.version = buf.readUint32(p + 0).swap()
@@ -711,8 +656,7 @@ proc parseOtf(buf: string): Font =
 
   p += 12
 
-  if p + otf.numTables.int * 16 > buf.len:
-    failEOF()
+  buf.eofCheck(p + otf.numTables.int * 16)
 
   for i in 0 ..< otf.numTables.int:
     var chunk: Chunk
