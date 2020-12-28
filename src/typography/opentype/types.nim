@@ -22,7 +22,7 @@ type
     glyphDataFormat*: int16 ## 0 for current format.
 
   NameTable* = ref object
-    version*: uint16
+    format*: uint16
     count*: uint16
     stringOffset*: uint16
     nameRecords*: seq[NameRecord]
@@ -180,7 +180,7 @@ type
   EncodingRecord* = object
     platformID*: uint16 ## Platform ID.
     encodingID*: uint16 ## Platform-specific encoding ID.
-    subtableOffset*: uint32 ## Byte offset from beginning of table to the subtable for this encoding.
+    offset*: uint32 ## Byte offset from beginning of table to the subtable for this encoding.
 
   SegmentMapping* = ref object
     format*: uint16 ## Format number is set to 4.

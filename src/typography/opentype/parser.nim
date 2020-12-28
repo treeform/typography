@@ -75,8 +75,8 @@ proc parseNameTable(buf: string, offset: int): NameTable =
   buf.eofCheck(p + 6)
 
   result = NameTable()
-  result.version = buf.readUint16(p + 0).swap()
-  assert result.version == 0
+  result.format = buf.readUint16(p + 0).swap()
+  assert result.format == 0
   result.count = buf.readUint16(p + 2).swap()
   result.stringOffset = buf.readUint16(p + 4).swap()
 
@@ -307,12 +307,12 @@ proc parseCmapTable(buf: string, offset: int): CmapTable =
     var record = EncodingRecord()
     record.platformID = buf.readUint16(p + 0).swap()
     record.encodingID = buf.readUint16(p + 2).swap()
-    record.subtableOffset = buf.readUint32(p + 4).swap()
+    record.offset = buf.readUint32(p + 4).swap()
     p += 8
 
     if record.platformID == 3:
       # Windows format unicode format.
-      var p = offset + record.subtableOffset.int
+      var p = offset + record.offset.int
       buf.eofCheck(p + 2)
       let format = buf.readUint16(p + 0).swap()
       if format == 4:
@@ -553,7 +553,8 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
       else:
         # Values are matched points.
         component.matchedPoints = [
-          buf.readUint16(p + 0).swap().int, buf.readUint16(p + 2).swap().int
+          buf.readUint16(p + 0).swap().int,
+          buf.readUint16(p + 2).swap().int
         ]
       p += 4
     else:
@@ -566,7 +567,8 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
       else:
         # Values are matched points.
         component.matchedPoints = [
-          buf.readInt8(p + 0).int, buf.readInt8(p + 1).int
+          buf.readInt8(p + 0).int,
+          buf.readInt8(p + 1).int
         ]
       p += 2
 
