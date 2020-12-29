@@ -42,6 +42,8 @@ type
     lineHeight*: float32
     weight*: float32
 
+  TypographyError* = object of ValueError
+
 proc `sizePt`*(font: Font): float32 =
   ## Gets font size in Pt or Point units.
   font.size * 0.75

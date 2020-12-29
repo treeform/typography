@@ -23,5 +23,14 @@ for i in 0 ..< 10000:
     doAssert font != nil
     for glyph in font.typeface.glyphArr:
       parseGlyph(glyph, font)
-  except:
+  except TypographyError:
+    discard
+
+  data = data[0 ..< pos]
+  try:
+    let font = parseOtf(data)
+    doAssert font != nil
+    for glyph in font.typeface.glyphArr:
+      parseGlyph(glyph, font)
+  except TypographyError:
     discard
