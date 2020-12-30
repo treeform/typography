@@ -1,5 +1,5 @@
 import bumpy, chroma, pixie, print, strformat, typography, typography/textboxes,
-    unicode, vmath, os, osproc
+    unicode, vmath, os, osproc, typography/svgfont
 
 setCurrentDir(getCurrentDir() / "tests")
 

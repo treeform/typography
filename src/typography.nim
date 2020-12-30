@@ -1,4 +1,4 @@
 import typography/font, typography/layout, typography/opentype/parser,
-    typography/rasterizer, typography/svgfonts
+    typography/rasterizer
 
-export font, layout, parser, rasterizer, svgfonts
+export font, layout, parser, rasterizer
