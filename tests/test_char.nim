@@ -55,12 +55,12 @@ block:
         winding=true
       )
 
-      image.writeFile("rendered/testchar.png")
+      image.writeFile("rendered/test_char.png")
 
       var glyphOffset: Vec2
       image = font.getGlyphImage(glyph, glyphOffset, quality=4)
       image.alphaToBlankAndWhite()
-      image.writeFile("rendered/testcharFill.png")
+      image.writeFile("rendered/test_charFill.png")
 
       if image.width == 1396:
         quit()

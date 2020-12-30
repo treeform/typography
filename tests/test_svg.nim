@@ -38,7 +38,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.writeFile("rendered/testsvg.png")
+  image.writeFile("rendered/test_svg.png")
 
   echo "saved"
 

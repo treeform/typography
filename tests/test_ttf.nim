@@ -22,7 +22,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.writeFile("rendered/testttf.png")
+  image.writeFile("rendered/test_ttf.png")
 
   echo "saved"
 
