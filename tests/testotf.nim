@@ -47,7 +47,7 @@ block:
   )
 
   image.alphaToBlankAndWhite()
-  image.writeFile("testotf.png")
+  image.writeFile("rendered/testotf.png")
 
   echo "saved"
 
