@@ -22,14 +22,14 @@ var font = readFontSvg("fonts/Ubuntu.svg")
 font.drawText(image, vec2(10, 50), "The quick brown fox jumps over the lazy dog.")
 ```
 
-![example output](tests/basicSvg.png?raw=true)
+![example output](tests/rendered/basicSvg.png?raw=true)
 
 ```nim
 var font = readFontTtf("fonts/Ubuntu.ttf")
 font.drawText(image, vec2(10, 50), "The quick brown fox jumps over the lazy dog.")
 ```
 
-![example output](tests/basicTtf.png?raw=true)
+![example output](tests/rendered/basicTtf.png?raw=true)
 
 ```nim
 font.size = 8
@@ -42,12 +42,12 @@ font.size = 22
 font.drawText(image, vec2(10, 75), "The quick brown fox jumps over the lazy dog.")
 ```
 
-![example output](tests/sizes.png?raw=true)
+![example output](tests/rendered/sizes.png?raw=true)
 
 ```nim
 font.drawText(image, vec2(10, 10), readFile("examples/sample.ru.txt"))
 ```
-![example output](tests/ru.png?raw=true)
+![example output](tests/rendered/ru.png?raw=true)
 
 # Dealing with Glyphs
 
@@ -66,14 +66,14 @@ You can also draw this path to see all of the paths and all of the curve contorl
 ```nim
 font.getGlyphOutlineImage("Q")
 ```
-![example output](tests/qOutLine.png?raw=true)
+![example output](tests/rendered/qOutLine.png?raw=true)
 
 Most of the time you would like to just get the image instead:
 
 ```nim
 font.getGlyphImage("Q")
 ```
-![example output](tests/qFill.png?raw=true)
+![example output](tests/rendered/qFill.png?raw=true)
 
 You can then use this image in openGL, canvas, or even HTML.
 
@@ -81,13 +81,13 @@ You can then use this image in openGL, canvas, or even HTML.
 
 Each glyphs can be rendered with a subpixel offset, so that it fits into the layout:
 
-![example output](tests/subpixelpos.png?raw=true)
+![example output](tests/rendered/subpixelpos.png?raw=true)
 
 Note how many of the "o"s and "m"s are different from each other. This happens because spaces between letters are not an integer number of pixels so glyphs must be rendred shifted by fraction of a pixel.
 
 Here is how glyph changes with different subpixel offsets:
 
-![example output](tests/subpixelglyphs.png?raw=true)
+![example output](tests/rendered/subpixelglyphs.png?raw=true)
 
 ```nim
 var glyphOffset # this is an offset of the image from the 0,0 position
@@ -109,7 +109,7 @@ To where it bent in the undergrowth;""")
 
 This produces a layout.
 
-![example output](tests/layoutNoText.png?raw=true)
+![example output](tests/rendered/layoutNoText.png?raw=true)
 
 ## Drawing the layout
 You can then use the simple drawing included to draw to an image, or use some other graphical librarry like openGL, canvas, or even HTML:
@@ -117,7 +117,7 @@ You can then use the simple drawing included to draw to an image, or use some ot
 ```nim
 image.drawText(layout)
 ```
-![example output](tests/layout.png?raw=true)
+![example output](tests/rendered/layout.png?raw=true)
 
 ## Wrapping and Clipping
 
@@ -131,7 +131,7 @@ font.typeset(
 )
 ```
 
-![example output](tests/wordwrap.png?raw=true)
+![example output](tests/rendered/wordwrap.png?raw=true)
 
 ## Alignment
 
@@ -146,7 +146,7 @@ font.typeset("Center, Bottom",
 )
 ```
 
-![example output](tests/alignment.png?raw=true)
+![example output](tests/rendered/alignment.png?raw=true)
 
 ## Selection
 
@@ -156,7 +156,7 @@ When selecting text is useful to know where to highlighting rectangles.
 layout.getSelection(23, 120) # selects char 23 to char 120 (not glyphs)
 ```
 
-![example output](tests/selection.png?raw=true)
+![example output](tests/rendered/selection.png?raw=true)
 
 ## Picking
 
@@ -166,7 +166,7 @@ When clicking on text is useful to know where to highlighting what glyph and wha
 layout.pickGlyphAt(vec2(120, 48)) # selects glyph at cordiantes
 ```
 
-![example output](tests/picking.png?raw=true)
+![example output](tests/rendered/picking.png?raw=true)
 
 
 # Comparison to different OSs.
@@ -185,23 +185,23 @@ At the large font sizes (more then 24 pixels) the fonts on most operating system
 
 Typography renderer - **this library** (4x):
 
-![example output](tests/scaledup.png?raw=true)
+![example output](tests/rendered/scaledup.png?raw=true)
 
 Apple Core Text renderer (4x):
 
-![example output](tests/sketchMac.png?raw=true)
+![example output](docs/sketchMac.png?raw=true)
 
 Paint.net renderer Windows (4x):
 
-![example output](tests/paintNetWindows.png?raw=true)
+![example output](docs/paintNetWindows.png?raw=true)
 
 Bohemian Sketch renderer OSx (4x):
 
-![example output](tests/sketchMac.png?raw=true)
+![example output](docs/sketchMac.png?raw=true)
 
 Window ClearType renderer (4x):
 
-![example output](tests/notepadWindows.png?raw=true)
+![example output](docs/notepadWindows.png?raw=true)
 
 How the font should look on screen is very subjective, some people love the crisp windows fonts, others swear by the apples adherence to design. But my opinion is it's all related a lot with familiarity. What you are used to is what you would like best, and when a person switches to a different screen with a different font rendering style brain immediately rejects it.
 
