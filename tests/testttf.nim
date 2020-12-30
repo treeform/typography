@@ -26,7 +26,7 @@ block:
 
   echo "saved"
 
-let (outp, _) = execCmdEx("git diff tests/*.png")
+let (outp, _) = execCmdEx("git diff tests/rendered/*.png")
 if len(outp) != 0:
   echo outp
   quit("Output does not match")
