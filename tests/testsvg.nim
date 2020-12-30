@@ -1,4 +1,5 @@
-import pixie, print, tables, typography, typography, vmath, os, osproc
+import pixie, print, tables, typography, typography, vmath, os, osproc,
+  typography/svgfont
 
 setCurrentDir(getCurrentDir() / "tests")
 

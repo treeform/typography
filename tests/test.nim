@@ -1,4 +1,5 @@
-import bumpy, chroma, pixie, print, tables, typography, vmath, os, osproc
+import bumpy, chroma, pixie, print, tables, typography, vmath, os, osproc,
+  typography/svgfont
 
 setCurrentDir(getCurrentDir() / "tests")
 

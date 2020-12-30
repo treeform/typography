@@ -3,6 +3,33 @@
 import algorithm, pixie, math, os, strutils, cligen,
     tables, typography, vmath, strformat, chroma
 
+proc imageDiff*(master, image: Image): (float32, Image) =
+  var
+    diffImage = newImage(master.width, master.height)
+    diffScore = 0
+    diffTotal = 0
+  for x in 0 ..< master.width:
+    for y in 0 ..< master.height:
+      let
+        m = master.getRgbaUnsafe(x, y)
+        u = image.getRgbaUnsafe(x, y)
+      var
+        c: ColorRGBA
+      let diff = (m.r.int - u.r.int) +
+        (m.g.int - u.g.int) +
+        (m.b.int - u.b.int)
+      c.r = abs(m.a.int - u.a.int).clamp(0, 255).uint8
+      c.g = (diff).clamp(0, 255).uint8
+      c.b = (-diff).clamp(0, 255).uint8
+      c.a = 255
+      diffScore += abs(m.r.int - u.r.int) +
+        abs(m.g.int - u.g.int) +
+        abs(m.b.int - u.b.int) +
+        abs(m.a.int - u.a.int)
+      diffTotal += 255 * 4
+      diffImage.setRgbaUnsafe(x, y, c)
+  return (100 * diffScore.float32 / diffTotal.float32, diffImage)
+
 proc textStr(font: Font): string =
   var text = """The quick brown fox jumps over the lazy dog."""
   if "q" notin font.typeface.glyphs:
@@ -23,7 +50,9 @@ proc main(fonts = "/p/googlefonts/") =
       fontPaths.add(fontPath)
   fontPaths.sort()
 
-  var mainFont = readFontTtf("tests/fonts/Ubuntu.ttf")
+  var
+    mainFont = readFontTtf("tests/fonts/Ubuntu.ttf")
+    html = ""
 
   for pageNum in 0 ..< fontPaths.len div 100 + 1:
     echo "page ", pageNum
@@ -56,19 +85,29 @@ proc main(fonts = "/p/googlefonts/") =
         path.rect(300, line, 500, 1)
         image.fillPath(path, rgba(0, 0, 0, 255))
 
-      try:
-        font.drawText(
-          image,
-          vec2(300, y),
-          font.textStr()
-        )
-      except:
-        echo "error!"
-        discard
+      font.drawText(
+        image,
+        vec2(300, y),
+        font.textStr()
+      )
 
     image.alphaToBlankAndWhite()
-    let imagePath = &"tests/samples/googlefonts_{pageNum}.png"
-    echo "saving ", imagePath
-    image.writeFile(imagePath)
+    echo "saving ", pageNum
+    image.writeFile(&"tests/googlefonts/out/googlefonts_{pageNum}.png")
+
+    let
+      master = readImage(&"tests/googlefonts/masters/googlefonts_{pageNum}.png")
+      (score, diff) = imageDiff(master, image)
+
+    diff.writeFile(&"tests/googlefonts/diffs/googlefonts_{pageNum}.png")
+
+    html.add(&"<h4>{pageNum}</h4>")
+    html.add(&"<p>{score:0.3f}% diffpx</p>")
+    html.add(&"<img width='300' src='out/googlefonts_{pageNum}.png'>")
+    html.add(&"<img width='300' src='masters/googlefonts_{pageNum}.png'>")
+    html.add(&"<img width='300' src='diffs/googlefonts_{pageNum}.png'>")
+    html.add("<br>")
+
+  writeFile("tests/googlefonts/index.html", html)
 
 dispatch(main)

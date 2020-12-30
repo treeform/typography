@@ -5,7 +5,7 @@ license       = "MIT"
 srcDir        = "src"
 
 requires "nim >= 1.0.0"
-requires "pixie >= 0.0.7"
+requires "pixie >= 0.0.9"
 requires "vmath >= 0.4.0"
 requires "chroma >= 0.1.2"
 requires "print >= 0.1.0"
