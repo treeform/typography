@@ -1,14 +1,10 @@
-import os, strutils, algorithm, random, strformat
+import os, strutils, random, strformat, common
 
 include typography/opentype/parser
 
 randomize()
 
-var fontPaths: seq[string]
-for fontPath in walkDirRec("tests/fonts"):
-  if fontPath.endsWith(".ttf") or fontPath.endsWith(".otf"):
-    fontPaths.add(fontPath)
-fontPaths.sort()
+let fontPaths = findAllFonts("tests/fonts")
 
 for i in 0 ..< 10000:
   var
