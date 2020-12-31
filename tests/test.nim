@@ -50,7 +50,7 @@ block:
   font.size = 100
   var image = font.getGlyphImage("h")
   image.alphaToBlankAndWhite()
-  image.writeFile("hFill.png")
+  image.writeFile("rendered/hFill.png")
 
 block:
   var image = newImage(500, 40)
@@ -60,7 +60,7 @@ block:
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.writeFile("basicSvg.png")
+  image.writeFile("rendered/basicSvg.png")
 
 block:
   var font = readFontTtf("fonts/Ubuntu.ttf")
@@ -70,7 +70,7 @@ block:
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.writeFile("basicTtf.png")
+  image.writeFile("rendered/basicTtf.png")
 
 block:
   var font = readFontTtf("fonts/IBMPlexSans-Regular.ttf")
@@ -80,7 +80,7 @@ block:
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.writeFile("basicTtf2.png")
+  image.writeFile("rendered/basicTtf2.png")
 
 
 block:
@@ -101,7 +101,7 @@ block:
   font.drawText(image, vec2(10, 180), "The quick brown fox jumps over the lazy dog.")
 
   image.alphaToBlankAndWhite()
-  image.writeFile("sizes.png")
+  image.writeFile("rendered/sizes.png")
 
 block:
   var image = newImage(800, 220)
@@ -112,7 +112,7 @@ block:
   font.drawText(image, vec2(10, 10), readFile("sample.ru.txt"))
 
   image.alphaToBlankAndWhite()
-  image.writeFile("ru.png")
+  image.writeFile("rendered/ru.png")
 
 block:
   var image = newImage(800, 200)
@@ -122,7 +122,7 @@ block:
   print "svg:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
-  image.writeFile("sample_svg.png")
+  image.writeFile("rendered/sample_svg.png")
 
 block:
   var image = newImage(800, 200)
@@ -132,12 +132,12 @@ block:
   print "ttf:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
   image.alphaToBlankAndWhite()
-  image.writeFile("sample_ttf.png")
+  image.writeFile("rendered/sample_ttf.png")
 
 
 block:
   var
-    sample = readImage("sample_ttf.png")
+    sample = readImage("rendered/sample_ttf.png")
     master = readImage("sample_master.png")
   for x in 0 ..< sample.width:
     for y in 0 ..< sample.height:
@@ -145,7 +145,7 @@ block:
       var b = sample[x, y].color
       var c = mix(a, b)
       sample[x, y] = c.rgba
-  sample.writeFile("sample_blur.png")
+  sample.writeFile("rendered/sample_blur.png")
 
 # block:
 #   var image = newImage(800, 200)
@@ -167,7 +167,7 @@ block:
   font.drawText(image, vec2(10, 10), readFile("sample.ch.txt"))
 
   image.alphaToBlankAndWhite()
-  image.writeFile("ch.png")
+  image.writeFile("rendered/ch.png")
 
 block:
   var image = newImage(250, 20)
@@ -178,7 +178,7 @@ block:
 
   image = image.magnifyNearest(4)
   image.alphaToBlankAndWhite()
-  image.writeFile("scaledup.png")
+  image.writeFile("rendered/scaledup.png")
 
 block:
   var image = newImage(140, 20)
@@ -189,7 +189,7 @@ block:
 
   image = image.magnifyNearest(6)
   image.alphaToBlankAndWhite()
-  image.writeFile("subpixelpos.png")
+  image.writeFile("rendered/subpixelpos.png")
 
 block:
   var image = newImage(140, 20)
@@ -228,7 +228,7 @@ block:
     image.line(at + vec2(0, -13 * mag), at + vec2(7 * mag, -13 * mag), red)
     image.line(at + vec2(0, -13 * mag), at, red)
 
-  image.writeFile("subpixelglyphs.png")
+  image.writeFile("rendered/subpixelglyphs.png")
 
 block:
   var font = readFontTtf("fonts/Moon Bold.otf")
@@ -239,11 +239,11 @@ block:
 
   echo font.typeface.glyphs["Q"].path
 
-  image.writeFile("qOutLine.png")
+  image.writeFile("rendered/qOutLine.png")
 
   image = font.getGlyphImage("Q")
   image.alphaToBlankAndWhite()
-  image.writeFile("qFill.png")
+  image.writeFile("rendered/qFill.png")
 
 block:
   var image = newImage(200, 100)
@@ -287,7 +287,7 @@ To where it bent in the undergrowth;""")
         ),
         rgba(255, 0, 0, 255)
       )
-  image.writeFile("layout.png")
+  image.writeFile("rendered/layout.png")
 
   image.fill(rgba(255, 255, 255, 255))
   # draw layout boxes only
@@ -308,7 +308,7 @@ To where it bent in the undergrowth;""")
         ),
         rgba(255, 0, 0, 255)
       )
-  image.writeFile("layoutNoText.png")
+  image.writeFile("rendered/layoutNoText.png")
 
 block:
   var image = newImage(500, 200)
@@ -408,7 +408,7 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.writeFile("alignment.png")
+  image.writeFile("rendered/alignment.png")
 
 block:
   var image = newImage(500, 200)
@@ -430,7 +430,7 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.writeFile("wordwrap.png")
+  image.writeFile("rendered/wordwrap.png")
 
 block:
   var image = newImage(500, 200)
@@ -452,7 +452,7 @@ block:
     rgba(255, 0, 0, 255)
   )
 
-  image.writeFile("wordwrapch.png")
+  image.writeFile("rendered/wordwrapch.png")
 
 block:
   var image = newImage(300, 120)
@@ -480,7 +480,7 @@ To where it bent in the undergrowth;""",
   for rect in selectionRects:
     image.strokeRect(rect, rgba(255, 0, 0, 255))
 
-  image.writeFile("selection.png")
+  image.writeFile("rendered/selection.png")
 
 block:
 
@@ -510,7 +510,7 @@ To where it bent in the undergrowth;""",
   image.strokeRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
   image.strokeRect(g.selectRect, rgba(255, 0, 0, 255))
 
-  image.writeFile("picking.png")
+  image.writeFile("rendered/picking.png")
 
 block:
   var image = newImage(500, 120)
@@ -531,7 +531,7 @@ block:
   # draw text at a layout
   image.drawText(layout)
   image.alphaToBlankAndWhite()
-  image.writeFile("tabs.png")
+  image.writeFile("rendered/tabs.png")
 
 block:
 
@@ -574,7 +574,7 @@ block:
   var master = readImage("font_metrics_master.png")
 
   image.alphaToBlankAndWhite()
-  image.writeFile("font_metrics.png")
+  image.writeFile("rendered/font_metrics.png")
 
   for x in 0 ..< image.width:
     for y in 0 ..< image.height:
@@ -583,9 +583,9 @@ block:
       var c = mix(a, b)
       image[x, y] = c.rgba
 
-  image.writeFile("font_metrics_blur.png")
+  image.writeFile("rendered/font_metrics_blur.png")
 
-let (outp, _) = execCmdEx("git diff tests/*.png")
+let (outp, _) = execCmdEx("git diff tests/rendered/*.png")
 if len(outp) != 0:
   echo outp
   quit("Output does not match")

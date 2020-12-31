@@ -55,17 +55,17 @@ block:
         winding=true
       )
 
-      image.writeFile("testchar.png")
+      image.writeFile("rendered/test_char.png")
 
       var glyphOffset: Vec2
       image = font.getGlyphImage(glyph, glyphOffset, quality=4)
       image.alphaToBlankAndWhite()
-      image.writeFile("testcharFill.png")
+      image.writeFile("rendered/test_charFill.png")
 
       if image.width == 1396:
         quit()
 
-let (outp, _) = execCmdEx("git diff tests/*.png")
+let (outp, _) = execCmdEx("git diff tests/rendered/*.png")
 if len(outp) != 0:
   echo outp
   quit("Output does not match")

@@ -1,34 +1,7 @@
 ## Loads google fonts and draws a text sample.
 
-import algorithm, pixie, math, os, strutils, cligen,
-    tables, typography, vmath, strformat, chroma
-
-proc imageDiff*(master, image: Image): (float32, Image) =
-  var
-    diffImage = newImage(master.width, master.height)
-    diffScore = 0
-    diffTotal = 0
-  for x in 0 ..< master.width:
-    for y in 0 ..< master.height:
-      let
-        m = master.getRgbaUnsafe(x, y)
-        u = image.getRgbaUnsafe(x, y)
-      var
-        c: ColorRGBA
-      let diff = (m.r.int - u.r.int) +
-        (m.g.int - u.g.int) +
-        (m.b.int - u.b.int)
-      c.r = abs(m.a.int - u.a.int).clamp(0, 255).uint8
-      c.g = (diff).clamp(0, 255).uint8
-      c.b = (-diff).clamp(0, 255).uint8
-      c.a = 255
-      diffScore += abs(m.r.int - u.r.int) +
-        abs(m.g.int - u.g.int) +
-        abs(m.b.int - u.b.int) +
-        abs(m.a.int - u.a.int)
-      diffTotal += 255 * 4
-      diffImage.setRgbaUnsafe(x, y, c)
-  return (100 * diffScore.float32 / diffTotal.float32, diffImage)
+import pixie, math, os, strutils, cligen, common, tables, typography, vmath,
+  strformat, chroma
 
 proc textStr(font: Font): string =
   var text = """The quick brown fox jumps over the lazy dog."""
@@ -44,11 +17,7 @@ proc textStr(font: Font): string =
   return text
 
 proc main(fonts = "/p/googlefonts/") =
-  var fontPaths: seq[string]
-  for fontPath in walkDirRec(fonts):
-    if fontPath.endsWith(".ttf"):
-      fontPaths.add(fontPath)
-  fontPaths.sort()
+  let fontPaths = findAllFonts(fonts)
 
   var
     mainFont = readFontTtf("tests/fonts/Ubuntu.ttf")
