@@ -1,36 +1,37 @@
 ## Utils for finding installed and system fonts.
 
-import os, strutils
+import algorithm, os, strutils, font
 
-var fontDirectories*: seq[string]
-
-when defined(MacOSX):
-  fontDirectories = @[
-    "/System/Library/Fonts/",
-    "/Library/Fonts/",
-    getHomeDir() & "/Library/Fonts/"
-  ]
-elif defined(windows):
-  fontDirectories = @[
-    r"C:\Windows\Fonts",
-  ]
-else:
-  # TODO implement linux
-  discard
+const fontDirectories* =
+  when defined(MacOSX):
+    [
+      "/System/Library/Fonts/",
+      "/Library/Fonts/",
+      getHomeDir() & "/Library/Fonts/"
+    ]
+  elif defined(windows):
+    [
+      r"C:\Windows\Fonts",
+    ]
+  else:
+    # TODO: linux paths
+    []
 
 proc getSystemFonts*(): seq[string] =
   ## Get a list of all of the installed fonts.
   for fontDir in fontDirectories:
     for kind, path in walkDir(fontDir):
-      result.add path
+      if kind == pcFile and path.splitFile().ext in [".ttf", ".otf"]:
+        result.add(path)
+  sort(result)
 
 proc findFont*(fontName: string): string =
   ## Find a font given a font name.
   for fontDir in fontDirectories:
     for kind, path in walkDir(fontDir):
-      let (dir, name, ext) = path.splitFile()
-      if name.toLowerAscii() == fontName.toLowerAscii():
+      if path.splitFile().name.toLowerAscii() == fontName.toLowerAscii():
         return path
+  raise newException(TypographyError, "Font " & fontName & " not found")
 
 proc getSystemFontPath*(): string =
   ## Gets the path to the system font.
@@ -49,7 +50,7 @@ proc getSystemFontPath*(): string =
   #   "/usr/X11R6/lib/X11/fonts/"
   #   "/usr/share/fonts/truetype/"
   else:
-    return ""
+    ""
 
 when isMainModule:
   echo getSystemFonts()
