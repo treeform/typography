@@ -546,9 +546,7 @@ block:
       font.size = s.float
       font.lineHeight = 32
 
-      let
-        fontHeight = font.typeface.ascent - font.typeface.descent
-        scale = font.size / fontHeight
+      let fontHeight = font.typeface.ascent - font.typeface.descent
       print fontHeight / font.size , font.typeface.unitsPerEm / font.size
       # print font.ascent * scale, font.descent * scale
       font.drawText(image, vec2(x, y), "Figte")
