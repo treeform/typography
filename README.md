@@ -12,8 +12,11 @@ See api reference: https://treeform.github.io/typography/typography.html
 # Requred Packages
 
 * [vmath](https://github.com/treeform/vmath) - vector stuff, vec2 and matrices.
-* [pixie](https://github.com/treeform/pixie) - image stuff, saving and loading PNG
+* [pixie](https://github.com/treeform/pixie) - image stuff, saving and loading PNGs.
 * [chroma](https://github.com/treeform/chroma) - color stuff, mostly to save and add rgba colors.
+* [print](https://github.com/treeform/print) - better logging.
+* [bumpy](https://github.com/treeform/bumpy) - geometry stuff.
+* [flatty](https://github.com/treeform/flatty) - dealing with binary encoding.
 
 # Basic usage
 
