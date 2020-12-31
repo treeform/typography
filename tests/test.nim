@@ -109,7 +109,7 @@ block:
 
   font.size = 16
   font.lineHeight = 20
-  font.drawText(image, vec2(10, 10), readFile("sample.ru.txt"))
+  font.drawText(image, vec2(10, 10), readFile("samples/sample.ru.txt"))
 
   image.alphaToBlankAndWhite()
   image.writeFile("rendered/ru.png")
@@ -120,7 +120,7 @@ block:
   font.size = 16
   font.lineHeight = 20
   print "svg:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
-  font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+  font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
   image.alphaToBlankAndWhite()
   image.writeFile("rendered/sample_svg.png")
 
@@ -130,22 +130,9 @@ block:
   font.size = 16
   font.lineHeight = 20
   print "ttf:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
-  font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+  font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
   image.alphaToBlankAndWhite()
   image.writeFile("rendered/sample_ttf.png")
-
-
-block:
-  var
-    sample = readImage("rendered/sample_ttf.png")
-    master = readImage("sample_master.png")
-  for x in 0 ..< sample.width:
-    for y in 0 ..< sample.height:
-      var a = master[x, y].color
-      var b = sample[x, y].color
-      var c = mix(a, b)
-      sample[x, y] = c.rgba
-  sample.writeFile("rendered/sample_blur.png")
 
 # block:
 #   var image = newImage(800, 200)
@@ -153,7 +140,7 @@ block:
 
 #   font.size = 16
 #   font.lineHeight = 20
-#   font.drawText(image, vec2(10, 10), readFile("sample.txt"))
+#   font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
 
 #   image.alphaToBlankAndWhite()
 #   image.writeFile("otf.png")
@@ -164,7 +151,7 @@ block:
   font.size = 16
   font.lineHeight = 20
 
-  font.drawText(image, vec2(10, 10), readFile("sample.ch.txt"))
+  font.drawText(image, vec2(10, 10), readFile("samples/sample.ch.txt"))
 
   image.alphaToBlankAndWhite()
   image.writeFile("rendered/ch.png")
@@ -418,7 +405,7 @@ block:
   font.lineHeight = 20
 
   image.drawText(font.typeset(
-    readFile("sample.wrap.txt"),
+    readFile("samples/sample.wrap.txt"),
     pos = vec2(100, 20),
     size = vec2(300, 160)
   ))
@@ -440,7 +427,7 @@ block:
   font.lineHeight = 20
 
   image.drawText(font.typeset(
-    readFile("sample.ch.txt"),
+    readFile("samples/sample.ch.txt"),
     pos = vec2(100, 20),
     size = vec2(300, 160)
   ))
@@ -570,20 +557,6 @@ block:
       x += 150
 
     y += 50
-
-  var master = readImage("font_metrics_master.png")
-
-  image.alphaToBlankAndWhite()
-  image.writeFile("rendered/font_metrics.png")
-
-  for x in 0 ..< image.width:
-    for y in 0 ..< image.height:
-      var a = master[x, y].color
-      var b = image[x, y].color
-      var c = mix(a, b)
-      image[x, y] = c.rgba
-
-  image.writeFile("rendered/font_metrics_blur.png")
 
 let (outp, _) = execCmdEx("git diff tests/rendered/*.png")
 if len(outp) != 0:
