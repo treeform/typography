@@ -16,11 +16,10 @@ proc imageDiff*(master, image: Image): (float32, Image) =
       let
         m = master.getRgbaUnsafe(x, y)
         u = image.getRgbaUnsafe(x, y)
-      var
-        c: ColorRGBA
-      let diff = (m.r.int - u.r.int) +
-        (m.g.int - u.g.int) +
-        (m.b.int - u.b.int)
+        diff = (m.r.int - u.r.int) +
+          (m.g.int - u.g.int) +
+          (m.b.int - u.b.int)
+      var c: ColorRGBA
       c.r = abs(m.a.int - u.a.int).clamp(0, 255).uint8
       c.g = (diff).clamp(0, 255).uint8
       c.b = (-diff).clamp(0, 255).uint8
