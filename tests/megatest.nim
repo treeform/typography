@@ -1,23 +1,28 @@
 ## Loads google fonts and draws a text sample.
 
 import pixie, math, os, strutils, cligen, common, tables, typography, vmath,
-  strformat, chroma
+  strformat, chroma, typography/systemfonts
 
-proc textStr(font: Font): string =
-  var text = """The quick brown fox jumps over the lazy dog."""
+proc testString(font: Font): string =
+  result = "The quick brown fox jumps over the lazy dog."
   if "q" notin font.typeface.glyphs:
     # can't display english, use random glpyhs:
-    text = ""
+    result = ""
     var i = 0
     for g in font.typeface.glyphs.values:
-      text.add(g.code)
+      result.add(g.code)
       inc i
       if i > 80:
         break
-  return text
 
-proc main(fonts = "/p/googlefonts/") =
-  let fontPaths = findAllFonts(fonts)
+proc main(fonts = "") =
+  let (testDir, fontPaths) =
+    if fonts.len == 0:
+      var systemFonts = getSystemFonts()
+      systemFonts.delete(systemFonts.find(r"C:\Windows\Fonts\DINPro.otf")) # Doesn't work yet
+      ("systemfonts", systemFonts)
+    else:
+      ("googlefonts", findAllFonts(fonts))
 
   var
     mainFont = readFontTtf("tests/fonts/Ubuntu.ttf")
@@ -30,13 +35,11 @@ proc main(fonts = "/p/googlefonts/") =
       if fontNum + pageNum * 100 >= fontPaths.len:
         break
       let fontPath = fontPaths[fontNum + pageNum * 100]
+      echo fontPath
+
       var font = readFontTtf(fontPath)
-      #echo font.name
-      #echo fontPath
       font.size = 20
       font.lineHeight = 20
-      if " " in font.typeface.glyphs:
-        echo font.typeface.glyphs[" "].advance, " ", fontPath
 
       let y = fontNum.float32 * 40 + 10
 
@@ -44,10 +47,11 @@ proc main(fonts = "/p/googlefonts/") =
       mainFont.lineHeight = 20
       mainFont.drawText(image, vec2(10, y), fontPath.lastPathPart)
 
-      let topLine = y + 20 + (-font.typeface.ascent + font.typeface.descent) * font.scale
-      let capLine = y + font.capline
-      let baseLine = y + font.baseline
-      let bottomLine = y + 20
+      let
+        topLine = y + 20 + (-font.typeface.ascent + font.typeface.descent) * font.scale
+        capLine = y + font.capline
+        baseLine = y + font.baseline
+        bottomLine = y + 20
 
       for line in [topLine, capLine, baseLine, bottomLine]:
         let path = newPath()
@@ -57,26 +61,28 @@ proc main(fonts = "/p/googlefonts/") =
       font.drawText(
         image,
         vec2(300, y),
-        font.textStr()
+        font.testString()
       )
 
     image.alphaToBlankAndWhite()
-    echo "saving ", pageNum
-    image.writeFile(&"tests/googlefonts/out/googlefonts_{pageNum}.png")
+    echo &"saving {testDir} page {pageNum}"
+    createDir(&"tests/{testDir}/out")
+    image.writeFile(&"tests/{testDir}/out/{pageNum}.png")
 
     let
-      master = readImage(&"tests/googlefonts/masters/googlefonts_{pageNum}.png")
+      master = readImage(&"tests/{testDir}/masters/{pageNum}.png")
       (score, diff) = imageDiff(master, image)
 
-    diff.writeFile(&"tests/googlefonts/diffs/googlefonts_{pageNum}.png")
+    createDir(&"tests/{testDir}/diffs")
+    diff.writeFile(&"tests/{testDir}/diffs/{pageNum}.png")
 
     html.add(&"<h4>{pageNum}</h4>")
     html.add(&"<p>{score:0.3f}% diffpx</p>")
-    html.add(&"<img width='300' src='out/googlefonts_{pageNum}.png'>")
-    html.add(&"<img width='300' src='masters/googlefonts_{pageNum}.png'>")
-    html.add(&"<img width='300' src='diffs/googlefonts_{pageNum}.png'>")
+    html.add(&"<img width='300' src='out/{pageNum}.png'>")
+    html.add(&"<img width='300' src='masters/{pageNum}.png'>")
+    html.add(&"<img width='300' src='diffs/{pageNum}.png'>")
     html.add("<br>")
 
-  writeFile("tests/googlefonts/index.html", html)
+  writeFile(&"tests/{testDir}/index.html", html)
 
 dispatch(main)
