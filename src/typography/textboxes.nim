@@ -43,6 +43,7 @@ type TextBox* = ref object
   fontSize*: float
   lineHeight*: float
   mousePos*: Vec2
+  hasChange*: bool
 
   multiline*: bool  # Single line only (good for input fields).
   wordWrap*: bool   # Should the lines wrap or not.
@@ -93,6 +94,7 @@ proc text*(textBox: TextBox): string =
 proc `text=`*(textBox: TextBox, text: string) =
   ## Converts string to internal runes.
   textBox.runes = toRunes(text)
+  textBox.hasChange = true
 
 proc multilineCheck(textBox: TextBox) =
   ## Makes sure there are not new lines in a single line text box.
@@ -183,6 +185,7 @@ proc removedSelection*(textBox: TextBox): bool =
     textBox.glyphs.setLen(0)
     textBox.cursor = sel.a
     textBox.selector = textBox.cursor
+    textBox.hasChange = true
     return true
   return false
 
@@ -222,6 +225,7 @@ proc typeCharacter*(textBox: TextBox, rune: Rune) =
   textBox.selector = textBox.cursor
   textBox.glyphs.setLen(0)
   textBox.adjustScroll()
+  textBox.hasChange = true
 
 proc typeCharacter*(textBox: TextBox, letter: char) =
   ## Add a character to the text box.
@@ -238,6 +242,7 @@ proc typeCharacters*(textBox: TextBox, s: string) =
   textBox.selector = textBox.cursor
   textBox.glyphs.setLen(0)
   textBox.adjustScroll()
+  textBox.hasChange = true
 
 proc copy*(textBox: TextBox): string =
   ## Returns the text that was copied.
@@ -275,6 +280,7 @@ proc backspace*(textBox: TextBox, shift = false) =
     textBox.adjustScroll()
     dec textBox.cursor
     textBox.selector = textBox.cursor
+    textBox.hasChange = true
 
 proc delete*(textBox: TextBox, shift = false) =
   ## Delete command.
@@ -285,6 +291,7 @@ proc delete*(textBox: TextBox, shift = false) =
     textBox.runes.delete(textBox.cursor)
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
+    textBox.hasChange = true
 
 proc backspaceWord*(textBox: TextBox, shift = false) =
   ## Backspace word command. (Usually ctr + backspace).
@@ -299,6 +306,7 @@ proc backspaceWord*(textBox: TextBox, shift = false) =
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
     textBox.selector = textBox.cursor
+    textBox.hasChange = true
 
 proc deleteWord*(textBox: TextBox, shift = false) =
   ## Delete word command. (Usually ctr + delete).
@@ -311,6 +319,7 @@ proc deleteWord*(textBox: TextBox, shift = false) =
       textBox.runes.delete(textBox.cursor)
     textBox.glyphs.setLen(0)
     textBox.adjustScroll()
+    textBox.hasChange = true
 
 proc left*(textBox: TextBox, shift = false) =
   ## Move cursor left.
