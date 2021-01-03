@@ -523,7 +523,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
         cmd(Quad, curr.x, curr.y)
         cmd(next2.x, next2.y)
 
-    cmd(End)
+    cmd(Close)
 
 proc parseGlyph*(glyph: Glyph, font: Font)
 
