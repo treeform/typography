@@ -442,7 +442,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
       x = buf.readInt16(p).swap().int
       p += 2
     prevX += x
-    coordinates[i].x = prevX
+    coordinates[i].x = prevX.float32
     coordinates[i].isOnCurve = (flag and 1) != 0
 
   # Figure out yCoordinates.
@@ -462,18 +462,9 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
       y = buf.readInt16(p).swap().int
       p += 2
     prevY += y
-    coordinates[i].y = prevY
+    coordinates[i].y = prevY.float32
 
   # Make an svg path out of this crazy stuff.
-
-  template cmd(k: PathCommandKind, x, y: int) =
-    result.add(PathCommand(kind: k, numbers: @[float32 x, float32 y]))
-
-  template cmd(k: PathCommandKind) =
-    result.add(PathCommand(kind: k))
-
-  template cmd(x, y: int) =
-    result[^1].numbers.add([x.float32, y.float32])
 
   var
     contours: seq[seq[TtfCoordinate]]
@@ -489,13 +480,16 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
       next: TtfCoordinate = contour[0]
 
     if curr.isOnCurve:
-      cmd(Move, curr.x, curr.y)
+      result.add(PathCommand(kind: Move, numbers: @[curr.x, curr.y]))
     else:
       if next.isOnCurve:
-        cmd(Move, next.x, next.y)
+        result.add(PathCommand(kind: Move, numbers: @[next.x, next.y]))
       else:
         # If both first and last points are off-curve, start at their middle.
-        cmd(Move, (curr.x + next.x) div 2, (curr.y + next.y) div 2)
+        result.add(PathCommand(
+          kind: Move,
+          numbers: @[(curr.x + next.x) / 2, (curr.y + next.y) / 2]
+        ))
 
     for i in 0 ..< contour.len:
       prev = curr
@@ -504,7 +498,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
 
       if curr.isOnCurve:
         # This is a straight line.
-        cmd(Line, curr.x, curr.y)
+        result.add(PathCommand(kind: Line, numbers: @[curr.x, curr.y]))
       else:
         # var prev2 = prev
         var next2 = next
@@ -516,14 +510,16 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
         #   )
         if not next.isOnCurve:
           next2 = TtfCoordinate(
-            x: (curr.x + next.x) div 2,
-            y: (curr.y + next.y) div 2
+            x: (curr.x + next.x) / 2,
+            y: (curr.y + next.y) / 2
           )
 
-        cmd(Quad, curr.x, curr.y)
-        cmd(next2.x, next2.y)
+        result.add(PathCommand(
+          kind: Quad,
+          numbers: @[curr.x, curr.y, next2.x, next2.y]
+        ))
 
-    cmd(Close)
+    result.add(PathCommand(kind: Close))
 
 proc parseGlyph*(glyph: Glyph, font: Font)
 
