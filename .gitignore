@@ -16,3 +16,4 @@ tests/fonts/helvetica.ttf
 
 tests/googlefonts/diffs
 tests/googlefonts/out
+tests/systemfonts

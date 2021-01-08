@@ -212,8 +212,8 @@ type
   #   path: seq[PathCommand]
 
   TtfCoordinate* = object
-    x*: int
-    y*: int
+    x*: float32
+    y*: float32
     isOnCurve*: bool
 
   Chunk* = object
