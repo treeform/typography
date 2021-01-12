@@ -124,16 +124,19 @@ proc getGlyphImage*(
   ) =
     hits.setLen(0)
     var yLine = (float32(y) + ep) + shiftY
-    var scan = Segment(at: vec2(-10000, yLine), to: vec2(100000, yLine))
+    var scan = Line(a: vec2(-10000, yLine), b: vec2(10000, yLine))
 
-    scan.at = trans(scan.at)
-    scan.to = trans(scan.to)
+    scan.a = trans(scan.a)
+    scan.b = trans(scan.b)
 
     for shape in shapes:
       for line in shape:
+        var line2 = line
+        if line2.at.y > line2.to.y: # Sort order doesn't actually matter
+          swap(line2.at, line2.to)
+        # Lines often connect and we need them to not share starts and ends
         var at: Vec2
-
-        if line.intersects(scan, at):
+        if line2.intersects(scan, at) and line2.to != at:
           let winding = line.at.y > line.to.y
           hits.add((at.x * font.scale - origin.x + subPixelShift, winding))
 
