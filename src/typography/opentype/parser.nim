@@ -652,7 +652,7 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
   else:
     glyph.commands = parseGlyphPath(otf.buf, p, glyph)
 
-proc parseOtf(buf: string): Font =
+proc parseOtf*(buf: string): Font =
   var
     otf = OTFFont()
     p: int
@@ -756,6 +756,10 @@ proc parseOtf(buf: string): Font =
           font.typeface.kerning[(u1, u2)] = pair.value.float32
 
   return font
+
+proc parseTtf*(buf: string): Font =
+  ## OTF Supports most of TTF features.
+  parseOtf(buf)
 
 proc readFontOtf*(filePath: string): Font =
   if not fileExists(filePath):
