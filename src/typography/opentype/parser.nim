@@ -482,16 +482,13 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
       next: TtfCoordinate = contour[0]
 
     if curr.isOnCurve:
-      result.commands.add(PathCommand(kind: Move, numbers: @[curr.x, curr.y]))
+      result.moveTo(curr.x, curr.y)
     else:
       if next.isOnCurve:
-        result.commands.add(PathCommand(kind: Move, numbers: @[next.x, next.y]))
+        result.moveTo(next.x, next.y)
       else:
         # If both first and last points are off-curve, start at their middle.
-        result.commands.add(PathCommand(
-          kind: Move,
-          numbers: @[(curr.x + next.x) / 2, (curr.y + next.y) / 2]
-        ))
+        result.moveTo((curr.x + next.x) / 2, (curr.y + next.y) / 2)
 
     for i in 0 ..< contour.len:
       prev = curr
@@ -500,7 +497,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
 
       if curr.isOnCurve:
         # This is a straight line.
-        result.commands.add(PathCommand(kind: Line, numbers: @[curr.x, curr.y]))
+        result.lineTo(curr.x, curr.y)
       else:
         # var prev2 = prev
         var next2 = next
@@ -516,12 +513,9 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
             y: (curr.y + next.y) / 2
           )
 
-        result.commands.add(PathCommand(
-          kind: Quad,
-          numbers: @[curr.x, curr.y, next2.x, next2.y]
-        ))
+        result.quadraticCurveTo(curr.x, curr.y, next2.x, next2.y)
 
-    result.commands.add(PathCommand(kind: Close))
+    result.closePath()
 
 proc parseGlyph*(glyph: Glyph, font: Font)
 
@@ -617,13 +611,10 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Pa
       component.dx, component.dy, 1.0
     )
     # Copy commands.
-    for command in subGlyph.path.commands:
-      var newCommand = PathCommand(kind: command.kind)
-      for n in 0 ..< command.numbers.len div 2:
-        var pos = vec2(command.numbers[n*2+0], command.numbers[n*2+1])
-        pos = mat * pos
-        newCommand.numbers.add([pos.x, pos.y])
-      result.commands.add(newCommand)
+    let copy = newPath()
+    copy.commands = subGlyph.path.commands # Copies
+    copy.transform(mat)
+    result.commands.add(copy.commands)
     moreComponents = flags.checkBit(32)
 
 proc parseGlyph*(glyph: Glyph, font: Font) =
