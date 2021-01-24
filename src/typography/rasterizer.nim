@@ -97,15 +97,10 @@ proc getGlyphImage*(
     size = getGlyphSize(font, glyph)
     w = max(int(size.x), 0)
     h = max(int(size.y), 0)
-    tx = floor(glyph.bboxMin.x * font.scale)
-    ty = floor(glyph.bboxMin.y * font.scale)
-    origin = vec2(tx, ty)
 
   result = newImage(w, h)
+  # TODO: Check, I don't think whiteTrans is needed with premultiplied alpha.
   result.fill(whiteTrans)
-
-  # glyphOffset.x = origin.x
-  # glyphOffset.y = -float32(h) - origin.y
 
   if glyph.isEmpty or glyph.path == nil:
     return
@@ -118,84 +113,11 @@ proc getGlyphImage*(
     bboxMax = mat * glyph.bboxMax
     offset = vec2(bboxMin.x - subPixelShift, bboxMax.y)
 
-  glyphOffset = offset - vec2(0, font.letterHeight)
-  glyphOffset.x = floor(glyphOffset.x)
-  glyphOffset.y = floor(glyphOffset.y)
+  glyphOffset = vec2(bboxMin.x, bboxMax.y - font.letterHeight).floor
 
   mat = translate(-offset) * mat
 
   result.fillPath(glyph.path, white, mat)
-
-  # const ep = 0.0001 * PI
-
-  # proc scanLineHits(
-  #   shapes: seq[seq[Segment]],
-  #   hits: var seq[(float32, bool)],
-  #   y: int,
-  #   shiftY: float32
-  # ) =
-  #   hits.setLen(0)
-  #   let
-  #     yLine = (float32(y) + ep) + shiftY
-  #     scan = Line(
-  #       a: vec2(-10000, (yLine + origin.y) / font.scale),
-  #       b: vec2(10000, (yLine + origin.y) / font.scale)
-  #     )
-  #   for shape in shapes:
-  #     for line in shape:
-  #       if line.at.y == line.to.y: # Skip horizontal lines
-  #         continue
-  #       var line2 = line
-  #       if line2.at.y > line2.to.y: # Sort order doesn't actually matter
-  #         swap(line2.at, line2.to)
-  #       # Lines often connect and we need them to not share starts and ends
-  #       var at: Vec2
-  #       if line2.intersects(scan, at) and line2.to != at:
-  #         let winding = line.at.y > line.to.y
-
-  #         hits.add((at.x * font.scale - origin.x + subPixelShift, winding))
-
-  #   hits.sort(proc(a, b: (float32, bool)): int = cmp(a[0], b[0]))
-
-  # var
-  #   hits = newSeq[(float32, bool)]()
-  #   alphas = newSeq[float32](result.width)
-  # for y in 0 ..< result.height:
-  #   # Reset alphas for this row.
-  #   zeroMem(alphas[0].addr, alphas.len * 4)
-
-  #   # Do scan lines for this row.
-  #   for m in 0 ..< quality:
-  #     glyph.shapes.scanLineHits(hits, y, float32(m) / float32(quality))
-  #     if hits.len == 0:
-  #       continue
-  #     var
-  #       penFill = 0
-  #       curHit = 0
-  #     for x in 0 ..< result.width:
-  #       var penEdge = penFill.float32
-  #       while true:
-  #         if curHit >= hits.len or x != hits[curHit][0].int:
-  #           break
-  #         let
-  #           cover = hits[curHit][0] - x.float32
-  #           winding = hits[curHit][1]
-  #         if winding == false:
-  #           penFill += 1
-  #           penEdge += 1.0 - cover
-  #         else:
-  #           penFill -= 1
-  #           penEdge -= 1.0 - cover
-  #         inc curHit
-  #       alphas[x] += penEdge
-
-  #   for x in 0 ..< result.width:
-  #     let a = clamp(abs(alphas[x]) / float32(quality), 0.0, 1.0)
-  #     if a > 0:
-  #       var colorWithAlpha = white
-  #       colorWithAlpha.a = uint8(a * 255.0)
-  #       result[x, h-y-1] = colorWithAlpha
-  #       result.setRgbaUnsafe(x, y, colorWithAlpha)
 
 proc getGlyphOutlineImage*(
   font: Font,
