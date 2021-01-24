@@ -21,7 +21,7 @@ block:
     """!!! The "quick" brown fox jumps over the lazy dog. !!!"""
   )
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/test_ttf.png")
 
   echo "saved"
