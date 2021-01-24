@@ -15,7 +15,7 @@ type
     numberOfContours*: int
     isComposite*: bool
     index*: int
-    path*: string  # SVG
+    pathStr*: string  # SVG
 
   Typeface* = ref object
     ## Main font object contains font information and Glyphs
@@ -88,7 +88,7 @@ proc capline*(font: Font): float32 =
 
 proc glyphPathToCommands*(glyph: Glyph) =
   ## Converts a glyph into lines-shape
-  glyph.commands = parsePath(glyph.path).commands
+  glyph.commands = parsePath(glyph.pathStr).commands
 
 proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines

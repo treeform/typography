@@ -49,7 +49,7 @@ proc readFontSvg*(f: Stream): Font =
       glyph.advance = parseFloat(advance)
     else:
       glyph.advance = font.typeface.advance
-    glyph.path = tag.attr "d"
+    glyph.pathStr = tag.attr "d"
     if name == "space" and glyph.code == "":
       glyph.code = " "
     font.typeface.glyphs[glyph.code] = glyph

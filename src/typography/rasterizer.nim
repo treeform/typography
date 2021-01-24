@@ -43,7 +43,7 @@ proc makeReady*(glyph: Glyph, font: Font) =
 
   if typeface.otf != nil and glyph.commands.len == 0:
     glyph.parseGlyph(font)
-  if glyph.path.len > 0:
+  if glyph.pathStr.len > 0:
     glyph.glyphPathToCommands()
   if glyph.commands.len > 0:
     glyph.commandsToShapes()
