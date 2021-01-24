@@ -388,7 +388,9 @@ proc parseGlyfTable(buf: string, offset: int, loca: LocaTable): GlyfTable =
     let locaOffset = loca.offsets[glyphIndex]
     result.offsets.add(offset + locaOffset.int)
 
-proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
+proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
+  result = Path()
+
   if glyph.numberOfContours <= 0:
     return
 
@@ -480,13 +482,13 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
       next: TtfCoordinate = contour[0]
 
     if curr.isOnCurve:
-      result.add(PathCommand(kind: Move, numbers: @[curr.x, curr.y]))
+      result.commands.add(PathCommand(kind: Move, numbers: @[curr.x, curr.y]))
     else:
       if next.isOnCurve:
-        result.add(PathCommand(kind: Move, numbers: @[next.x, next.y]))
+        result.commands.add(PathCommand(kind: Move, numbers: @[next.x, next.y]))
       else:
         # If both first and last points are off-curve, start at their middle.
-        result.add(PathCommand(
+        result.commands.add(PathCommand(
           kind: Move,
           numbers: @[(curr.x + next.x) / 2, (curr.y + next.y) / 2]
         ))
@@ -498,7 +500,7 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
 
       if curr.isOnCurve:
         # This is a straight line.
-        result.add(PathCommand(kind: Line, numbers: @[curr.x, curr.y]))
+        result.commands.add(PathCommand(kind: Line, numbers: @[curr.x, curr.y]))
       else:
         # var prev2 = prev
         var next2 = next
@@ -514,16 +516,17 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): seq[PathCommand] =
             y: (curr.y + next.y) / 2
           )
 
-        result.add(PathCommand(
+        result.commands.add(PathCommand(
           kind: Quad,
           numbers: @[curr.x, curr.y, next2.x, next2.y]
         ))
 
-    result.add(PathCommand(kind: Close))
+    result.commands.add(PathCommand(kind: Close))
 
 proc parseGlyph*(glyph: Glyph, font: Font)
 
-proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): seq[PathCommand] =
+proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Path =
+  result = Path()
   var
     typeface = font.typeface
     moreComponents = true
@@ -604,7 +607,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
       p += 8
 
     var subGlyph = typeface.glyphArr[component.glyphIndex]
-    if subGlyph.commands.len == 0:
+    if subGlyph.path == nil:
       parseGlyph(subGlyph, font)
 
     # Transform commands path.
@@ -614,13 +617,13 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): se
       component.dx, component.dy, 1.0
     )
     # Copy commands.
-    for command in subGlyph.commands:
+    for command in subGlyph.path.commands:
       var newCommand = PathCommand(kind: command.kind)
       for n in 0 ..< command.numbers.len div 2:
         var pos = vec2(command.numbers[n*2+0], command.numbers[n*2+1])
         pos = mat * pos
         newCommand.numbers.add([pos.x, pos.y])
-      result.add(newCommand)
+      result.commands.add(newCommand)
     moreComponents = flags.checkBit(32)
 
 proc parseGlyph*(glyph: Glyph, font: Font) =
@@ -631,6 +634,7 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
   if index + 1 < otf.glyf.offsets.len and
     otf.glyf.offsets[index] == otf.glyf.offsets[index + 1]:
     glyph.isEmpty = true
+    glyph.path = Path()
     return
 
   var p = otf.glyf.offsets[index].int
@@ -648,9 +652,9 @@ proc parseGlyph*(glyph: Glyph, font: Font) =
 
   if glyph.numberOfContours == -1:
     glyph.isComposite = true
-    glyph.commands = parseCompositeGlyph(otf.buf, p, glyph, font)
+    glyph.path = parseCompositeGlyph(otf.buf, p, glyph, font)
   else:
-    glyph.commands = parseGlyphPath(otf.buf, p, glyph)
+    glyph.path = parseGlyphPath(otf.buf, p, glyph)
 
 proc parseOtf*(buf: string): Font =
   var

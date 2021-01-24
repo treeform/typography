@@ -41,11 +41,11 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
-  if typeface.otf != nil and glyph.commands.len == 0:
+  if typeface.otf != nil and glyph.path == nil:
     glyph.parseGlyph(font)
   if glyph.pathStr.len > 0:
     glyph.glyphPathToCommands()
-  if glyph.commands.len > 0:
+  if glyph.path != nil and glyph.path.commands.len > 0:
     glyph.commandsToShapes()
 
     if glyph.shapes.len > 0 and glyph.shapes[0].len > 0:
@@ -242,7 +242,7 @@ proc getGlyphOutlineImage*(
         image.line(flip(adjust(s.at)), flip(adjust(s.to)), red)
     if points:
       # Draw points.
-      for ruleNum, c in glyph.commands:
+      for ruleNum, c in glyph.path.commands:
 
         for i in 0..<c.numbers.len div 2:
           var at: Vec2

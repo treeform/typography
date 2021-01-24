@@ -32,7 +32,7 @@ block:
 
       #print font.glyphs[name].ttfOffset
       #print font.glyphs[name].commands.len
-      for j, command in font.typeface.glyphs[glyph.code].commands:
+      for j, command in font.typeface.glyphs[glyph.code].path.commands:
         echo j, ": ", command
         for i in 0 ..< command.numbers.len div 2:
           var x = int command.numbers[i*2+0]
