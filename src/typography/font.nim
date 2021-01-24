@@ -6,7 +6,7 @@ type
     ## SVG Path, command buffer, and shapes of lines.
     code*: string
     advance*: float32
-    commands*: seq[PathCommand]
+    path*: Path
     shapes*: seq[seq[Segment]] ## Shapes are made of lines.
     bboxMin*: Vec2
     bboxMax*: Vec2
@@ -15,7 +15,7 @@ type
     numberOfContours*: int
     isComposite*: bool
     index*: int
-    path*: string  # SVG
+    pathStr*: string  # SVG
 
   Typeface* = ref object
     ## Main font object contains font information and Glyphs
@@ -88,10 +88,10 @@ proc capline*(font: Font): float32 =
 
 proc glyphPathToCommands*(glyph: Glyph) =
   ## Converts a glyph into lines-shape
-  glyph.commands = parsePath(glyph.path).commands
+  glyph.path = parsePath(glyph.pathStr)
 
 proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines
-  let polygons = commandsToPolygons(glyph.commands)
+  let polygons = glyph.path.commands.commandsToPolygons()
   for polygon in polygons:
     glyph.shapes.add(toSeq(polygon.segments))

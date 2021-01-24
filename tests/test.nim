@@ -224,7 +224,7 @@ block:
 
   var image = font.getGlyphOutlineImage("Q")
 
-  echo font.typeface.glyphs["Q"].path
+  echo font.typeface.glyphs["Q"].pathStr
 
   image.writeFile("rendered/qOutLine.png")
 
