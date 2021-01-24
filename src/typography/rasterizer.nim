@@ -300,17 +300,7 @@ proc drawGlyph*(font: Font, image: Image, at: Vec2, c: string) =
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
-      image.draw(
-        img,
-        origin
-        # rect(0, 0, float32 img.width, float32 img.height),
-        # rect(
-        #   at.x + origin.x,
-        #   at.y + origin.y,
-        #   float32 img.width,
-        #   float32 img.height
-        # )
-      )
+      image.draw(img, origin + at)
 
 proc getGlyphImageOffset*(
   font: Font,
