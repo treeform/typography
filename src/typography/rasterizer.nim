@@ -41,11 +41,11 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
-  if typeface.otf != nil and glyph.path == nil:
+  if typeface.otf != nil and not glyph.isEmpty:
     glyph.parseGlyph(font)
   if glyph.pathStr.len > 0:
     glyph.glyphPathToCommands()
-  if glyph.path != nil and glyph.path.commands.len > 0:
+  if glyph.path.commands.len > 0:
     glyph.commandsToShapes()
 
     if glyph.shapes.len > 0 and glyph.shapes[0].len > 0:
