@@ -80,7 +80,7 @@ proc getGlyphSize*(font: Font,glyph: Glyph): Vec2 =
     w = ceil(glyph.bboxMax.x * font.scale) - tx + 1
     h = ceil(glyph.bboxMax.y * font.scale) - ty + 1
   vec2(float32 w, float32 h)
-
+import print
 proc getGlyphImage*(
     font: Font,
     glyph: Glyph,
@@ -105,15 +105,17 @@ proc getGlyphImage*(
   if glyph.isEmpty or glyph.path == nil:
     return
 
-  var mat = translate(vec2(0, font.letterHeight)) *
+  let lh = font.letterHeight.floor
+
+  var mat = translate(vec2(0, lh)) *
     scale(vec2(font.scale, -font.scale))
 
   let
     bboxMin = mat * glyph.bboxMin
     bboxMax = mat * glyph.bboxMax
-    offset = vec2(bboxMin.x - subPixelShift, bboxMax.y)
+    offset = vec2(bboxMin.x - subPixelShift, bboxMax.y - 0.13)
 
-  glyphOffset = vec2(bboxMin.x, bboxMax.y - font.letterHeight).floor
+  glyphOffset = vec2(bboxMin.x, bboxMax.y - lh).floor
 
   mat = translate(-offset) * mat
 
