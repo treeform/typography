@@ -1,11 +1,11 @@
-version       = "0.7.3"
+version       = "0.7.4"
 author        = "treeform"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
 srcDir        = "src"
 
 requires "nim >= 1.0.0"
-requires "pixie >= 0.0.16"
+requires "pixie 0.0.16"
 requires "vmath >= 0.4.0"
 requires "chroma >= 0.1.2"
 requires "print >= 0.1.0"
