@@ -54,7 +54,7 @@ proc main(fonts = "") =
         bottomLine = y + 20
 
       for line in [topLine, capLine, baseLine, bottomLine]:
-        let path = newPath()
+        var path: Path
         path.rect(300, line, 500, 1)
         image.fillPath(path, rgba(0, 0, 0, 255))
 
@@ -64,7 +64,7 @@ proc main(fonts = "") =
         font.testString()
       )
 
-    image.alphaToBlankAndWhite()
+    image.alphaToBlackAndWhite()
     echo &"saving {testDir} page {pageNum}"
     createDir(&"tests/{testDir}/out")
     image.writeFile(&"tests/{testDir}/out/{pageNum}.png")
