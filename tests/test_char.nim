@@ -59,7 +59,7 @@ block:
 
       var glyphOffset: Vec2
       image = font.getGlyphImage(glyph, glyphOffset, quality=4)
-      image.alphaToBlankAndWhite()
+      image.alphaToBlackAndWhite()
       image.writeFile("rendered/test_charFill.png")
 
       if image.width == 1396:

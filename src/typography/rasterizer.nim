@@ -72,19 +72,14 @@ proc makeReady*(glyph: Glyph, font: Font) =
 
   glyph.ready = true
 
-proc getGlyphSize*(
-    font: Font,
-    glyph: Glyph
-  ): Vec2 =
-
+proc getGlyphSize*(font: Font, glyph: Glyph): Vec2 =
   glyph.makeReady(font)
   var
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
     w = ceil(glyph.bboxMax.x * font.scale) - tx + 1
     h = ceil(glyph.bboxMax.y * font.scale) - ty + 1
-
-  return vec2(float32 w, float32 h)
+  vec2(float32 w, float32 h)
 
 proc getGlyphImage*(
     font: Font,
@@ -98,16 +93,16 @@ proc getGlyphImage*(
     white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
     whiteTrans = ColorRgba(r: 255, g: 255, b: 255, a: 0)
 
-  var
+  let
     size = getGlyphSize(font, glyph)
     w = max(int(size.x), 0)
     h = max(int(size.y), 0)
     tx = floor(glyph.bboxMin.x * font.scale)
     ty = floor(glyph.bboxMin.y * font.scale)
+    origin = vec2(tx, ty)
 
-  var image = newImage(w, h)
-  image.fill(whiteTrans)
-  let origin = vec2(tx, ty)
+  result = newImage(w, h)
+  result.fill(whiteTrans)
 
   glyphOffset.x = origin.x
   glyphOffset.y = -float32(h) - origin.y
@@ -145,14 +140,14 @@ proc getGlyphImage*(
   var hits: seq[(float32, bool)]
 
   if quality == 0:
-    for y in 0 ..< image.height:
+    for y in 0 ..< result.height:
       glyph.shapes.scanLineHits(hits, y, 0)
       if hits.len == 0:
         continue
       var
         pen: int16 = 0
         curHit = 0
-      for x in 0 ..< image.width:
+      for x in 0 ..< result.width:
         while true:
           if curHit >= hits.len:
             break
@@ -165,11 +160,11 @@ proc getGlyphImage*(
             pen -= 1
           inc curHit
         if pen != 0:
-          image[x, h-y-1] = white
+          result[x, h-y-1] = white
   else:
-    var alphas = newSeq[float32](image.width)
-    for y in 0 ..< image.height:
-      for x in 0 ..< image.width:
+    var alphas = newSeq[float32](result.width)
+    for y in 0 ..< result.height:
+      for x in 0 ..< result.width:
         alphas[x] = 0
       for m in 0 ..< quality:
         glyph.shapes.scanLineHits(hits, y, float32(m)/float32(quality))
@@ -178,7 +173,7 @@ proc getGlyphImage*(
         var
           penFill = 0.0
           curHit = 0
-        for x in 0 ..< image.width:
+        for x in 0 ..< result.width:
           var penEdge = penFill
           while true:
             if curHit >= hits.len:
@@ -195,12 +190,10 @@ proc getGlyphImage*(
               penEdge -= 1.0 - cover
             inc curHit
           alphas[x] += penEdge
-      for x in 0 ..< image.width:
+      for x in 0 ..< result.width:
         var a = clamp(abs(alphas[x]) / float32(quality), 0.0, 1.0)
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
-        image[x, h-y-1] = color
-
-  return image
+        result[x, h-y-1] = color
 
 proc getGlyphOutlineImage*(
   font: Font,
@@ -226,20 +219,21 @@ proc getGlyphOutlineImage*(
   var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
   var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
 
-  var image = newImage(w, h)
+  result = newImage(w, h)
   let origin = vec2(float32 tx, float32 ty)
 
   proc adjust(v: Vec2): Vec2 = (v) * scale - origin
-  # Draw the outline.
+
   proc flip(v: Vec2): Vec2 =
     result.x = v.x
     result.y = float32(h) - v.y
-  for shape in glyph.shapes:
 
+  # Draw the outline.
+  for shape in glyph.shapes:
     if lines:
       # Draw lines.
       for s in shape:
-        image.line(flip(adjust(s.at)), flip(adjust(s.to)), red)
+        result.line(flip(adjust(s.at)), flip(adjust(s.to)), red)
     if points:
       # Draw points.
       for ruleNum, c in glyph.path.commands:
@@ -248,12 +242,12 @@ proc getGlyphOutlineImage*(
           var at: Vec2
           at.x = c.numbers[i*2+0]
           at.y = c.numbers[i*2+1]
-          image.line(
+          result.line(
             flip(adjust(at)) + vec2(1, 1),
             flip(adjust(at)) + vec2(-1, -1),
             blue
           )
-          image.line(
+          result.line(
             flip(adjust(at)) + vec2(-1, 1),
             flip(adjust(at)) + vec2(1, -1),
             blue
@@ -278,11 +272,9 @@ proc getGlyphOutlineImage*(
             head = mid + dir
             left = mid - dir + dir2
             right = mid - dir - dir2
-          image.line(head, left, color)
-          image.line(left, right, color)
-          image.line(right, head, color)
-
-  return image
+          result.line(head, left, color)
+          result.line(left, right, color)
+          result.line(right, head, color)
 
 proc getGlyphImage*(
   font: Font,
@@ -292,12 +284,12 @@ proc getGlyphImage*(
 ): Image =
   ## Get an image of the glyph and the glyph offset the image should be drawn
   var glyph = font.typeface.glyphs[unicode]
-  return font.getGlyphImage(glyph, glyphOffset)
+  font.getGlyphImage(glyph, glyphOffset)
 
 proc getGlyphImage*(font: Font, unicode: string): Image =
   ## Get an image of the glyph
   var glyphOffset: Vec2
-  return font.getGlyphImage(unicode, glyphOffset)
+  font.getGlyphImage(unicode, glyphOffset)
 
 proc drawGlyph*(font: Font, image: Image, at: Vec2, c: string) =
   ## Draw glyph at a location on the image
@@ -308,17 +300,7 @@ proc drawGlyph*(font: Font, image: Image, at: Vec2, c: string) =
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
-      image.draw(
-        img,
-        origin
-        # rect(0, 0, float32 img.width, float32 img.height),
-        # rect(
-        #   at.x + origin.x,
-        #   at.y + origin.y,
-        #   float32 img.width,
-        #   float32 img.height
-        # )
-      )
+      image.draw(img, origin + at)
 
 proc getGlyphImageOffset*(
   font: Font,
@@ -340,15 +322,12 @@ proc getGlyphImageOffset*(
   result.x = origin.x
   result.y = -float32(h) - origin.y
 
-proc alphaToBlankAndWhite*(image: var Image) =
+proc alphaToBlackAndWhite*(image: Image) =
   ## Typography deals mostly with transparent images with white text
   ## This is hard to see in tests so we convert it to white background
   ## with black text.
-  for x in 0..<image.width:
-    for y in 0..<image.height:
-      var c = image[x, y]
-      c.r = uint8(255) - c.a
-      c.g = uint8(255) - c.a
-      c.b = uint8(255) - c.a
-      c.a = 255
-      image[x, y] = c
+  for c in image.data.mitems:
+    c.r = 255 - c.a
+    c.g = 255 - c.a
+    c.b = 255 - c.a
+    c.a = 255

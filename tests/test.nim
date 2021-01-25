@@ -49,7 +49,7 @@ block:
   var font = readFontSvg("fonts/Ubuntu.svg")
   font.size = 100
   var image = font.getGlyphImage("h")
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/hFill.png")
 
 block:
@@ -59,7 +59,7 @@ block:
   font.lineHeight = 16
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/basicSvg.png")
 
 block:
@@ -69,7 +69,7 @@ block:
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/basicTtf.png")
 
 block:
@@ -79,7 +79,7 @@ block:
 
   font.drawText(image, vec2(10, 10), "The \"quick\" brown fox jumps over the lazy dog.")
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/basicTtf2.png")
 
 
@@ -100,7 +100,7 @@ block:
   font.size = 72
   font.drawText(image, vec2(10, 180), "The quick brown fox jumps over the lazy dog.")
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/sizes.png")
 
 block:
@@ -111,7 +111,7 @@ block:
   font.lineHeight = 20
   font.drawText(image, vec2(10, 10), readFile("samples/sample.ru.txt"))
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/ru.png")
 
 block:
@@ -121,7 +121,7 @@ block:
   font.lineHeight = 20
   print "svg:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/sample_svg.png")
 
 block:
@@ -131,7 +131,7 @@ block:
   font.lineHeight = 20
   print "ttf:", font.typeface.ascent, font.typeface.descent, font.typeface.unitsPerEm
   font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/sample_ttf.png")
 
 # block:
@@ -142,7 +142,7 @@ block:
 #   font.lineHeight = 20
 #   font.drawText(image, vec2(10, 10), readFile("samples/sample.txt"))
 
-#   image.alphaToBlankAndWhite()
+#   image.alphaToBlackAndWhite()
 #   image.writeFile("otf.png")
 
 block:
@@ -153,7 +153,7 @@ block:
 
   font.drawText(image, vec2(10, 10), readFile("samples/sample.ch.txt"))
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/ch.png")
 
 block:
@@ -164,7 +164,7 @@ block:
   font.drawText(image, vec2(10, 4), "The quick brown fox jumps over the lazy dog.")
 
   image = image.magnifyNearest(4)
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/scaledup.png")
 
 block:
@@ -175,7 +175,7 @@ block:
   font.drawText(image, vec2(8, 4), "momomomomomomo")
 
   image = image.magnifyNearest(6)
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/subpixelpos.png")
 
 block:
@@ -205,7 +205,7 @@ block:
     let at = vec2(12.0 + float(i)*12, 15) * mag
     font.drawText(image, at + vec2(0, 6), "+0." & $i)
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   let red = rgba(255, 0, 0, 255)
   for i in 0..<10:
@@ -229,7 +229,7 @@ block:
   image.writeFile("rendered/qOutLine.png")
 
   image = font.getGlyphImage("Q")
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/qFill.png")
 
 block:
@@ -254,7 +254,7 @@ To where it bent in the undergrowth;""")
 
   let mag = 3.0
   image = image.magnifyNearest(mag.int)
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   # draw layout boxes
   for pos in layout:
@@ -388,7 +388,7 @@ block:
     )
   )
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   image.strokeRect(
     rect(20, 20, 460, 160),
@@ -410,7 +410,7 @@ block:
     size = vec2(300, 160)
   ))
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   image.strokeRect(
     rect(100, 20, 300, 160),
@@ -432,7 +432,7 @@ block:
     size = vec2(300, 160)
   ))
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   image.strokeRect(
     rect(100, 20, 300, 160),
@@ -460,7 +460,7 @@ To where it bent in the undergrowth;""",
   # draw text at a layout
   image.drawText(layout)
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   let selectionRects = layout.getSelection(23, 120)
   # draw selection boxes
@@ -489,7 +489,7 @@ To where it bent in the undergrowth;""",
   # draw text at a layout
   image.drawText(layout)
 
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
 
   let at = vec2(120, 52)
   let g = layout.pickGlyphAt(at)
@@ -517,7 +517,7 @@ block:
 
   # draw text at a layout
   image.drawText(layout)
-  image.alphaToBlankAndWhite()
+  image.alphaToBlackAndWhite()
   image.writeFile("rendered/tabs.png")
 
 block:
