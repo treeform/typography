@@ -39,7 +39,7 @@ block:
           var y = int command.numbers[i*2+1]
           #print x, y
 
-      glyph.commandsToShapes()
+      glyph.shapes = glyph.path.commandsToShapes()
 
       print glyph.shapes.len
       for i, shape in glyph.shapes:
