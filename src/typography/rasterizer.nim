@@ -72,7 +72,7 @@ proc makeReady*(glyph: Glyph, font: Font) =
 
   glyph.ready = true
 
-proc getGlyphSize*(font: Font,glyph: Glyph): Vec2 =
+proc getGlyphSize*(font: Font, glyph: Glyph): Vec2 =
   glyph.makeReady(font)
   var
     tx = floor(glyph.bboxMin.x * font.scale)
