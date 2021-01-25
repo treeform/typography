@@ -46,7 +46,7 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.pathStr.len > 0:
     glyph.glyphPathToCommands()
   if glyph.path.commands.len > 0:
-    glyph.shapes = glyph.path.commandsToShapes()
+    glyph.commandsToShapes()
 
     if glyph.shapes.len > 0 and glyph.shapes[0].len > 0:
       glyph.bboxMin = glyph.shapes[0][0].at

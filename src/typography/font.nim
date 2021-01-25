@@ -89,3 +89,9 @@ proc capline*(font: Font): float32 =
 proc glyphPathToCommands*(glyph: Glyph) =
   ## Converts a glyph into lines-shape
   glyph.path = parsePath(glyph.pathStr)
+
+proc commandsToShapes*(glyph: Glyph) =
+  ## Converts SVG-like commands to shape made out of lines
+  let shapes = glyph.path.commandsToShapes()
+  for shape in shapes:
+    glyph.shapes.add(toSeq(shape.segments))
