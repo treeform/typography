@@ -31,3 +31,10 @@ proc imageDiff*(master, image: Image): (float32, Image) =
       diffTotal += 255 * 4
       diffImage.setRgbaUnsafe(x, y, c)
   return (100 * diffScore.float32 / diffTotal.float32, diffImage)
+
+proc strokeRectInner*(image: Image, rect: Rect, rgba: ColorRGBA) =
+  ## Draws a rectangle borders only.
+  let
+    at = rect.xy.floor + vec2(0.5, 0.5)
+    wh = rect.wh.floor - vec2(1, 1) # line width
+  image.strokeRect(rect(at, wh), rgba)

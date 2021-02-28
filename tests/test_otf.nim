@@ -26,8 +26,8 @@ block:
   #  print glyph.code, glyph.advance
 
   var image = newImage(500, 40)
-  image.line(vec2(0, font.capline), vec2(500, font.capline), rgba(0,0,0,255))
-  image.line(vec2(0, font.baseline), vec2(500, font.baseline), rgba(0,0,0,255))
+  image.strokeSegment(segment(vec2(0, font.capline) + vec2(0, 0.25), vec2(500, font.capline) + vec2(0, 0.25)), rgba(0,0,0,255))
+  image.strokeSegment(segment(vec2(0, font.baseline) + vec2(0, 0.25), vec2(500, font.baseline) + vec2(0, 0.25)), rgba(0,0,0,255))
 
   var text = """+Welcome, Earthling."""
   if "q" notin font.typeface.glyphs:

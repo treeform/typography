@@ -3,6 +3,9 @@
 import pixie, math, os, strutils, cligen, common, tables, typography, vmath,
   strformat, chroma, typography/systemfonts
 
+# Clone https://github.com/google/fonts
+# Check out commit b51a3d63cf500ea5bc195bba92614e94904bfb08
+
 proc testString(font: Font): string =
   result = "The quick brown fox jumps over the lazy dog."
   if "q" notin font.typeface.glyphs:
@@ -17,7 +20,7 @@ proc testString(font: Font): string =
 
 proc main(fonts = "") =
   let (testDir, fontPaths) =
-    if fonts.len == 0:
+    if fonts == "system":
       var systemFonts = getSystemFonts()
       systemFonts.delete(systemFonts.find(r"C:\Windows\Fonts\DINPro.otf")) # Doesn't work yet
       ("systemfonts", systemFonts)
