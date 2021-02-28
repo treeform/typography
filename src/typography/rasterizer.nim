@@ -64,6 +64,9 @@ proc getGlyphImage*(
     ty = floor(glyph.bboxMin.y * font.scale)
     origin = vec2(tx, ty)
 
+  if w == 0 or h == 0:
+    return newImage(1, 1)
+
   result = newImage(w, h)
 
   glyphOffset.x = origin.x
