@@ -1,5 +1,5 @@
 import bumpy, chroma, pixie, print, strformat, typography, typography/textboxes,
-    unicode, vmath, os, osproc, typography/svgfont
+    unicode, vmath, os, osproc, typography/svgfont, common
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -16,16 +16,6 @@ proc alphaWhite(image: var Image) =
       c.a = 255
       image[x, y] = c
 
-proc drawRect(image: var Image, at, wh: Vec2, color: ColorRGBA) =
-  var wh = wh - vec2(1, 1) # line width
-  image.line(at, at + vec2(wh.x, 0), color)
-  image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), color)
-  image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), color)
-  image.line(at + vec2(0, wh.y), at, color)
-
-proc drawRect(image: var Image, rect: Rect, color: ColorRGBA) =
-  image.drawRect(rect.xy, rect.wh, color)
-
 proc draw(textBox: TextBox, imageName: string) =
   var image = newImage(textBox.width, textBox.innerHeight)
 
@@ -35,20 +25,20 @@ proc draw(textBox: TextBox, imageName: string) =
   image.alphaWhite()
 
   # draw scroll region
-  image.drawRect(
+  image.strokeRectInner(
     rect(0, float textBox.scroll.y, float textBox.width, float textBox.height),
     rgba(0, 255, 255, 155))
 
   # draw selection regions
   for rect in textBox.selectionRegions():
-    image.drawRect(rect, rgba(0, 255, 0, 155))
+    image.strokeRectInner(rect, rgba(0, 255, 0, 155))
 
   # draw cursor
-  image.drawRect(textBox.selectorRect, rgba(0, 0, 255, 255))
-  image.drawRect(textBox.cursorRect, rgba(255, 0, 0, 255))
+  image.strokeRectInner(textBox.selectorRect, rgba(0, 0, 255, 255))
+  image.strokeRectInner(textBox.cursorRect, rgba(255, 0, 0, 255))
 
   # draw mouse pos
-  image.drawRect(rect(textBox.mousePos, vec2(4, 4)), rgba(255, 128, 128, 255))
+  image.strokeRectInner(rect(textBox.mousePos, vec2(4, 4)), rgba(255, 128, 128, 255))
 
   image.writeFile(imageName)
 

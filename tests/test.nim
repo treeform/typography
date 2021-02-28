@@ -1,5 +1,5 @@
 import bumpy, chroma, pixie, print, tables, typography, vmath, os, osproc,
-  typography/svgfont
+  typography/svgfont, common
 
 setCurrentDir(getCurrentDir() / "tests")
 
@@ -14,16 +14,6 @@ proc magnifyNearest*(image: Image, scale: int): Image =
       var rgba =
         image.getRgbaUnsafe(x div scale, y div scale)
       result.setRgbaUnsafe(x, y, rgba)
-
-proc strokeRect*(image: Image, rect: Rect, rgba: ColorRGBA) =
-  ## Draws a rectangle borders only.
-  let
-    at = rect.xy
-    wh = rect.wh - vec2(1, 1) # line width
-  image.line(at, at + vec2(wh.x, 0), rgba)
-  image.line(at + vec2(wh.x, 0), at + vec2(wh.x, wh.y), rgba)
-  image.line(at + vec2(0, wh.y), at + vec2(wh.x, wh.y), rgba)
-  image.line(at + vec2(0, wh.y), at, rgba)
 
 proc outlineBorder*(image: Image, borderPx: int): Image =
   ## Adds n pixel border around alpha parts of the image.
@@ -210,10 +200,7 @@ block:
   let red = rgba(255, 0, 0, 255)
   for i in 0..<10:
     let at = vec2(12.0 + float(i)*12, 15) * mag
-    image.line(at, at + vec2(7 * mag, 0), red)
-    image.line(at + vec2(7 * mag, 0), at + vec2(7 * mag, -13 * mag), red)
-    image.line(at + vec2(0, -13 * mag), at + vec2(7 * mag, -13 * mag), red)
-    image.line(at + vec2(0, -13 * mag), at, red)
+    image.strokeRectInner(rect(at + vec2(0, -13 * mag), vec2(7 * mag, 13 * mag)), red)
 
   image.writeFile("rendered/subpixelglyphs.png")
 
@@ -267,7 +254,7 @@ To where it bent in the undergrowth;""")
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.strokeRect(
+      image.strokeRectInner(
         rect(
           (pos.rect.xy + glyphOffset) * mag,
           vec2(float img.width, float img.height) * mag
@@ -288,7 +275,7 @@ To where it bent in the undergrowth;""")
         glyphOffset,
         subPixelShift = pos.subPixelShift
       )
-      image.strokeRect(
+      image.strokeRectInner(
         rect(
           (pos.rect.xy + glyphOffset) * mag,
           vec2(float img.width, float img.height) * mag
@@ -390,7 +377,7 @@ block:
 
   image.alphaToBlackAndWhite()
 
-  image.strokeRect(
+  image.strokeRectInner(
     rect(20, 20, 460, 160),
     rgba(255, 0, 0, 255)
   )
@@ -412,7 +399,7 @@ block:
 
   image.alphaToBlackAndWhite()
 
-  image.strokeRect(
+  image.strokeRectInner(
     rect(100, 20, 300, 160),
     rgba(255, 0, 0, 255)
   )
@@ -434,7 +421,7 @@ block:
 
   image.alphaToBlackAndWhite()
 
-  image.strokeRect(
+  image.strokeRectInner(
     rect(100, 20, 300, 160),
     rgba(255, 0, 0, 255)
   )
@@ -465,7 +452,7 @@ To where it bent in the undergrowth;""",
   let selectionRects = layout.getSelection(23, 120)
   # draw selection boxes
   for rect in selectionRects:
-    image.strokeRect(rect, rgba(255, 0, 0, 255))
+    image.strokeRectInner(rect, rgba(255, 0, 0, 255))
 
   image.writeFile("rendered/selection.png")
 
@@ -494,8 +481,8 @@ To where it bent in the undergrowth;""",
   let at = vec2(120, 52)
   let g = layout.pickGlyphAt(at)
   # draw g
-  image.strokeRect(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
-  image.strokeRect(g.selectRect, rgba(255, 0, 0, 255))
+  image.strokeRectInner(rect(at, vec2(4, 4)), rgba(0, 0, 255, 255))
+  image.strokeRectInner(g.selectRect, rgba(255, 0, 0, 255))
 
   image.writeFile("rendered/picking.png")
 
@@ -550,7 +537,7 @@ block:
       print fontHeight / font.size , font.typeface.unitsPerEm / font.size
       # print font.ascent * scale, font.descent * scale
       font.drawText(image, vec2(x, y), "Figte")
-      image.strokeRect(rect(x, y, 100, 32), rgba(255, 255, 255, 255))
+      image.strokeRectInner(rect(x, y, 100, 32), rgba(255, 255, 255, 255))
 
       x += 150
 
