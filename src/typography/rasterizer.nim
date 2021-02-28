@@ -89,9 +89,7 @@ proc getGlyphImage*(
     subPixelShift: float32 = 0.0,
   ): Image =
   ## Get image for this glyph
-  let
-    white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
-    whiteTrans = ColorRgba(r: 255, g: 255, b: 255, a: 0)
+  let white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
 
   let
     size = getGlyphSize(font, glyph)
@@ -102,7 +100,6 @@ proc getGlyphImage*(
     origin = vec2(tx, ty)
 
   result = newImage(w, h)
-  result.fill(whiteTrans)
 
   glyphOffset.x = origin.x
   glyphOffset.y = -float32(h) - origin.y
