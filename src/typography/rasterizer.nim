@@ -1,40 +1,5 @@
 import algorithm, bumpy, chroma, pixie, font, tables, vmath, opentype/parser
 
-proc line*(image: Image, at, to: Vec2, rgba: ColorRGBA) =
-  ## Draws a line from one at vec to to vec.
-  let
-    dx = to.x - at.x
-    dy = to.y - at.y
-  var x = at.x
-  while true:
-    if dx == 0:
-      break
-    let y = at.y + dy * (x - at.x) / dx
-    image[int x, int y] =  rgba
-    if at.x < to.x:
-      x += 1
-      if x > to.x:
-        break
-    else:
-      x -= 1
-      if x < to.x:
-        break
-
-  var y = at.y
-  while true:
-    if dy == 0:
-      break
-    let x = at.x + dx * (y - at.y) / dy
-    image[int x, int y] = rgba
-    if at.y < to.y:
-      y += 1
-      if y > to.y:
-        break
-    else:
-      y -= 1
-      if y < to.y:
-        break
-
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
   var typeface = font.typeface
@@ -89,9 +54,7 @@ proc getGlyphImage*(
     subPixelShift: float32 = 0.0,
   ): Image =
   ## Get image for this glyph
-  let
-    white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
-    whiteTrans = ColorRgba(r: 255, g: 255, b: 255, a: 0)
+  let white = ColorRgba(r: 255, g: 255, b: 255, a: 255)
 
   let
     size = getGlyphSize(font, glyph)
@@ -101,8 +64,10 @@ proc getGlyphImage*(
     ty = floor(glyph.bboxMin.y * font.scale)
     origin = vec2(tx, ty)
 
+  if w == 0 or h == 0:
+    return newImage(1, 1)
+
   result = newImage(w, h)
-  result.fill(whiteTrans)
 
   glyphOffset.x = origin.x
   glyphOffset.y = -float32(h) - origin.y
@@ -233,7 +198,7 @@ proc getGlyphOutlineImage*(
     if lines:
       # Draw lines.
       for s in shape:
-        result.line(flip(adjust(s.at)), flip(adjust(s.to)), red)
+        result.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))), red)
     if points:
       # Draw points.
       for ruleNum, c in glyph.path.commands:
@@ -242,14 +207,14 @@ proc getGlyphOutlineImage*(
           var at: Vec2
           at.x = c.numbers[i*2+0]
           at.y = c.numbers[i*2+1]
-          result.line(
+          result.strokeSegment(segment(
             flip(adjust(at)) + vec2(1, 1),
-            flip(adjust(at)) + vec2(-1, -1),
+            flip(adjust(at)) + vec2(-1, -1)),
             blue
           )
-          result.line(
+          result.strokeSegment(segment(
             flip(adjust(at)) + vec2(-1, 1),
-            flip(adjust(at)) + vec2(1, -1),
+            flip(adjust(at)) + vec2(1, -1)),
             blue
           )
     if winding:
@@ -272,9 +237,9 @@ proc getGlyphOutlineImage*(
             head = mid + dir
             left = mid - dir + dir2
             right = mid - dir - dir2
-          result.line(head, left, color)
-          result.line(left, right, color)
-          result.line(right, head, color)
+          result.strokeSegment(segment(head, left), color)
+          result.strokeSegment(segment(left, right), color)
+          result.strokeSegment(segment(right, head), color)
 
 proc getGlyphImage*(
   font: Font,

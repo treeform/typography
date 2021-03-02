@@ -3,6 +3,9 @@
 import pixie, math, os, strutils, cligen, common, tables, typography, vmath,
   strformat, chroma, typography/systemfonts
 
+# Clone https://github.com/google/fonts
+# Check out commit ebaa6a7aab9b700da4e30a4682687acdf427eae7
+
 proc testString(font: Font): string =
   result = "The quick brown fox jumps over the lazy dog."
   if "q" notin font.typeface.glyphs:
@@ -69,9 +72,13 @@ proc main(fonts = "") =
     createDir(&"tests/{testDir}/out")
     image.writeFile(&"tests/{testDir}/out/{pageNum}.png")
 
-    let
-      master = readImage(&"tests/{testDir}/masters/{pageNum}.png")
-      (score, diff) = imageDiff(master, image)
+    let master =
+      if fileExists(&"tests/{testDir}/masters/{pageNum}.png"):
+        readImage(&"tests/{testDir}/masters/{pageNum}.png")
+      else:
+        newImage(1, 1)
+
+    let (score, diff) = diff(master, image)
 
     createDir(&"tests/{testDir}/diffs")
     diff.writeFile(&"tests/{testDir}/diffs/{pageNum}.png")
