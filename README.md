@@ -190,19 +190,19 @@ Typography renderer - **this library** (4x):
 
 ![example output](tests/rendered/scaledup.png?raw=true)
 
-Apple Core Text renderer (4x):
+[Apple Core Text](https://developer.apple.com/documentation/coretext) renderer (4x):
 
 ![example output](docs/sketchMac.png?raw=true)
 
-Paint.net renderer Windows (4x):
+[Paint.net](Paint.net) renderer (4x):
 
 ![example output](docs/paintNetWindows.png?raw=true)
 
-Bohemian Sketch renderer OSx (4x):
+[Bohemian Sketch](https://www.sketch.com/) renderer (4x):
 
 ![example output](docs/sketchMac.png?raw=true)
 
-Window ClearType renderer (4x):
+[Window ClearType](https://docs.microsoft.com/en-us/typography/cleartype/) renderer (4x):
 
 ![example output](docs/notepadWindows.png?raw=true)
 
