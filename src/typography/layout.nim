@@ -65,27 +65,26 @@ proc canWrap(rune: Rune): bool =
   if not rune.isAlpha(): return true
 
 proc typeset*(
-    font: Font,
-    runes: seq[Rune],
-    pos: Vec2 = vec2(0, 0),
-    size: Vec2 = vec2(0, 0),
-    hAlign: HAlignMode = Left,
-    vAlign: VAlignMode = Top,
-    clip = true,
-    wrap = true,
-    kern = true,
-    textCase = tcNormal,
-    tabWidth: float32 = 0.0,
-    boundsMin: var Vec2,
-    boundsMax: var Vec2
-  ): seq[GlyphPosition] =
+  font: Font,
+  runes: seq[Rune],
+  pos: Vec2 = vec2(0, 0),
+  size: Vec2 = vec2(0, 0),
+  hAlign: HAlignMode = Left,
+  vAlign: VAlignMode = Top,
+  clip = true,
+  wrap = true,
+  kern = true,
+  textCase = tcNormal,
+  tabWidth: float32 = 0.0,
+  boundsMin: var Vec2,
+  boundsMax: var Vec2
+): seq[GlyphPosition] =
   ## Typeset runes and return glyph positions that is ready to draw.
 
   assert font.size != 0
   assert font.typeface != nil
   assert font.typeface.unitsPerEm != 0
 
-  result = @[]
   var
     at = pos
     lineStart = pos.x
