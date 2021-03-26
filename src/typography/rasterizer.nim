@@ -227,7 +227,7 @@ proc getGlyphOutlineImage*(
           mid = (at + to) / 2
           angle = angle(at - to)
           dir = dir(angle) * 3
-          dir2 = dir(angle + PI/2) * 3
+          dir2 = dir(angle + float32(PI/2)) * 3
           winding = s.at.y > s.to.y
         var color = if winding: blue else: green
 

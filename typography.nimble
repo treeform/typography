@@ -1,15 +1,15 @@
-version       = "0.7.7"
+version       = "0.7.8"
 author        = "treeform"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
 srcDir        = "src"
 
-requires "nim >= 1.0.0"
-requires "pixie >= 1.0.4"
-requires "vmath >= 0.4.0"
+requires "nim >= 1.4.0"
+requires "pixie >= 1.1.2"
+requires "vmath >= 1.0.0"
 requires "chroma >= 0.2.3"
 requires "print >= 0.1.0"
-requires "bumpy >= 1.0.0"
+requires "bumpy >= 1.0.3"
 requires "flatty >= 0.1.3"
 
 task docs, "Generate API documents":
