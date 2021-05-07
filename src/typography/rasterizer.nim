@@ -1,5 +1,7 @@
 import algorithm, bumpy, chroma, pixie, font, tables, vmath, opentype/parser
 
+type Font = font.Font
+
 proc makeReady*(glyph: Glyph, font: Font) =
   ## Make sure the glyph is ready to render
   var typeface = font.typeface

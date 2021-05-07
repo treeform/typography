@@ -1,4 +1,4 @@
-version       = "0.7.8"
+version       = "0.7.9"
 author        = "treeform"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"

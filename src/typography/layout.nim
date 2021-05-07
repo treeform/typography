@@ -4,6 +4,8 @@ const
   normalLineHeight* = 0 ## Default line height of font.size * 1.2
 
 type
+  Font = font.Font
+
   Span* = object
     ## Represents a run of litter of same size and font.
     font: Font
