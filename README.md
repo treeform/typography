@@ -1,5 +1,13 @@
 # Typography - Fonts, Typesetting and Rasterization.
 
+⚠️ Typography has been integrated into [Pixie](https://github.com/treeform/pixie), a full-featured 2D graphics library for Nim. This repo is no longer being actively worked on. ⚠️
+
+Pixie supports more TrueType / OpenType font features as well as rich text layout and rasterizizing through spans.
+
+Consider migrating projects from Typography to [Pixie](https://github.com/treeform/pixie) for additional functionality and future improvements. 🚀🚀🚀🚀🚀
+
+----
+
 Typography is pure nim implementation for font rasterization (letter drawing) and text typesetting (text layout). It does *not* rely on any external library such as FreeType, stb_truetype, pango or HarfBuzz.
 
 See api reference: https://treeform.github.io/typography/typography.html
