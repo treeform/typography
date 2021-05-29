@@ -11,4 +11,6 @@ proc strokeRectInner*(image: Image, rect: Rect, rgba: ColorRGBA) =
   let
     at = rect.xy.floor + vec2(0.5, 0.5)
     wh = rect.wh.floor - vec2(1, 1) # line width
-  image.strokeRect(rect(at, wh), rgba)
+    ctx = newContext(image)
+  ctx.strokeStyle = rgba
+  ctx.strokeRect(rect(at, wh))

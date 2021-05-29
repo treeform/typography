@@ -26,8 +26,10 @@ block:
   #  print glyph.code, glyph.advance
 
   var image = newImage(500, 40)
-  image.strokeSegment(segment(vec2(0, font.capline) + vec2(0, 0.25), vec2(500, font.capline) + vec2(0, 0.25)), rgba(0,0,0,255))
-  image.strokeSegment(segment(vec2(0, font.baseline) + vec2(0, 0.25), vec2(500, font.baseline) + vec2(0, 0.25)), rgba(0,0,0,255))
+  let ctx = newContext(image)
+  ctx.strokeStyle = rgba(0,0,0,255)
+  ctx.strokeSegment(segment(vec2(0, font.capline) + vec2(0, 0.25), vec2(500, font.capline) + vec2(0, 0.25)))
+  ctx.strokeSegment(segment(vec2(0, font.baseline) + vec2(0, 0.25), vec2(500, font.baseline) + vec2(0, 0.25)))
 
   var text = """+Welcome, Earthling."""
   if "q" notin font.typeface.glyphs:
