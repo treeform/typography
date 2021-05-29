@@ -195,29 +195,31 @@ proc getGlyphOutlineImage*(
     result.x = v.x
     result.y = float32(h) - v.y
 
+  let ctx = newContext(result)
+
   # Draw the outline.
   for shape in glyph.shapes:
     if lines:
       # Draw lines.
+      ctx.strokeStyle = red
       for s in shape:
-        result.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))), red)
+        ctx.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))))
     if points:
       # Draw points.
+      ctx.strokeStyle = blue
       for ruleNum, c in glyph.path.commands:
 
         for i in 0..<c.numbers.len div 2:
           var at: Vec2
           at.x = c.numbers[i*2+0]
           at.y = c.numbers[i*2+1]
-          result.strokeSegment(segment(
+          ctx.strokeSegment(segment(
             flip(adjust(at)) + vec2(1, 1),
-            flip(adjust(at)) + vec2(-1, -1)),
-            blue
+            flip(adjust(at)) + vec2(-1, -1))
           )
-          result.strokeSegment(segment(
+          ctx.strokeSegment(segment(
             flip(adjust(at)) + vec2(-1, 1),
-            flip(adjust(at)) + vec2(1, -1)),
-            blue
+            flip(adjust(at)) + vec2(1, -1))
           )
     if winding:
       # Draw winding order
@@ -235,13 +237,14 @@ proc getGlyphOutlineImage*(
 
         if length > 0:
           # Triangle.
+          ctx.strokeStyle = color
           let
             head = mid + dir
             left = mid - dir + dir2
             right = mid - dir - dir2
-          result.strokeSegment(segment(head, left), color)
-          result.strokeSegment(segment(left, right), color)
-          result.strokeSegment(segment(right, head), color)
+          ctx.strokeSegment(segment(head, left))
+          ctx.strokeSegment(segment(left, right))
+          ctx.strokeSegment(segment(right, head))
 
 proc getGlyphImage*(
   font: Font,
