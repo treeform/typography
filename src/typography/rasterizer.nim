@@ -12,28 +12,26 @@ proc makeReady*(glyph: Glyph, font: Font) =
     glyph.parseGlyph(font)
   if glyph.pathStr.len > 0:
     glyph.glyphPathToCommands()
-  if glyph.path.commands.len > 0:
+  if glyph.segments.len == 0:
     glyph.commandsToShapes()
 
-    if glyph.shapes.len > 0 and glyph.shapes[0].len > 0:
-      glyph.bboxMin = glyph.shapes[0][0].at
-      glyph.bboxMax = glyph.shapes[0][0].at
-      for shape in glyph.shapes:
-        for s in shape:
-          var at = s.at
-          var to = s.to
+  if glyph.segments.len > 0 and glyph.segments[0].len > 0:
+    glyph.bboxMin = glyph.segments[0][0].at
+    glyph.bboxMax = glyph.segments[0][0].at
+    for segments in glyph.segments:
+      for s in segments:
+        var at = s.at
+        var to = s.to
 
-          if at.x < glyph.bboxMin.x: glyph.bboxMin.x = at.x
-          if at.y < glyph.bboxMin.y: glyph.bboxMin.y = at.y
-          if at.x > glyph.bboxMax.x: glyph.bboxMax.x = at.x
-          if at.y > glyph.bboxMax.y: glyph.bboxMax.y = at.y
+        if at.x < glyph.bboxMin.x: glyph.bboxMin.x = at.x
+        if at.y < glyph.bboxMin.y: glyph.bboxMin.y = at.y
+        if at.x > glyph.bboxMax.x: glyph.bboxMax.x = at.x
+        if at.y > glyph.bboxMax.y: glyph.bboxMax.y = at.y
 
-          if to.x < glyph.bboxMin.x: glyph.bboxMin.x = to.x
-          if to.y < glyph.bboxMin.y: glyph.bboxMin.y = to.y
-          if to.x > glyph.bboxMax.x: glyph.bboxMax.x = to.x
-          if to.y > glyph.bboxMax.y: glyph.bboxMax.y = to.y
-    else:
-      glyph.isEmpty = true
+        if to.x < glyph.bboxMin.x: glyph.bboxMin.x = to.x
+        if to.y < glyph.bboxMin.y: glyph.bboxMin.y = to.y
+        if to.x > glyph.bboxMax.x: glyph.bboxMax.x = to.x
+        if to.y > glyph.bboxMax.y: glyph.bboxMax.y = to.y
   else:
     glyph.isEmpty = true
 
@@ -108,7 +106,7 @@ proc getGlyphImage*(
 
   if quality == 0:
     for y in 0 ..< result.height:
-      glyph.shapes.scanLineHits(hits, y, 0)
+      glyph.segments.scanLineHits(hits, y, 0)
       if hits.len == 0:
         continue
       var
@@ -134,7 +132,7 @@ proc getGlyphImage*(
       for x in 0 ..< result.width:
         alphas[x] = 0
       for m in 0 ..< quality:
-        glyph.shapes.scanLineHits(hits, y, float32(m)/float32(quality))
+        glyph.segments.scanLineHits(hits, y, float32(m)/float32(quality))
         if hits.len == 0:
           continue
         var
@@ -161,6 +159,10 @@ proc getGlyphImage*(
         var a = clamp(abs(alphas[x]) / float32(quality), 0.0, 1.0)
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
         result[x, h-y-1] = color
+
+type
+  PathWithCommands = object
+    commands: seq[PathCommand]
 
 proc getGlyphOutlineImage*(
   font: Font,
@@ -198,16 +200,16 @@ proc getGlyphOutlineImage*(
   let ctx = newContext(result)
 
   # Draw the outline.
-  for shape in glyph.shapes:
+  for segments in glyph.segments:
     if lines:
       # Draw lines.
       ctx.strokeStyle = red
-      for s in shape:
+      for s in segments:
         ctx.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))))
     if points:
       # Draw points.
       ctx.strokeStyle = blue
-      for ruleNum, c in glyph.path.commands:
+      for ruleNum, c in cast[ptr PathWithCommands](glyph.path.addr)[].commands:
 
         for i in 0..<c.numbers.len div 2:
           var at: Vec2
@@ -223,7 +225,7 @@ proc getGlyphOutlineImage*(
           )
     if winding:
       # Draw winding order
-      for s in shape:
+      for s in segments:
         let
           at = flip(adjust(s.at))
           to = flip(adjust(s.to))
