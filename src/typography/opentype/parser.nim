@@ -598,8 +598,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Pa
       p += 8
 
     var subGlyph = typeface.glyphArr[component.glyphIndex]
-    if subGlyph.path.commands.len == 0:
-      parseGlyph(subGlyph, font)
+    parseGlyph(subGlyph, font)
 
     # Transform commands path.
     let mat = mat3(
@@ -610,7 +609,7 @@ proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Pa
     # Copy commands.
     var copy = subGlyph.path
     copy.transform(mat)
-    result.commands.add(copy.commands)
+    result.addPath(copy)
     moreComponents = flags.checkBit(32)
 
 proc parseGlyph*(glyph: Glyph, font: Font) =

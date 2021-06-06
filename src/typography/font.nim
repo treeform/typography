@@ -7,7 +7,8 @@ type
     code*: string
     advance*: float32
     path*: Path
-    shapes*: seq[seq[Segment]] ## Shapes are made of lines.
+    shapes*: seq[seq[Vec2]]
+    segments*: seq[seq[Segment]]
     bboxMin*: Vec2
     bboxMax*: Vec2
     ready*: bool
@@ -92,6 +93,6 @@ proc glyphPathToCommands*(glyph: Glyph) =
 
 proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines
-  let shapes = glyph.path.commandsToShapes()
-  for shape in shapes:
-    glyph.shapes.add(toSeq(shape.segments))
+  glyph.shapes = glyph.path.commandsToShapes()
+  for shape in glyph.shapes:
+    glyph.segments.add(toSeq(shape.segments))
