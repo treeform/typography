@@ -161,8 +161,12 @@ proc getGlyphImage*(
         result[x, h-y-1] = color
 
 type
+  PathCommandInternals = object
+    kind: PathCommandKind
+    numbers: seq[float32]
+
   PathWithCommands = object
-    commands: seq[PathCommand]
+    commands: seq[PathCommandInternals]
 
 proc getGlyphOutlineImage*(
   font: Font,
