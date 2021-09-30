@@ -8,6 +8,14 @@ Consider migrating projects from Typography to [Pixie](https://github.com/treefo
 
 ----
 
+`nimble install typography`
+
+![Github Actions](https://github.com/treeform/typography/workflows/Github%20Actions/badge.svg)
+
+[API reference](https://nimdocs.com/treeform/typography)
+
+## About
+
 Typography is pure nim implementation for font rasterization (letter drawing) and text typesetting (text layout). It does *not* rely on any external library such as FreeType, stb_truetype, pango or HarfBuzz.
 
 See api reference: https://treeform.github.io/typography/typography.html

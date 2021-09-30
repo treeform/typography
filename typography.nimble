@@ -1,5 +1,5 @@
 version       = "0.7.12"
-author        = "treeform"
+author        = "Andre von Houck"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
 srcDir        = "src"
