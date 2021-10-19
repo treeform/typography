@@ -186,7 +186,7 @@ block:
     )
     image.draw(
       glyphImage,
-      at + glyphOffset
+      translate(at + glyphOffset)
     )
 
   let mag = 6.0

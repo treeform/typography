@@ -521,7 +521,7 @@ proc parseGlyph*(glyph: Glyph, font: Font)
 
 proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Path =
   result = newPath()
-  
+
   var
     typeface = font.typeface
     moreComponents = true
