@@ -162,14 +162,6 @@ proc getGlyphImage*(
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
         result[x, h-y-1] = color
 
-type
-  PathCommandInternals = object
-    kind: PathCommandKind
-    numbers: seq[float32]
-
-  PathWithCommands = object
-    commands: seq[PathCommandInternals]
-
 proc getGlyphOutlineImage*(
   font: Font,
   unicode: string,
@@ -215,7 +207,7 @@ proc getGlyphOutlineImage*(
     if points:
       # Draw points.
       ctx.strokeStyle = blue
-      for ruleNum, c in cast[ptr PathWithCommands](glyph.path.addr)[].commands:
+      for ruleNum, c in cast[PathShim](glyph.path).commands:
 
         for i in 0..<c.numbers.len div 2:
           var at: Vec2
