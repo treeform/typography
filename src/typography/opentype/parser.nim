@@ -389,6 +389,8 @@ proc parseGlyfTable(buf: string, offset: int, loca: LocaTable): GlyfTable =
     result.offsets.add(offset + locaOffset.int)
 
 proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
+  result = newPath()
+
   if glyph.numberOfContours <= 0:
     return
 
@@ -518,6 +520,8 @@ proc parseGlyphPath(buf: string, offset: int, glyph: Glyph): Path =
 proc parseGlyph*(glyph: Glyph, font: Font)
 
 proc parseCompositeGlyph(buf: string, offset: int, glyph: Glyph, font: Font): Path =
+  result = newPath()
+  
   var
     typeface = font.typeface
     moreComponents = true
