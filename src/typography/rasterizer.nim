@@ -8,6 +8,8 @@ proc makeReady*(glyph: Glyph, font: Font) =
   if glyph.ready:
     return
 
+  glyph.path = newPath()
+
   if typeface.otf != nil and not glyph.isEmpty:
     glyph.parseGlyph(font)
   if glyph.pathStr.len > 0:
@@ -276,7 +278,7 @@ proc drawGlyph*(font: Font, image: Image, at: Vec2, c: string) =
     if glyph.shapes.len > 0:
       var origin = vec2(0, 0)
       var img = font.getGlyphImage(glyph, origin)
-      image.draw(img, origin + at)
+      image.draw(img, translate(origin + at))
 
 proc getGlyphImageOffset*(
   font: Font,

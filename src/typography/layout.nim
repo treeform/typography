@@ -312,7 +312,7 @@ proc drawText*(image: var Image, layout: seq[GlyphPosition]) =
       )
       image.draw(
         img,
-        vec2(pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y)
+        translate(vec2(pos.rect.x + glyphOffset.x, pos.rect.y + glyphOffset.y))
       )
 
 proc drawText*(font: Font, image: var Image, pos: Vec2, text: string) =
