@@ -11,9 +11,7 @@ proc magnifyNearest*(image: Image, scale: int): Image =
   )
   for y in 0 ..< result.height:
     for x in 0 ..< result.width:
-      var rgba =
-        image.getRgbaUnsafe(x div scale, y div scale)
-      result.setRgbaUnsafe(x, y, rgba)
+      result.unsafe[x, y] = image.unsafe[x div scale, y div scale]
 
 proc outlineBorder*(image: Image, borderPx: int): Image =
   ## Adds n pixel border around alpha parts of the image.
@@ -33,7 +31,7 @@ proc outlineBorder*(image: Image, borderPx: int): Image =
         if filled:
           break
       if filled:
-        result.setRgbaUnsafe(x, y, rgba(255, 255, 255, 255))
+        result.unsafe[x, y] = rgba(255, 255, 255, 255)
 
 block:
   var font = readFontSvg("fonts/Ubuntu.svg")

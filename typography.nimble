@@ -1,11 +1,11 @@
-version       = "0.7.12"
+version       = "0.7.13"
 author        = "Andre von Houck"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
 srcDir        = "src"
 
 requires "nim >= 1.4.0"
-requires "pixie >= 2.0.2"
+requires "pixie >= 3.1.1"
 requires "vmath >= 1.0.0"
 requires "chroma >= 0.2.3"
 requires "print >= 0.1.0"
