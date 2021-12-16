@@ -1,4 +1,4 @@
-version       = "0.7.12"
+version       = "0.7.13"
 author        = "Andre von Houck"
 description   = "Fonts, Typesetting and Rasterization for Nim."
 license       = "MIT"
