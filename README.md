@@ -10,7 +10,7 @@ Consider migrating projects from Typography to [Pixie](https://github.com/treefo
 
 `nimble install typography`
 
-![Github Actions](https://github.com/treeform/typography/workflows/Github%20Actions/badge.svg)
+[![Run tests](https://github.com/treeform/typography/actions/workflows/build.yml/badge.svg)](https://github.com/treeform/typography/actions/workflows/build.yml)
 
 [API reference](https://nimdocs.com/treeform/typography)
 
