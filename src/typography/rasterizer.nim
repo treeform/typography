@@ -162,89 +162,89 @@ proc getGlyphImage*(
         var color = ColorRgba(r: 255, g: 255, b: 255, a: uint8(a * 255.0))
         result[x, h-y-1] = color
 
-proc getGlyphOutlineImage*(
-  font: Font,
-  unicode: string,
-  lines=true,
-  points=true,
-  winding=true
-): Image =
-  ## Get an outline of the glyph with controls points. Useful for debugging.
-  var glyph = font.typeface.glyphs[unicode]
+# proc getGlyphOutlineImage*(
+#   font: Font,
+#   unicode: string,
+#   lines=true,
+#   points=true,
+#   winding=true
+# ): Image =
+#   ## Get an outline of the glyph with controls points. Useful for debugging.
+#   var glyph = font.typeface.glyphs[unicode]
 
-  const
-    green = ColorRgba(r: 0, g: 255, b: 0, a: 255)
-    red = ColorRgba(r: 255, g: 0, b: 0, a: 255)
-    blue = ColorRgba(r: 0, g: 0, b: 255, a: 255)
+#   const
+#     green = ColorRgba(r: 0, g: 255, b: 0, a: 255)
+#     red = ColorRgba(r: 255, g: 0, b: 0, a: 255)
+#     blue = ColorRgba(r: 0, g: 0, b: 255, a: 255)
 
-  glyph.makeReady(font)
+#   glyph.makeReady(font)
 
-  var fontHeight = font.typeface.ascent - font.typeface.descent
-  var scale = font.size / (fontHeight)
-  var tx = int floor(glyph.bboxMin.x * scale)
-  var ty = int floor(glyph.bboxMin.y * scale)
-  var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
-  var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
+#   var fontHeight = font.typeface.ascent - font.typeface.descent
+#   var scale = font.size / (fontHeight)
+#   var tx = int floor(glyph.bboxMin.x * scale)
+#   var ty = int floor(glyph.bboxMin.y * scale)
+#   var w = int(ceil(glyph.bboxMax.x * scale)) - tx + 1
+#   var h = int(ceil(glyph.bboxMax.y * scale)) - ty + 1
 
-  result = newImage(w, h)
-  let origin = vec2(float32 tx, float32 ty)
+#   result = newImage(w, h)
+#   let origin = vec2(float32 tx, float32 ty)
 
-  proc adjust(v: Vec2): Vec2 = (v) * scale - origin
+#   proc adjust(v: Vec2): Vec2 = (v) * scale - origin
 
-  proc flip(v: Vec2): Vec2 =
-    result.x = v.x
-    result.y = float32(h) - v.y
+#   proc flip(v: Vec2): Vec2 =
+#     result.x = v.x
+#     result.y = float32(h) - v.y
 
-  let ctx = newContext(result)
+#   let ctx = newContext(result)
 
-  # Draw the outline.
-  for segments in glyph.segments:
-    if lines:
-      # Draw lines.
-      ctx.strokeStyle = red
-      for s in segments:
-        ctx.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))))
-    if points:
-      # Draw points.
-      ctx.strokeStyle = blue
-      for ruleNum, c in cast[PathShim](glyph.path).commands:
+#   # Draw the outline.
+#   for segments in glyph.segments:
+#     if lines:
+#       # Draw lines.
+#       ctx.strokeStyle = red
+#       for s in segments:
+#         ctx.strokeSegment(segment(flip(adjust(s.at)), flip(adjust(s.to))))
+#     if points:
+#       # Draw points.
+#       ctx.strokeStyle = blue
+#       for ruleNum, c in cast[PathShim](glyph.path).commands:
 
-        for i in 0..<c.numbers.len div 2:
-          var at: Vec2
-          at.x = c.numbers[i*2+0]
-          at.y = c.numbers[i*2+1]
-          ctx.strokeSegment(segment(
-            flip(adjust(at)) + vec2(1, 1),
-            flip(adjust(at)) + vec2(-1, -1))
-          )
-          ctx.strokeSegment(segment(
-            flip(adjust(at)) + vec2(-1, 1),
-            flip(adjust(at)) + vec2(1, -1))
-          )
-    if winding:
-      # Draw winding order
-      for s in segments:
-        let
-          at = flip(adjust(s.at))
-          to = flip(adjust(s.to))
-          length = (at - to).length
-          mid = (at + to) / 2
-          angle = angle(at - to)
-          dir = dir(angle) * 3
-          dir2 = dir(angle + float32(PI/2)) * 3
-          winding = s.at.y > s.to.y
-        var color = if winding: blue else: green
+#         for i in 0..<c.numbers.len div 2:
+#           var at: Vec2
+#           at.x = c.numbers[i*2+0]
+#           at.y = c.numbers[i*2+1]
+#           ctx.strokeSegment(segment(
+#             flip(adjust(at)) + vec2(1, 1),
+#             flip(adjust(at)) + vec2(-1, -1))
+#           )
+#           ctx.strokeSegment(segment(
+#             flip(adjust(at)) + vec2(-1, 1),
+#             flip(adjust(at)) + vec2(1, -1))
+#           )
+#     if winding:
+#       # Draw winding order
+#       for s in segments:
+#         let
+#           at = flip(adjust(s.at))
+#           to = flip(adjust(s.to))
+#           length = (at - to).length
+#           mid = (at + to) / 2
+#           angle = angle(at - to)
+#           dir = dir(angle) * 3
+#           dir2 = dir(angle + float32(PI/2)) * 3
+#           winding = s.at.y > s.to.y
+#         var color = if winding: blue else: green
 
-        if length > 0:
-          # Triangle.
-          ctx.strokeStyle = color
-          let
-            head = mid + dir
-            left = mid - dir + dir2
-            right = mid - dir - dir2
-          ctx.strokeSegment(segment(head, left))
-          ctx.strokeSegment(segment(left, right))
-          ctx.strokeSegment(segment(right, head))
+#         if length > 0:
+#           # Triangle.
+#           ctx.strokeStyle = color
+#           let
+#             head = mid + dir
+#             left = mid - dir + dir2
+#             right = mid - dir - dir2
+#           ctx.strokeSegment(segment(head, left))
+#           ctx.strokeSegment(segment(left, right))
+#           ctx.strokeSegment(segment(right, head))
 
 proc getGlyphImage*(
   font: Font,

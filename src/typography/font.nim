@@ -1,4 +1,4 @@
-import bumpy, tables, vmath, opentype/types, pixie/paths, sequtils
+import bumpy, tables, vmath, opentype/types, pixie/paths, sequtils, std/fenv
 
 type
   Glyph* = ref object
@@ -93,18 +93,15 @@ proc glyphPathToCommands*(glyph: Glyph) =
 
 type
   PathShim* = ref object
-    commands*: seq[PathCommand]
+    ## Used to hold paths and create paths.
+    commands: seq[float32]
+    start, at: Vec2 # Maintained by moveTo, lineTo, etc. Used by arcTo.
 
-  PathCommandKind* = enum
+  PathCommandKind = enum
     ## Type of path commands
     Close,
     Move, Line, HLine, VLine, Cubic, SCubic, Quad, TQuad, Arc,
     RMove, RLine, RHLine, RVLine, RCubic, RSCubic, RQuad, RTQuad, RArc
-
-  PathCommand* = object
-    ## Binary version of an SVG command.
-    kind*: PathCommandKind
-    numbers*: seq[float32]
 
 proc parameterCount(kind: PathCommandKind): int =
   ## Returns number of parameters a path command has.
@@ -117,21 +114,21 @@ proc parameterCount(kind: PathCommandKind): int =
   of Arc, RArc: 7
 
 proc commandsToShapes(
-  path: Path, closeSubpaths = false, pixelScale: float32 = 1.0
-): seq[seq[Vec2]] =
+  path: Path, closeSubpaths: bool, pixelScale: float32
+): seq[Polygon] =
   ## Converts SVG-like commands to sequences of vectors.
   var
     start, at: Vec2
-    shape: seq[Vec2]
+    shape: Polygon
 
   # Some commands use data from the previous command
   var
     prevCommandKind = Move
     prevCtrl, prevCtrl2: Vec2
 
-  let errorMargin = 0.2 / pixelScale
+  let errorMarginSq = pow(0.2 / pixelScale, 2)
 
-  proc addSegment(shape: var seq[Vec2], at, to: Vec2) =
+  proc addSegment(shape: var Polygon, at, to: Vec2) =
     # Don't add any 0 length lines
     if at - to != vec2(0, 0):
       # Don't double up points
@@ -139,67 +136,95 @@ proc commandsToShapes(
         shape.add(at)
       shape.add(to)
 
-  proc addCubic(shape: var seq[Vec2], at, ctrl1, ctrl2, to: Vec2) =
+  proc addCubic(shape: var Polygon, at, ctrl1, ctrl2, to: Vec2) =
     ## Adds cubic segments to shape.
     proc compute(at, ctrl1, ctrl2, to: Vec2, t: float32): Vec2 {.inline.} =
-      pow(1 - t, 3) * at +
-      pow(1 - t, 2) * 3 * t * ctrl1 +
-      (1 - t) * 3 * pow(t, 2) * ctrl2 +
-      pow(t, 3) * to
-
-    var prev = at
-
-    proc discretize(shape: var seq[Vec2], i, steps: int) =
-      # Closure captures at, ctrl1, ctrl2, to and prev
       let
-        tPrev = (i - 1).float32 / steps.float32
-        t = i.float32 / steps.float32
-        next = compute(at, ctrl1, ctrl2, to, t)
-        halfway = compute(at, ctrl1, ctrl2, to, tPrev + (t - tPrev) / 2)
-        midpoint = (prev + next) / 2
-        error = (midpoint - halfway).length
+        t2 = t*t
+        t3 = t2*t
+      at * (-t3 + 3*t2 - 3*t + 1) +
+      ctrl1 * (3*t3 - 6*t2 + 3*t) +
+      ctrl2 * (-3*t3 + 3*t2) +
+      to * (t3)
 
-      if error >= errorMargin:
-        # Error too large, double precision for this step
-        shape.discretize(i * 2 - 1, steps * 2)
-        shape.discretize(i * 2, steps * 2)
+    proc computeDeriv(at, ctrl1, ctrl2, to: Vec2, t: float32): Vec2 {.inline.} =
+      let t2 = t*t
+      at * (-3*t2 + 6*t - 3) +
+      ctrl1 * (9*t2 - 12*t + 3) +
+      ctrl2 * (-9*t2 + 6*t) +
+      to * (3 * t2)
+
+    var
+      t: float32       # Where we are at on the curve from [0, 1]
+      step = 1.float32 # How far we want to try to move along the curve
+      prev = at
+      next = compute(at, ctrl1, ctrl2, to, t + step)
+      halfway = compute(at, ctrl1, ctrl2, to, t + step / 2)
+    while true:
+      if step <= epsilon(float32):
+        raise newException(TypographyError, "Unable to discretize cubic")
+      let
+        midpoint = (prev + next) / 2
+        lineTangent = midpoint - prev
+        curveTangent = computeDeriv(at, ctrl1, ctrl2, to, t + step / 2)
+        curveTangentScaled = curveTangent.normalize() * lineTangent.length()
+        error = (midpoint - halfway).lengthSq
+        errorTangent = (lineTangent - curveTangentScaled).lengthSq
+      if error + errorTangent > errorMarginSq:
+        next = halfway
+        halfway = compute(at, ctrl1, ctrl2, to, t + step / 4)
+        step /= 2
       else:
         shape.addSegment(prev, next)
+        t += step
+        if t == 1:
+          break
         prev = next
+        step = min(step * 2, 1 - t) # Optimistically attempt larger steps
+        next = compute(at, ctrl1, ctrl2, to, t + step)
+        halfway = compute(at, ctrl1, ctrl2, to, t + step / 2)
 
-    shape.discretize(1, 1)
-
-  proc addQuadratic(shape: var seq[Vec2], at, ctrl, to: Vec2) =
+  proc addQuadratic(shape: var Polygon, at, ctrl, to: Vec2) =
     ## Adds quadratic segments to shape.
     proc compute(at, ctrl, to: Vec2, t: float32): Vec2 {.inline.} =
-      pow(1 - t, 2) * at +
-      2 * (1 - t) * t * ctrl +
-      pow(t, 2) * to
+      let t2 = t*t
+      at * (t2 - 2*t + 1) +
+      ctrl * (-2*t2 + 2*t) +
+      to * t2
 
-    var prev = at
-
-    proc discretize(shape: var seq[Vec2], i, steps: int) =
-      # Closure captures at, ctrl, to and prev
+    var
+      t: float32       # Where we are at on the curve from [0, 1]
+      step = 1.float32 # How far we want to try to move along the curve
+      prev = at
+      next = compute(at, ctrl, to, t + step)
+      halfway = compute(at, ctrl, to, t + step / 2)
+      halfStepping = false
+    while true:
+      if step <= epsilon(float32):
+        raise newException(TypographyError, "Unable to discretize quadratic")
       let
-        tPrev = (i - 1).float32 / steps.float32
-        t = i.float32 / steps.float32
-        next = compute(at, ctrl, to, t)
-        halfway = compute(at, ctrl, to, tPrev + (t - tPrev) / 2)
         midpoint = (prev + next) / 2
-        error = (midpoint - halfway).length
-
-      if error >= errorMargin:
-        # Error too large, double precision for this step
-        shape.discretize(i * 2 - 1, steps * 2)
-        shape.discretize(i * 2, steps * 2)
+        error = (midpoint - halfway).lengthSq
+      if error > errorMarginSq:
+        next = halfway
+        halfway = compute(at, ctrl, to, t + step / 4)
+        halfStepping = true
+        step /= 2
       else:
         shape.addSegment(prev, next)
+        t += step
+        if t == 1:
+          break
         prev = next
-
-    shape.discretize(1, 1)
+        if halfStepping:
+          step = min(step, 1 - t)
+        else:
+          step = min(step * 2, 1 - t) # Optimistically attempt larger steps
+        next = compute(at, ctrl, to, t + step)
+        halfway = compute(at, ctrl, to, t + step / 2)
 
   proc addArc(
-    shape: var seq[Vec2],
+    shape: var Polygon,
     at, radii: Vec2,
     rotation: float32,
     large, sweep: bool,
@@ -286,72 +311,86 @@ proc commandsToShapes(
       result = vec2(cos(a) * arc.radii.x, sin(a) * arc.radii.y)
       result = arc.rotMat * result + arc.center
 
-    var prev = at
+    let arc = endpointToCenterArcParams(at, radii, rotation, large, sweep, to)
 
-    proc discretize(shape: var seq[Vec2], arc: ArcParams, i, steps: int) =
+    var
+      t: float32       # Where we are at on the curve from [0, 1]
+      step = 1.float32 # How far we want to try to move along the curve
+      prev = at
+    while t != 1:
+      if step <= epsilon(float32):
+        raise newException(TypographyError, "Unable to discretize arc")
       let
-        step = arc.delta / steps.float32
-        aPrev = arc.theta + step * (i - 1).float32
-        a = arc.theta + step * i.float32
+        aPrev = arc.theta + arc.delta * t
+        a = arc.theta + arc.delta * (t + step)
         next = arc.compute(a)
         halfway = arc.compute(aPrev + (a - aPrev) / 2)
         midpoint = (prev + next) / 2
-        error = (midpoint - halfway).length
-
-      if error >= errorMargin:
-        # Error too large, try again with doubled precision
-        shape.discretize(arc, i * 2 - 1, steps * 2)
-        shape.discretize(arc, i * 2, steps * 2)
+        error = (midpoint - halfway).lengthSq
+      if error > errorMarginSq:
+        let
+          quarterway = arc.compute(aPrev + (a - aPrev) / 4)
+          midpoint = (prev + halfway) / 2
+          halfwayError = (midpoint - quarterway).lengthSq
+        if halfwayError < errorMarginSq:
+          shape.addSegment(prev, halfway)
+          prev = halfway
+          t += step / 2
+          step = min(step / 2, 1 - t) # Assume next steps hould be the same size
+        else:
+          step = step / 4 # We know a half-step is too big
       else:
         shape.addSegment(prev, next)
         prev = next
+        t += step
+        step = min(step * 2, 1 - t) # Optimistically attempt larger steps
 
-    let arc = endpointToCenterArcParams(at, radii, rotation, large, sweep, to)
-    shape.discretize(arc, 1, 1)
+  let path = cast[PathShim](path)
 
-  for command in cast[PathShim](path).commands:
-    if command.numbers.len != command.kind.parameterCount():
-      raise newException(TypographyError, "Invalid path")
+  var i: int
+  while i < path.commands.len:
+    let kind = path.commands[i].PathCommandKind
+    inc i
 
-    case command.kind:
+    case kind:
     of Move:
       if shape.len > 0:
         if closeSubpaths:
           shape.addSegment(at, start)
         result.add(shape)
         shape = newSeq[Vec2]()
-      at.x = command.numbers[0]
-      at.y = command.numbers[1]
+      at.x = path.commands[i + 0]
+      at.y = path.commands[i + 1]
       start = at
 
     of Line:
-      let to = vec2(command.numbers[0], command.numbers[1])
+      let to = vec2(path.commands[i + 0], path.commands[i + 1])
       shape.addSegment(at, to)
       at = to
 
     of HLine:
-      let to = vec2(command.numbers[0], at.y)
+      let to = vec2(path.commands[i + 0], at.y)
       shape.addSegment(at, to)
       at = to
 
     of VLine:
-      let to = vec2(at.x, command.numbers[0])
+      let to = vec2(at.x, path.commands[i + 0])
       shape.addSegment(at, to)
       at = to
 
     of Cubic:
       let
-        ctrl1 = vec2(command.numbers[0], command.numbers[1])
-        ctrl2 = vec2(command.numbers[2], command.numbers[3])
-        to = vec2(command.numbers[4], command.numbers[5])
+        ctrl1 = vec2(path.commands[i + 0], path.commands[i + 1])
+        ctrl2 = vec2(path.commands[i + 2], path.commands[i + 3])
+        to = vec2(path.commands[i + 4], path.commands[i + 5])
       shape.addCubic(at, ctrl1, ctrl2, to)
       at = to
       prevCtrl2 = ctrl2
 
     of SCubic:
       let
-        ctrl2 = vec2(command.numbers[0], command.numbers[1])
-        to = vec2(command.numbers[2], command.numbers[3])
+        ctrl2 = vec2(path.commands[i + 0], path.commands[i + 1])
+        to = vec2(path.commands[i + 2], path.commands[i + 3])
       if prevCommandKind in {Cubic, SCubic, RCubic, RSCubic}:
         let ctrl1 = at * 2 - prevCtrl2
         shape.addCubic(at, ctrl1, ctrl2, to)
@@ -362,15 +401,15 @@ proc commandsToShapes(
 
     of Quad:
       let
-        ctrl = vec2(command.numbers[0], command.numbers[1])
-        to = vec2(command.numbers[2], command.numbers[3])
+        ctrl = vec2(path.commands[i + 0], path.commands[i + 1])
+        to = vec2(path.commands[i + 2], path.commands[i + 3])
       shape.addQuadratic(at, ctrl, to)
       at = to
       prevCtrl = ctrl
 
     of TQuad:
       let
-        to = vec2(command.numbers[0], command.numbers[1])
+        to = vec2(path.commands[i + 0], path.commands[i + 1])
         ctrl =
           if prevCommandKind in {Quad, TQuad, RQuad, RTQuad}:
             at * 2 - prevCtrl
@@ -382,11 +421,11 @@ proc commandsToShapes(
 
     of Arc:
       let
-        radii = vec2(command.numbers[0], command.numbers[1])
-        rotation = command.numbers[2]
-        large = command.numbers[3] == 1
-        sweep = command.numbers[4] == 1
-        to = vec2(command.numbers[5], command.numbers[6])
+        radii = vec2(path.commands[i + 0], path.commands[i + 1])
+        rotation = path.commands[i + 2]
+        large = path.commands[i + 3] == 1
+        sweep = path.commands[i + 4] == 1
+        to = vec2(path.commands[i + 5], path.commands[i + 6])
       shape.addArc(at, radii, rotation, large, sweep, to)
       at = to
 
@@ -394,38 +433,38 @@ proc commandsToShapes(
       if shape.len > 0:
         result.add(shape)
         shape = newSeq[Vec2]()
-      at.x += command.numbers[0]
-      at.y += command.numbers[1]
+      at.x += path.commands[i + 0]
+      at.y += path.commands[i + 1]
       start = at
 
     of RLine:
-      let to = vec2(at.x + command.numbers[0], at.y + command.numbers[1])
+      let to = vec2(at.x + path.commands[i + 0], at.y + path.commands[i + 1])
       shape.addSegment(at, to)
       at = to
 
     of RHLine:
-      let to = vec2(at.x + command.numbers[0], at.y)
+      let to = vec2(at.x + path.commands[i + 0], at.y)
       shape.addSegment(at, to)
       at = to
 
     of RVLine:
-      let to = vec2(at.x, at.y + command.numbers[0])
+      let to = vec2(at.x, at.y + path.commands[i + 0])
       shape.addSegment(at, to)
       at = to
 
     of RCubic:
       let
-        ctrl1 = vec2(at.x + command.numbers[0], at.y + command.numbers[1])
-        ctrl2 = vec2(at.x + command.numbers[2], at.y + command.numbers[3])
-        to = vec2(at.x + command.numbers[4], at.y + command.numbers[5])
+        ctrl1 = vec2(at.x + path.commands[i + 0], at.y + path.commands[i + 1])
+        ctrl2 = vec2(at.x + path.commands[i + 2], at.y + path.commands[i + 3])
+        to = vec2(at.x + path.commands[i + 4], at.y + path.commands[i + 5])
       shape.addCubic(at, ctrl1, ctrl2, to)
       at = to
       prevCtrl2 = ctrl2
 
     of RSCubic:
       let
-        ctrl2 = vec2(at.x + command.numbers[0], at.y + command.numbers[1])
-        to = vec2(at.x + command.numbers[2], at.y + command.numbers[3])
+        ctrl2 = vec2(at.x + path.commands[i + 0], at.y + path.commands[i + 1])
+        to = vec2(at.x + path.commands[i + 2], at.y + path.commands[i + 3])
         ctrl1 =
           if prevCommandKind in {Cubic, SCubic, RCubic, RSCubic}:
             at * 2 - prevCtrl2
@@ -437,15 +476,15 @@ proc commandsToShapes(
 
     of RQuad:
       let
-        ctrl = vec2(at.x + command.numbers[0], at.y + command.numbers[1])
-        to = vec2(at.x + command.numbers[2], at.y + command.numbers[3])
+        ctrl = vec2(at.x + path.commands[i + 0], at.y + path.commands[i + 1])
+        to = vec2(at.x + path.commands[i + 2], at.y + path.commands[i + 3])
       shape.addQuadratic(at, ctrl, to)
       at = to
       prevCtrl = ctrl
 
     of RTQuad:
       let
-        to = vec2(at.x + command.numbers[0], at.y + command.numbers[1])
+        to = vec2(at.x + path.commands[i + 0], at.y + path.commands[i + 1])
         ctrl =
           if prevCommandKind in {Quad, TQuad, RQuad, RTQuad}:
             at * 2 - prevCtrl
@@ -457,11 +496,11 @@ proc commandsToShapes(
 
     of RArc:
       let
-        radii = vec2(command.numbers[0], command.numbers[1])
-        rotation = command.numbers[2]
-        large = command.numbers[3] == 1
-        sweep = command.numbers[4] == 1
-        to = vec2(at.x + command.numbers[5], at.y + command.numbers[6])
+        radii = vec2(path.commands[i + 0], path.commands[i + 1])
+        rotation = path.commands[i + 2]
+        large = path.commands[i + 3] == 1
+        sweep = path.commands[i + 4] == 1
+        to = vec2(at.x + path.commands[i + 5], at.y + path.commands[i + 6])
       shape.addArc(at, radii, rotation, large, sweep, to)
       at = to
 
@@ -473,7 +512,8 @@ proc commandsToShapes(
         result.add(shape)
         shape = newSeq[Vec2]()
 
-    prevCommandKind = command.kind
+    i += kind.parameterCount()
+    prevCommandKind = kind
 
   if shape.len > 0:
     if closeSubpaths:
@@ -482,6 +522,6 @@ proc commandsToShapes(
 
 proc commandsToShapes*(glyph: Glyph) =
   ## Converts SVG-like commands to shape made out of lines
-  glyph.shapes = glyph.path.commandsToShapes()
+  glyph.shapes = glyph.path.commandsToShapes(false, 1.0)
   for shape in glyph.shapes:
     glyph.segments.add(toSeq(shape.segments))
