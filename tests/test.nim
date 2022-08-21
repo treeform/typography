@@ -202,20 +202,20 @@ block:
 
   image.writeFile("rendered/subpixelglyphs.png")
 
-block:
-  var font = readFontTtf("fonts/Moon Bold.otf")
-  font.size = 300
-  font.lineHeight = 300
+# block:
+#   var font = readFontTtf("fonts/Moon Bold.otf")
+#   font.size = 300
+#   font.lineHeight = 300
 
-  var image = font.getGlyphOutlineImage("Q")
+  # var image = font.getGlyphOutlineImage("Q")
 
-  echo font.typeface.glyphs["Q"].pathStr
+  # echo font.typeface.glyphs["Q"].pathStr
 
-  image.writeFile("rendered/qOutLine.png")
+  # image.writeFile("rendered/qOutLine.png")
 
-  image = font.getGlyphImage("Q")
-  image.alphaToBlackAndWhite()
-  image.writeFile("rendered/qFill.png")
+  # image = font.getGlyphImage("Q")
+  # image.alphaToBlackAndWhite()
+  # image.writeFile("rendered/qFill.png")
 
 block:
   var image = newImage(200, 100)

@@ -48,22 +48,22 @@ block:
 
       #print glyph
 
-      var image = font.getGlyphOutlineImage(
-        glyph.code,
-        lines=true,
-        points=true,
-        winding=true
-      )
+      # var image = font.getGlyphOutlineImage(
+      #   glyph.code,
+      #   lines=true,
+      #   points=true,
+      #   winding=true
+      # )
 
-      image.writeFile("rendered/test_char.png")
+      # image.writeFile("rendered/test_char.png")
 
-      var glyphOffset: Vec2
-      image = font.getGlyphImage(glyph, glyphOffset, quality=4)
-      image.alphaToBlackAndWhite()
-      image.writeFile("rendered/test_charFill.png")
+      # var glyphOffset: Vec2
+      # image = font.getGlyphImage(glyph, glyphOffset, quality=4)
+      # image.alphaToBlackAndWhite()
+      # image.writeFile("rendered/test_charFill.png")
 
-      if image.width == 1396:
-        quit()
+      # if image.width == 1396:
+      #   quit()
 
 let (outp, _) = execCmdEx("git diff tests/rendered/*.png")
 if len(outp) != 0:
