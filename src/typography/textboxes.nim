@@ -37,6 +37,7 @@ type TextBox* = ref object
   vAlign*: VAlignMode
   hAling*: HAlignMode
   scrollable*: bool
+  wasScrolled*: bool
   editable*: bool
   scroll*: Vec2     # Scroll position.
   font*: Font
@@ -195,7 +196,7 @@ proc removeSelection(textBox: TextBox) =
 
 proc adjustScroll*(textBox: TextBox) =
   ## Adjust scroll to make sure cursor is in the window.
-  if textBox.scrollable:
+  if textBox.scrollable and not textBox.wasScrolled:
     let
       r = textBox.cursorRect
     # is pos.y inside the window?
@@ -464,6 +465,7 @@ proc mouseAction*(
   shift = false
 ) =
   ## Click on this with a mouse.
+  textBox.wasScrolled = false
   textBox.mousePos = mousePos + textBox.scroll
   # Pick where to place the cursor.
   let pos = textBox.layout.pickGlyphAt(textBox.mousePos)
@@ -528,6 +530,7 @@ proc resize*(textBox: TextBox, size: Vec2) =
 
 proc scrollBy*(textBox: TextBox, amount: float) =
   ## Scroll text box with a scroll wheel.
+  textBox.wasScrolled = true
   textBox.scroll.y += amount
   # Make sure it does not scroll off the top.
   textBox.scroll.y = max(0, textBox.scroll.y)
