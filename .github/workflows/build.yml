@@ -3,24 +3,16 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nim-version: ['2.0.16', '2.4.0', 'stable']
 
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Cache choosenim
-      id: cache-choosenim
-      uses: actions/cache@v1
+    - uses: actions/checkout@v4
+    - uses: jiro4989/setup-nim-action@v2
       with:
-        path: ~/.choosenim
-        key: ${{ runner.os }}-choosenim-stable
-
-    - name: Cache nimble
-      id: cache-nimble
-      uses: actions/cache@v1
-      with:
-        path: ~/.nimble
-        key: ${{ runner.os }}-nimble-stable
-
-    - uses: jiro4989/setup-nim-action@v1
+        nim-version: ${{ matrix.nim-version }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - run: nimble test -y
