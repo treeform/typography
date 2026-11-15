@@ -116,8 +116,8 @@ To where it bent in the undergrowth;""")
 
     for pos in layout:
       var font = pos.font
-      if pos.character in font.glyphs:
-        var glyph = font.glyphs[pos.character]
+      if pos.character in font.typeface.glyphs:
+        var glyph = font.typeface.glyphs[pos.character]
         var glyphOffset: Vec2
         let image = font.getGlyphImage(
           glyph,
@@ -144,7 +144,7 @@ To where it bent in the undergrowth;""")
 
     for pos in layout:
       var font = pos.font
-      if pos.character in font.glyphs:
+      if pos.character in font.typeface.glyphs:
         let key = GlyphKey(
           rune: pos.rune,
           size: font.size,
@@ -152,7 +152,7 @@ To where it bent in the undergrowth;""")
         )
 
         if key notin glyphCache:
-          var glyph = font.glyphs[pos.character]
+          var glyph = font.typeface.glyphs[pos.character]
           var glyphOffset: Vec2
           let image = font.getGlyphImage(
             glyph,

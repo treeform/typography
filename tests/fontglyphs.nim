@@ -1,7 +1,7 @@
 ## Loads ttf system fonts and prodces a grid of their glphys
 
 import algorithm, chroma, pixie, math, os, ospaths, print, sequtils, strutils,
-    tables, typography, typography/sysfonts, vmath
+    tables, typography, typography/systemfonts, vmath
 
 proc alphaWhite(image: var Image) =
   ## Typography deals mostly with transperant images with white text
@@ -9,12 +9,12 @@ proc alphaWhite(image: var Image) =
   ## with black text.
   for x in 0..<image.width:
     for y in 0..<image.height:
-      var c = image.getrgba(x, y)
+      var c = image[x, y]
       c.r = uint8(255) - c.a
       c.g = uint8(255) - c.a
       c.b = uint8(255) - c.a
       c.a = 255
-      image.putrgba(x, y, c)
+      image[x, y] = c
 
 for fontPath in getSystemFonts():
   if fontPath.endsWith(".ttf"):
@@ -25,53 +25,37 @@ for fontPath in getSystemFonts():
     #   continue
 
     var font = readFontTtf(fontPath)
-    echo font.name
+    echo font.typeface.name
     font.size = 30
-    echo font.glyphs.len
+    echo font.typeface.glyphs.len
 
     let
       width = 1000
-      height = 100 * int(ceil(float(font.glyphs.len) / 10.0))
+      height = 100 * int(ceil(float(font.typeface.glyphs.len) / 10.0))
 
     var ctx = newImage(width, height)
     ctx.fill(rgba(255, 255, 255, 255))
+    let context = newContext(ctx)
     var x, y: int
-    var names = toSeq(font.glyphs.keys)
+    var names = toSeq(font.typeface.glyphs.keys)
     names.sort(cmp)
     for i, name in names:
 
-      if font.glyphs[name].isEmpty:
-        ctx.fillRect(
-          rect(
-            float(x) + 20.0, float(y) + 20.0,
-            float 20, float 20
-          ),
-          rgba(128, 128, 128, 255)
-        )
+      if font.typeface.glyphs[name].isEmpty:
+        context.fillStyle = rgba(128, 128, 128, 255)
+        context.fillRect(float(x) + 20, float(y) + 20, 20, 20)
       else:
         try:
           var img = font.getGlyphImage(name)
-          ctx.blitWithMask(
-            img,
-            rect(
-              0, 0,
-              float img.width, float img.height
-            ),
-            rect(
-              float(x) + 20.0, float(y) + 20.0,
-              float img.width, float img.height
-            ),
-            rgba(0, 0, 0, 255)
-          )
+          for color in img.data.mitems:
+            color.r = 0
+            color.g = 0
+            color.b = 0
+          ctx.draw(img, translate(vec2(float(x) + 20, float(y) + 20)))
         except:
           echo "error on: ", i
-          ctx.fillRect(
-            rect(
-              float(x) + 20.0, float(y) + 20.0,
-              float 20, float 20
-            ),
-            rgba(255, 0, 0, 255)
-          )
+          context.fillStyle = rgba(255, 0, 0, 255)
+          context.fillRect(float(x) + 20, float(y) + 20, 20, 20)
 
       x += 100
       if x >= 1000:

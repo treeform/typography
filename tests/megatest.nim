@@ -6,7 +6,7 @@ import pixie, math, os, strutils, cligen, common, tables, typography, vmath,
 # Clone https://github.com/google/fonts
 # Check out commit ebaa6a7aab9b700da4e30a4682687acdf427eae7
 
-proc testString(font: Font): string =
+proc testString(font: typography.Font): string =
   result = "The quick brown fox jumps over the lazy dog."
   if "q" notin font.typeface.glyphs:
     # can't display english, use random glpyhs:
